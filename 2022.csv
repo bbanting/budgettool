@@ -1,0 +1,6 @@
+id,date,amount,category,earner,note,hidden
+1,2022/01/04,-658.00,Bills,,Rent for Jan,False
+2,2022/01/04,-99.68,Bills,,Car insurance,False
+3,2022/01/10,-52.00,Gas,,Gas for airport trip,False
+4,2022/01/11,-25.48,Food,,Got pizza,False
+5,2022/01/12,45.00,Other,Jim,Sold some pokemon cards,False
