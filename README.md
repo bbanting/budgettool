@@ -7,18 +7,20 @@ I made this because I like to code and want to improve. I can't see this being u
 ## To Do
 
 - Help command
-- Incorporate graphing with matplotlib stuff
+- Incorporate graphing with matplotlib
     - bar graph categories for year and month
     - monthly income and expenses over year
 - Goals for categories; sub categories?
 - Config command
+    - Prevent keywords from being used as users or categories
 - Warn when current year is not active year
 - Preset expenses and bills
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
 - Summarize command
 - Separate earner and note for edit command
-- Currently broken on linux
-- Overlapping expense and income categories (e.g. "Other" and "Other")
 - Add more dummy data
 - Implement undo and redo?
+- Wrap input function for shell, so users can get always help or quit; takes context param(s)
+- User attached to expenses as well (can be blank)
+- List multiple categories

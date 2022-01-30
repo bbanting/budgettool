@@ -2,15 +2,12 @@
 # Created by Ben Banting
 # A simple tool to keep track of expenses and earnings.
 
-from cmath import exp
 import sys
 import os
-
 import csv
 import json
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
-from tabnanny import check
 from typing import List
 
 
@@ -24,11 +21,13 @@ COMMANDS = {
     "bills": "show_bills",
     "edit": "edit_entry",
     "del": "delete_entry",
+    "config": "manage_config",
     # "sum": "summarize",
+    # "graph": "graph_entries",
+    # "help": "help",
     "switch": "switch_year",
     "quit": "quit_program",
     "q": "quit_program",
-    # "help": "help",
 }
 
 MONTHS = {
@@ -36,6 +35,8 @@ MONTHS = {
     "May": 5, "June": 6, "July": 7, "August": 8,
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
+
+KEYWORDS = ("income", "expense") + tuple(MONTHS)
 
 
 def check_file(year):
@@ -56,23 +57,28 @@ class BTError(Exception):
 
 
 class Config:
-    """Just a wrapper to avoid using dictionary keys"""
-    def __init__(self):
+    """A class to manage the state of the programs configuration"""
+    def __init__(self) -> None:
         with open("config.json", "r") as fp:
             cfgdata = json.load(fp)
 
         self.active_year = cfgdata["active_year"]
         self.users = cfgdata["users"]
-        self.income_cats = cfgdata["categories"]["income"]
-        self.expense_cats = cfgdata["categories"]["expense"]
+        self.categories = cfgdata["categories"]
         self.bills = cfgdata["bills"]
 
-    def overwrite(self):
-        pass
+    def update(self, attr, value) -> None:
+        """Update attribute and overwrite file."""
+        setattr(self, attr, value)
+        with open("config.json", "w") as fp:
+            json.dump(self.to_dict(), fp)
     
-    @property
-    def categories(self):
-        return self.income_cats + self.expense_cats
+    def to_dict(self) -> dict:
+        return {"active_year": self.active_year,
+                "users": self.users,
+                "categories": self.categories,
+                "bills": self.bills,
+            }
 
     @staticmethod
     def check():
@@ -203,11 +209,11 @@ def get_amount(*args):
                 return amount
 
 
-def _search_category(query, categories):
+def _search_category(query):
     query = query.strip().lower()
     results = []
 
-    for c in categories:
+    for c in config.categories:
         if c.lower().startswith(query):
             results.append(c)
     
@@ -222,26 +228,29 @@ def get_category(amount, *args):
         category = input("Category: ")
         if category.lower() == "back":
             raise BTError("Command terminated.")
-        if amount > 0:
-            category = _search_category(category, config.income_cats)
-        else:
-            category = _search_category(category, config.expense_cats)
+        # if amount > 0:
+        #     category = _search_category(category, config.income_cats)
+        # else:
+        #     category = _search_category(category, config.expense_cats)
+
+        category = _search_category(category, config.categories)
         
         if category:
             return category
         else:
-            categories = config.income_cats if amount > 0 else config.expense_cats
+            # categories = config.income_cats if amount > 0 else config.expense_cats
+            categories = config.categories
             print("Category not found...")
             print(f"Categories: {', '.join(categories)}")
 
 
-def get_earner_and_note(amount, *args):
+def get_earner_and_note(amount, *args) -> tuple:
     while True:
         if amount > 0:
             earner = input("Earner: ")
-            for name in ("ben", "rylee"):
-                if name.startswith(earner.lower()):
-                    earner = name.title()
+            for name in config.users:
+                if name.lower().startswith(earner.lower()):
+                    earner = name
                     note = input("Note: ")
                     return (earner, note)
         else:
@@ -251,12 +260,12 @@ def get_earner_and_note(amount, *args):
             return (None, note)
 
 
-def _get_entries(month=None, type=None, earner=None) -> List[Entry]:
-    if month == None and config.active_year == TODAY.year:
+def _get_entries(month=None, typ=None, cat=None, earner=None) -> List[Entry]:
+    if month is None and config.active_year == TODAY.year:
         month = TODAY.month
-    elif month == None and config.active_year != TODAY.year:
+    elif month is None and config.active_year != TODAY.year:
         month = 12
-    if type in ["expense",] + config.expense_cats:
+    if typ == "expense":
         earner = None
 
     check_file(config.active_year)
@@ -272,68 +281,48 @@ def _get_entries(month=None, type=None, earner=None) -> List[Entry]:
             continue
         if month != "year" and e.date.month != month:
             continue
-        if type and type != e.type and type != e.category:
+        if typ == "expense" and e.amount > 0:
             continue
-        if earner and e.earner != earner:
+        if typ == "income" and e.amount < 0:
+            continue
+        if cat and cat != e.category:
+            continue
+        if earner and e.earner.lower() != earner:
             continue
         filtered_entries.append(e)
 
     if not filtered_entries:
-        raise BTError("Record is empty.")
+        raise BTError("No entries found.")
     return filtered_entries
 
 
 def list_entries(*args):
-    """Process args and print appropriate entries to the terminal."""
-    month, type, earner = None, None, None
-    # Check if a month is the the first argument
-    if len(args) > 0:
-        try:
-            month = match_month(args[0])
-        except BTError:
-            if args[0].lower() == "year":
-                month = "year"
+    month, typ, cat, earner = None, None, None, None
+    for arg in args:
+        arg = arg.lower()
+        if not month:
+            try:
+                month = match_month(arg)
+            except BTError:
+                if arg == "year":
+                    month = "year"
+                    continue
+            else:
+                continue
+        if not typ:
+            if arg in ("expense", "income"):
+                typ = arg
+                continue
+        if not cat:
+            if cat := _search_category(arg):
+                continue
+        if not earner:
+            if arg in [u.lower() for u in config.users]:
+                earner = arg
+                continue
 
-    # Process the args for when a month is provided
-    if month:
-        if len(args) > 1:
-            if args[1].lower() in ("income",):
-                type = "income"
-            elif args[1].lower() in ("expense", "expenses"):
-                type = "expense"
-            elif cat := _search_category(args[1].lower(), config.categories):
-                type = cat
-            else:
-                print("Invalid entry type.")
-                return None
-        if len(args) > 2:
-            if args[2].lower() in ("ben", "rylee"):
-                earner = args[2].title()
-            else:
-                print("Invalid name.")
-                return None
-    
-    # Process the args for when a month is not provided
-    elif not month and len(args) > 0:
-        if args[0].lower() in ("income",):
-            type = "income"
-        elif args[0].lower() in ("expense", "expenses"):
-            type = "expense"
-        elif cat := _search_category(args[0].lower(), config.categories):
-                type = cat
-        else:
-            print("Invalid type or month.")
-            return None
-        if len(args) > 1:
-            if args[1].lower() in ("ben", "rylee"):
-                earner = args[1].title()
-            else:
-                print("Invalid name.")
-                return None
-
-    # Get the entries and print
     try:
-        entries = _get_entries(month, type, earner)
+        entries = _get_entries(month, typ, cat, earner)
     except BTError as e:
         print(e)
     else:
@@ -433,6 +422,10 @@ def show_bills(*args):
         print(f"{k}:\t{v}")
 
 
+def manage_config(*args):
+    pass
+
+
 def switch_year(*args):
     """Switches to different year."""
     if len(args) > 0 and args[0].isdigit():
@@ -449,7 +442,8 @@ def quit_program(*args):
     quit()
 
 
-def get_config() -> dict:
+def btinput() -> str:
+    """Wrapper for builtin input function"""
     pass
 
 

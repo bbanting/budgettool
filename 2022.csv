@@ -4,3 +4,4 @@ id,date,amount,category,earner,note,hidden
 3,2022/01/10,-52.00,Gas,,Gas for airport trip,False
 4,2022/01/11,-25.48,Food,,Got pizza,False
 5,2022/01/12,45.00,Other,Jim,Sold some pokemon cards,False
+6,2022/01/29,87.32,Other,Barb,Found $87 on the street,False
