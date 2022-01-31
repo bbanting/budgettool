@@ -16,18 +16,18 @@ TODAY = datetime.now()
 HEADERS = ("id","date","amount","category","earner","note","hidden")
 
 COMMANDS = {
-    "list": "list_entries",
-    "add": "add_entry",
-    "bills": "show_bills",
-    "edit": "edit_entry",
-    "del": "delete_entry",
-    "config": "manage_config",
-    # "sum": "summarize",
-    # "graph": "graph_entries",
-    # "help": "help",
-    "switch": "switch_year",
-    "quit": "quit_program",
-    "q": "quit_program",
+    "list":     "list_entries",
+    "add":      "add_entry",
+    "bills":    "show_bills",
+    "edit":     "edit_entry",
+    "del":      "delete_entry",
+    "config":   "manage_config",
+    # "sum":    "summarize",
+    # "graph":  "graph_entries",
+    # "help":   "help",
+    "switch":   "switch_year",
+    "quit":     "quit_program",
+    "q":        "quit_program",
 }
 
 MONTHS = {
@@ -88,8 +88,10 @@ class Config:
 
 class Entry:
     editable_fields = {
-        "amount": "get_amount", 
+        "amount":   "get_amount", 
         "category": "get_category",
+        "earner":   "get_earner",
+        "note":     "get_note",
         }
 
     def __init__(self, date: str, amount: Decimal, category: str, note:str, earner:str="",
@@ -242,22 +244,6 @@ def get_category(amount, *args):
             categories = config.categories
             print("Category not found...")
             print(f"Categories: {', '.join(categories)}")
-
-
-def get_earner_and_note(amount, *args) -> tuple:
-    while True:
-        if amount > 0:
-            earner = input("Earner: ")
-            for name in config.users:
-                if name.lower().startswith(earner.lower()):
-                    earner = name
-                    note = input("Note: ")
-                    return (earner, note)
-        else:
-            note = input("Note: ")
-            if note.lower() == "back":
-                raise BTError("Command terminated.")
-            return (None, note)
 
 
 def get_earner(amount, *args):
@@ -421,7 +407,7 @@ def edit_entry(*args):
         return
 
     attr = args[1]
-    if attr.lower() not in Entry.editable:
+    if attr.lower() not in Entry.editable_fields:
         print("Invalid attribute.")
         return
 
@@ -429,7 +415,7 @@ def edit_entry(*args):
     entries = _get_entries(month="year")
     for e in entries:
         if e.id == id:
-            setattr(e, attr, globals()[Entry.editable[attr]](e.amount))
+            setattr(e, attr, globals()[Entry.editable_fields[attr]](e.amount))
             _overwrite_entries(entries)
             break
     else:

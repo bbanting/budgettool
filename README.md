@@ -18,9 +18,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
 - Summarize command
-- Edit command: enable editing earner and note
 - Add more dummy data
 - Implement undo and redo?
 - Wrap input function for shell, so users can get always help or quit; takes context param(s)
 - User attached to expenses as well (can be blank)
-- List multiple categories
+- Write tests
