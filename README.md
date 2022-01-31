@@ -18,7 +18,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
 - Summarize command
-- Separate earner and note for edit command
+- Edit command: enable editing earner and note
 - Add more dummy data
 - Implement undo and redo?
 - Wrap input function for shell, so users can get always help or quit; takes context param(s)

@@ -233,7 +233,7 @@ def get_category(amount, *args):
         # else:
         #     category = _search_category(category, config.expense_cats)
 
-        category = _search_category(category, config.categories)
+        category = _search_category(category)
         
         if category:
             return category
@@ -260,7 +260,25 @@ def get_earner_and_note(amount, *args) -> tuple:
             return (None, note)
 
 
-def _get_entries(month=None, typ=None, cat=None, earner=None) -> List[Entry]:
+def get_earner(amount, *args):
+    if amount < 0:
+        return None
+    while True:
+        earner = input("Earner: ")
+        for name in config.users:
+            if name.lower().startswith(earner.lower()):
+                return name
+
+
+def get_note(*args):
+    while True:
+        note = input("Note: ")
+        if note.lower() == "back":
+            raise BTError("Command terminated.")
+        return note
+
+
+def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
     if month is None and config.active_year == TODAY.year:
         month = TODAY.month
     elif month is None and config.active_year != TODAY.year:
@@ -285,7 +303,7 @@ def _get_entries(month=None, typ=None, cat=None, earner=None) -> List[Entry]:
             continue
         if typ == "income" and e.amount < 0:
             continue
-        if cat and cat != e.category:
+        if cats and e.category not in cats:
             continue
         if earner and e.earner.lower() != earner:
             continue
@@ -297,7 +315,7 @@ def _get_entries(month=None, typ=None, cat=None, earner=None) -> List[Entry]:
 
 
 def list_entries(*args):
-    month, typ, cat, earner = None, None, None, None
+    month, typ, cats, earner = None, None, [], None
     for arg in args:
         arg = arg.lower()
         if not month:
@@ -313,16 +331,16 @@ def list_entries(*args):
             if arg in ("expense", "income"):
                 typ = arg
                 continue
-        if not cat:
-            if cat := _search_category(arg):
-                continue
+        if c := _search_category(arg):
+            cats.append(c)
+            continue
         if not earner:
             if arg in [u.lower() for u in config.users]:
                 earner = arg
                 continue
 
     try:
-        entries = _get_entries(month, typ, cat, earner)
+        entries = _get_entries(month, typ, cats, earner)
     except BTError as e:
         print(e)
     else:
@@ -346,7 +364,8 @@ def add_entry(*args):
         date = get_date()
         amount = get_amount()
         category = get_category(amount)
-        earner, note = get_earner_and_note(amount)
+        earner = get_earner(amount)
+        note = get_note()
     except BTError:
         pass # Exit the command
     else:
