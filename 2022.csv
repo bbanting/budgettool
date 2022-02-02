@@ -7,3 +7,4 @@ id,date,amount,category,earner,note,hidden
 6,2022/01/29,87.32,Other,Barb,Found $87 on the street,False
 7,2022/01/30,-43.21,Food,,Got some popsicles,False
 8,2022/01/30,1400.34,Workplace,Barb,Paycheck,False
+9,2022/01/20,-3.28,Food,,Got some chips,False

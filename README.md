@@ -17,9 +17,16 @@ I made this because I like to code and want to improve. I can't see this being u
 - Preset expenses and bills
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
-- Summarize command
-- Add more dummy data
 - Implement undo and redo?
 - Wrap input function for shell, so users can get always help or quit; takes context param(s)
 - User attached to expenses as well (can be blank)
+- User is automatic when theres only one
 - Write tests
+- Account for file errors (permissions)
+- List old months when no entries in latest month
+- No dash if no note
+- Go back a step in adding an entry (or editing)
+- Exit cleanly on keyboard interrupt
+- Refactor list_entries and summarize functions
+- List n last entries
+- "Sign in" as user?

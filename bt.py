@@ -22,7 +22,7 @@ COMMANDS = {
     "edit":     "edit_entry",
     "del":      "delete_entry",
     "config":   "manage_config",
-    # "sum":    "summarize",
+    "sum":      "summarize",
     # "graph":  "graph_entries",
     # "help":   "help",
     "switch":   "switch_year",
@@ -297,7 +297,7 @@ def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
 
     if not filtered_entries:
         raise BTError("No entries found.")
-    return filtered_entries
+    return sorted(filtered_entries, key=lambda x: x.date)
 
 
 def list_entries(*args):
@@ -335,8 +335,45 @@ def list_entries(*args):
         for entry in entries:
             print(entry)
         sign = "-" if total < 0 else ""
-        print(f"\nRunning total: {sign}${abs(total)}")
+        print(f"\nTotal: {sign}${abs(total)}")
         
+
+def summarize(*args):
+    month, typ, cats, earner = None, None, [], None
+    for arg in args:
+        arg = arg.lower()
+        if not month:
+            try:
+                month = match_month(arg)
+            except BTError:
+                if arg == "year":
+                    month = "year"
+                    continue
+            else:
+                continue
+        if not typ:
+            if arg in ("expense", "income"):
+                typ = arg
+                continue
+        if c := _search_category(arg):
+            cats.append(c)
+            continue
+        if not earner:
+            if arg in [u.lower() for u in config.users]:
+                earner = arg
+                continue
+
+    try:
+        entries = _get_entries(month, typ, cats, earner)
+    except BTError as e:
+        print(e)
+    else:
+        total = sum([e.amount for e in entries])
+        sign = "-" if total < 0 else ""
+        x = "Entry" if len(entries) < 2 else "Entries"
+        print(f"{len(entries)} {x}")
+        print(f"Total: {sign}${abs(total)}")
+
 
 # def quick_add_entry(*args):
 #     amount, category = args[:2]
@@ -454,7 +491,10 @@ def btinput() -> str:
 
 def process_command(sysargs):
     command = sysargs[0].lower()
-    if command not in COMMANDS:
+    if command not in COMMANDS and command != "":
+        func = globals()[COMMANDS["sum"]]
+        func(*sysargs)
+    elif command not in COMMANDS:
         raise BTError("Command not found.")
     else:
         func = globals()[COMMANDS[command]]
