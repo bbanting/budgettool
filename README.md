@@ -10,11 +10,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - Incorporate graphing with matplotlib
     - bar graph categories for year and month
     - monthly income and expenses over year
-- Goals for categories; sub categories?
 - Config command
     - Prevent keywords from being used as users or categories
 - Warn when current year is not active year
-- Preset expenses and bills
+- Preset expenses and bills (goals)
+    - tags attached to goals 
+        - any and and relationships
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
 - Implement undo and redo?
@@ -24,9 +25,10 @@ I made this because I like to code and want to improve. I can't see this being u
 - Write tests
 - Account for file errors (permissions)
 - List old months when no entries in latest month
-- No dash if no note
 - Go back a step in adding an entry (or editing)
-- Exit cleanly on keyboard interrupt
-- Refactor list_entries and summarize functions
 - List n last entries
 - "Sign in" as user?
+- Make summarize more insightful
+- Tags instead of categories and users?
+- Search descriptions
+- make check_file more generic; useful for config file too

@@ -8,3 +8,4 @@ id,date,amount,category,earner,note,hidden
 7,2022/01/30,-43.21,Food,,Got some popsicles,False
 8,2022/01/30,1400.34,Workplace,Barb,Paycheck,False
 9,2022/01/20,-3.28,Food,,Got some chips,False
+10,2022/02/02,250.00,Workplace,Jim,,False

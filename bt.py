@@ -36,7 +36,7 @@ MONTHS = {
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
 
-KEYWORDS = ("income", "expense") + tuple(MONTHS)
+KEYWORDS = ("income", "expense", "year") + tuple(MONTHS)
 
 
 def check_file(year):
@@ -148,8 +148,8 @@ class Entry:
     
     def __str__(self):
         date = self.date.strftime("%b %d")
-        earner = self.earner + " - " if self.earner else ""
-        return f"{str(self.id).zfill(4):8}{date:8} {self.dollars:10} {self.category:12} {earner}{self.note}"
+        dash = " - " if (self.earner and self.note) else ""
+        return f"{str(self.id).zfill(4):8}{date:8} {self.dollars:10} {self.category:12} {self.earner}{dash}{self.note}"
 
 
 def match_month(name:str) -> int:
@@ -246,7 +246,7 @@ def get_category(amount, *args):
             print(f"Categories: {', '.join(categories)}")
 
 
-def get_earner(amount, *args):
+def get_earner(amount, *args) -> str:
     if amount < 0:
         return None
     while True:
@@ -256,7 +256,8 @@ def get_earner(amount, *args):
                 return name
 
 
-def get_note(*args):
+def get_note(*args) -> str:
+    """Get the note content from the user"""
     while True:
         note = input("Note: ")
         if note.lower() == "back":
@@ -265,6 +266,7 @@ def get_note(*args):
 
 
 def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
+    """Filter and return entries based on input."""
     if month is None and config.active_year == TODAY.year:
         month = TODAY.month
     elif month is None and config.active_year != TODAY.year:
@@ -277,9 +279,9 @@ def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
         lines = list(csv.reader(f))
         if len(lines) < 2:
             raise BTError("Record is empty.")
+
     entries = [Entry.from_csv(line) for line in lines[1:]]
     filtered_entries = []
-
     for e in entries:
         if e.hidden:
             continue
@@ -300,15 +302,15 @@ def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-def list_entries(*args):
+def _process_search_terms(*args):
     month, typ, cats, earner = None, None, [], None
     for arg in args:
         arg = arg.lower()
         if not month:
             try:
-                month = match_month(arg)
+                month = match_month(arg) # TODO examine
             except BTError:
-                if arg == "year":
+                if arg in ("year", "all"):
                     month = "year"
                     continue
             else:
@@ -324,6 +326,12 @@ def list_entries(*args):
             if arg in [u.lower() for u in config.users]:
                 earner = arg
                 continue
+
+    return (month, typ, cats, earner)
+
+
+def list_entries(*args):
+    month, typ, cats, earner = _process_search_terms(*args)
 
     try:
         entries = _get_entries(month, typ, cats, earner)
@@ -335,33 +343,11 @@ def list_entries(*args):
         for entry in entries:
             print(entry)
         sign = "-" if total < 0 else ""
-        print(f"\nTotal: {sign}${abs(total)}")
+        print(f"\nTOTAL: {sign}${abs(total)}")
         
 
 def summarize(*args):
-    month, typ, cats, earner = None, None, [], None
-    for arg in args:
-        arg = arg.lower()
-        if not month:
-            try:
-                month = match_month(arg)
-            except BTError:
-                if arg == "year":
-                    month = "year"
-                    continue
-            else:
-                continue
-        if not typ:
-            if arg in ("expense", "income"):
-                typ = arg
-                continue
-        if c := _search_category(arg):
-            cats.append(c)
-            continue
-        if not earner:
-            if arg in [u.lower() for u in config.users]:
-                earner = arg
-                continue
+    month, typ, cats, earner = _process_search_terms(*args)
 
     try:
         entries = _get_entries(month, typ, cats, earner)
@@ -372,7 +358,7 @@ def summarize(*args):
         sign = "-" if total < 0 else ""
         x = "Entry" if len(entries) < 2 else "Entries"
         print(f"{len(entries)} {x}")
-        print(f"Total: {sign}${abs(total)}")
+        print(f"TOTAL: {sign}${abs(total)}")
 
 
 # def quick_add_entry(*args):
@@ -516,11 +502,13 @@ def main(sysargs: List[str]):
     global config
     config = Config()
     check_file(TODAY.year)
-
-    if not sysargs:
-        shell()
-    else:
-        process_command(sysargs)
+    try:
+        if not sysargs:
+            shell()
+        else:
+            process_command(sysargs)
+    except KeyboardInterrupt:
+        print("")
 
 
 if __name__=="__main__":
