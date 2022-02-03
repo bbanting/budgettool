@@ -13,7 +13,7 @@ from typing import List
 
 TODAY = datetime.now()
 
-HEADERS = ("id","date","amount","category","earner","note","hidden")
+HEADERS = ("id","date","amount","tags","note","hidden")
 
 COMMANDS = {
     "list":     "list_entries",
@@ -36,7 +36,7 @@ MONTHS = {
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
 
-KEYWORDS = ("income", "expense", "year") + tuple(MONTHS)
+KEYWORDS = ("income", "expense", "year", "all") + tuple(MONTHS)
 
 
 def check_file(year):
@@ -63,8 +63,7 @@ class Config:
             cfgdata = json.load(fp)
 
         self.active_year = cfgdata["active_year"]
-        self.users = cfgdata["users"]
-        self.categories = cfgdata["categories"]
+        self.tags = cfgdata["tags"]
         self.bills = cfgdata["bills"]
 
     def update(self, attr, value) -> None:
@@ -75,8 +74,7 @@ class Config:
     
     def to_dict(self) -> dict:
         return {"active_year": self.active_year,
-                "users": self.users,
-                "categories": self.categories,
+                "tags": self.tags,
                 "bills": self.bills,
             }
 
@@ -89,17 +87,15 @@ class Config:
 class Entry:
     editable_fields = {
         "amount":   "get_amount", 
-        "category": "get_category",
-        "earner":   "get_earner",
+        "tags":     "get_tags",
         "note":     "get_note",
         }
 
-    def __init__(self, date: str, amount: Decimal, category: str, note:str, earner:str="",
+    def __init__(self, date: str, amount: Decimal, tags: List, note:str,
                     hidden:bool=False, id:int=0):
         self.date = date
         self.amount = amount
-        self.category = category
-        self.earner = earner
+        self.tags = tags
         self.note = note
         self.hidden = hidden
 
@@ -109,14 +105,14 @@ class Entry:
             self.id = self.generate_id()
 
     @property
-    def type(self):
+    def type(self) -> str:
         if self.amount > 0:
             return "income"
         else:
             return "expense"
 
     @property
-    def dollars(self):
+    def dollars(self) -> str:
         if self.amount > 0:
             return f"+${self.amount}"
         else:
@@ -124,14 +120,21 @@ class Entry:
 
     @classmethod
     def from_csv(cls, data: list):
-        id, date, amount, category, earner, note, hidden = data
-        id= int(id)
+        """Contruct an entry from a csv line."""
+        id, date, amount, tags, note, hidden = data
+        id = int(id)
         date = datetime.strptime(date, "%Y/%m/%d")
         amount = Decimal(amount)
+        tags = tags.split(" ")
         hidden = to_bool(hidden)
-        return cls(date, amount, category, note, hidden=hidden, earner=earner, id=id)
+        return cls(date, amount, tags, note, hidden=hidden, id=id)
 
-    def generate_id(self):
+    def to_csv(self) -> List:
+        date = self.date.strftime("%Y/%m/%d")
+        return [self.id, date, f"{self.amount:.2f}", " ".join(self.tags), self.note, self.hidden]
+
+    def generate_id(self) -> int:
+        """Generate a new unused ID for a new entry."""
         check_file(TODAY.year)
         with open(f"{config.active_year}.csv", "r", newline="") as f:
             lines = list(csv.reader(f))
@@ -141,15 +144,11 @@ class Entry:
                 return prev_id + 1
             else:
                 return 1
-
-    def to_csv(self):
-        date = self.date.strftime("%Y/%m/%d")
-        return [self.id, date, f"{self.amount:.2f}", self.category, self.earner, self.note, self.hidden]
     
-    def __str__(self):
+    def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        dash = " - " if (self.earner and self.note) else ""
-        return f"{str(self.id).zfill(4):8}{date:8} {self.dollars:10} {self.category:12} {self.earner}{dash}{self.note}"
+        tags = ", ".join(self.tags)
+        return f"{str(self.id).zfill(4):8}{date:8} {self.dollars:10} {tags:12} {self.note}"
 
 
 def match_month(name:str) -> int:
@@ -211,13 +210,13 @@ def get_amount(*args):
                 return amount
 
 
-def _search_category(query):
+def _search_tag(query) -> str:
     query = query.strip().lower()
     results = []
 
-    for c in config.categories:
-        if c.lower().startswith(query):
-            results.append(c)
+    for t in config.tags:
+        if t.lower().startswith(query):
+            results.append(t)
     
     if len(results) != 1:
         return None
@@ -225,36 +224,22 @@ def _search_category(query):
         return results[0]
 
 
-def get_category(amount, *args):
+def get_tags(*args) -> List:
     while True:
-        category = input("Category: ")
-        if category.lower() == "back":
+        tags = input("Tags: ")
+        if tags.lower().strip() == "back":
             raise BTError("Command terminated.")
-        # if amount > 0:
-        #     category = _search_category(category, config.income_cats)
-        # else:
-        #     category = _search_category(category, config.expense_cats)
-
-        category = _search_category(category)
-        
-        if category:
-            return category
+        if tags == "":
+            print(f"Tags: {', '.join(config.tags)}")
+            continue
         else:
-            # categories = config.income_cats if amount > 0 else config.expense_cats
-            categories = config.categories
-            print("Category not found...")
-            print(f"Categories: {', '.join(categories)}")
+            tags = tags.split(" ")
 
-
-def get_earner(amount, *args) -> str:
-    if amount < 0:
-        return None
-    while True:
-        earner = input("Earner: ")
-        for name in config.users:
-            if name.lower().startswith(earner.lower()):
-                return name
-
+        if not all(tags := [_search_tag(t) for t in tags]):
+            print("Invalid tags given.")
+            continue
+        return tags
+            
 
 def get_note(*args) -> str:
     """Get the note content from the user"""
@@ -265,14 +250,12 @@ def get_note(*args) -> str:
         return note
 
 
-def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
+def _get_entries(month=None, typ=None, tags=[]) -> List[Entry]:
     """Filter and return entries based on input."""
     if month is None and config.active_year == TODAY.year:
         month = TODAY.month
     elif month is None and config.active_year != TODAY.year:
         month = 12
-    if typ == "expense":
-        earner = None
 
     check_file(config.active_year)
     with open(f"{config.active_year}.csv", "r", newline="") as f:
@@ -287,13 +270,9 @@ def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
             continue
         if month != "year" and e.date.month != month:
             continue
-        if typ == "expense" and e.amount > 0:
+        if typ and typ != e.type:
             continue
-        if typ == "income" and e.amount < 0:
-            continue
-        if cats and e.category not in cats:
-            continue
-        if earner and e.earner.lower() != earner:
+        if tags and not any([True if t in e.tags else False for t in tags]):
             continue
         filtered_entries.append(e)
 
@@ -302,13 +281,13 @@ def _get_entries(month=None, typ=None, cats=[], earner=None) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-def _process_search_terms(*args):
-    month, typ, cats, earner = None, None, [], None
+def _process_search_terms(*args) -> tuple:
+    month, typ, tags  = None, None, []
     for arg in args:
         arg = arg.lower()
         if not month:
             try:
-                month = match_month(arg) # TODO examine
+                month = match_month(arg) ### examine
             except BTError:
                 if arg in ("year", "all"):
                     month = "year"
@@ -319,26 +298,23 @@ def _process_search_terms(*args):
             if arg in ("expense", "income"):
                 typ = arg
                 continue
-        if c := _search_category(arg):
-            cats.append(c)
+        if t := _search_tag(arg):
+            tags.append(t)
             continue
-        if not earner:
-            if arg in [u.lower() for u in config.users]:
-                earner = arg
-                continue
 
-    return (month, typ, cats, earner)
+    return (month, typ, tags)
 
 
 def list_entries(*args):
-    month, typ, cats, earner = _process_search_terms(*args)
+    """Print the specified entries."""
+    month, typ, tags = _process_search_terms(*args)
 
     try:
-        entries = _get_entries(month, typ, cats, earner)
+        entries = _get_entries(month, typ, tags)
     except BTError as e:
         print(e)
     else:
-        print(f"{'':8}{'DATE':8} {'AMOUNT':10} {'CATEGORY':12} {'NOTE'}")
+        print(f"{'':8}{'DATE':8} {'AMOUNT':10} {'TAGS':12} {'NOTE'}")
         total = sum([e.amount for e in entries])
         for entry in entries:
             print(entry)
@@ -347,10 +323,10 @@ def list_entries(*args):
         
 
 def summarize(*args):
-    month, typ, cats, earner = _process_search_terms(*args)
-
+    """Print a summary of the specifies entries."""
+    month, typ, tags = _process_search_terms(*args)
     try:
-        entries = _get_entries(month, typ, cats, earner)
+        entries = _get_entries(month, typ, tags)
     except BTError as e:
         print(e)
     else:
@@ -372,13 +348,12 @@ def add_entry(*args):
     try:
         date = get_date()
         amount = get_amount()
-        category = get_category(amount)
-        earner = get_earner(amount)
+        tags = get_tags()
         note = get_note()
     except BTError:
         pass # Exit the command
     else:
-        entry = Entry(date, amount, category, note, earner=earner)
+        entry = Entry(date, amount, tags, note)
         check_file(config.active_year)
         with open(f"{config.active_year}.csv", "a", newline="") as f:
             csv.writer(f).writerow(entry.to_csv())
@@ -461,7 +436,7 @@ def switch_year(*args):
         if os.path.exists(f"{year}.csv"):
             config.active_year = year
             print(f"Records for {year} are now active.")
-            return None
+            return
 
     print("Invalid year input.")
         

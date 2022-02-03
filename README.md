@@ -15,7 +15,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - Warn when current year is not active year
 - Preset expenses and bills (goals)
     - tags attached to goals 
-        - any and and relationships
+        - any and all relationships
 - Get entry ID more efficiently
 - Show hidden entries, ability to permanently delete
 - Implement undo and redo?
@@ -32,3 +32,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - Tags instead of categories and users?
 - Search descriptions
 - make check_file more generic; useful for config file too
+- Calendar view
+- Fix formatting in light of tags (remove tags from output?)
+- Any and all relationships for search tags; negating
+    - tag+tag tag !tag tag+!tag
+    - ! and + are reserved and cant be used in tag names
