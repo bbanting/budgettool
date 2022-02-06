@@ -6,34 +6,34 @@ I made this because I like to code and want to improve. I can't see this being u
 
 ## To Do
 
-- Help command
-- Incorporate graphing with matplotlib
+- [ ] Help command
+- [ ] Incorporate graphing with matplotlib
     - bar graph categories for year and month
     - monthly income and expenses over year
-- Config command
+- [ ] Config command
     - Prevent keywords from being used as users or categories
-- Warn when current year is not active year
-- Preset expenses and bills (goals)
+- [ ] Warn when current year is not active year
+- [ ] Preset expenses and bills (goals)
     - tags attached to goals 
         - any and all relationships
-- Get entry ID more efficiently
-- Show hidden entries, ability to permanently delete
-- Implement undo and redo?
-- Wrap input function for shell, so users can get always help or quit; takes context param(s)
-- User attached to expenses as well (can be blank)
-- User is automatic when theres only one
-- Write tests
-- Account for file errors (permissions)
-- List old months when no entries in latest month
-- Go back a step in adding an entry (or editing)
-- List n last entries
-- "Sign in" as user?
-- Make summarize more insightful
-- Tags instead of categories and users?
-- Search descriptions
-- make check_file more generic; useful for config file too
-- Calendar view
-- Fix formatting in light of tags (remove tags from output?)
-- Any and all relationships for search tags; negating
+- [ ] Get entry ID more efficiently
+- [ ] Show hidden entries, ability to permanently delete
+- [ ] Implement undo and redo?
+- [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
+- [ ] Write tests
+- [ ] Account for file errors (permissions)
+- [ ] List old months when no entries in latest month
+- [ ] Go back a step in adding an entry (or editing)
+- [ ] List n last entries
+- [ ] Make summarize more insightful
+- [ ] Search descriptions
+- [ ] Refactor error checking for csv file
+- [ ] Calendar view
+- [ ] Fix formatting in light of tags (remove tags from output?)
+- [ ] Any and all relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
+- [ ] list command by default is truncated
+- [ ] Check for invalid csv formatting and give helpful error
+- [ ] cache entries; update cache as well as file when changed
+- [ ] Remove ability to do one-off commands?

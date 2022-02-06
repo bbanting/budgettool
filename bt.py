@@ -1,4 +1,4 @@
-# BT: Budget Tool
+# Budget Tool
 # Created by Ben Banting
 # A simple tool to keep track of expenses and earnings.
 
@@ -9,6 +9,7 @@ import json
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
+from collections import UserList
 
 
 TODAY = datetime.now()
@@ -36,7 +37,15 @@ MONTHS = {
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
 
+# Words that cannot be used in tags
 KEYWORDS = ("income", "expense", "year", "all") + tuple(MONTHS)
+
+# Widths for display columns
+IDW = 8
+DATEW = 8
+AMOUNTW = 10
+TAGSW = 12
+NOTEW = None
 
 
 def check_file(year):
@@ -59,8 +68,9 @@ class BTError(Exception):
 class Config:
     """A class to manage the state of the programs configuration"""
     def __init__(self) -> None:
+        Config.check_file()
         with open("config.json", "r") as fp:
-            cfgdata = json.load(fp)
+                cfgdata = json.load(fp)
 
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
@@ -69,6 +79,8 @@ class Config:
     def update(self, attr, value) -> None:
         """Update attribute and overwrite file."""
         setattr(self, attr, value)
+
+        Config.check_file()
         with open("config.json", "w") as fp:
             json.dump(self.to_dict(), fp)
     
@@ -76,12 +88,21 @@ class Config:
         return {"active_year": self.active_year,
                 "tags": self.tags,
                 "bills": self.bills,
-            }
+                }
 
     @staticmethod
-    def check():
+    def check_file():
         """Check if the config exists."""
-        pass
+        try:
+            with open("config.json", "r") as fp:
+                pass
+        except PermissionError:
+            print("You do not have the necessary file permissions.")
+            quit()
+        except FileNotFoundError:
+            with open("config.json", "w") as fp:
+                cfg = {"active_year": TODAY.year, "tags": [], "bills": {}}
+                json.dump(cfg, fp)
 
 
 class Entry:
@@ -147,8 +168,15 @@ class Entry:
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
+        note = self.note if self.note else "..."
         tags = ", ".join(self.tags)
-        return f"{str(self.id).zfill(4):8}{date:8} {self.dollars:10} {tags:12} {self.note}"
+        if len(tags) > 12:
+            tags = tags[:9] + "..."
+        return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.dollars:{AMOUNTW}} {tags:{TAGSW}} {note}"
+
+
+class EntryList(UserList):
+    pass
 
 
 def match_month(name:str) -> int:
@@ -314,7 +342,7 @@ def list_entries(*args):
     except BTError as e:
         print(e)
     else:
-        print(f"{'':8}{'DATE':8} {'AMOUNT':10} {'TAGS':12} {'NOTE'}")
+        print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = sum([e.amount for e in entries])
         for entry in entries:
             print(entry)
