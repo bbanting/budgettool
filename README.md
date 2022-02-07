@@ -7,7 +7,7 @@ I made this because I like to code and want to improve. I can't see this being u
 ## To Do
 
 - [ ] Help command
-- [ ] Incorporate graphing with matplotlib
+- [ ] Incorporate graphing
     - bar graph categories for year and month
     - monthly income and expenses over year
 - [ ] Config command
@@ -21,7 +21,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Implement undo and redo?
 - [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
 - [ ] Write tests
-- [ ] Account for file errors (permissions)
+- [x] Account for file errors (permissions)
 - [ ] List old months when no entries in latest month
 - [ ] Go back a step in adding an entry (or editing)
 - [ ] List n last entries
@@ -33,7 +33,10 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Any and all relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] list command by default is truncated
-- [ ] Check for invalid csv formatting and give helpful error
-- [ ] cache entries; update cache as well as file when changed
-- [ ] Remove ability to do one-off commands?
+- [ ] Check for invalid csv formatting on each entry and give helpful error
+- [ ] Changing entry attrs trigger file overwrite
+- [x] cache entries; update cache as well as file when changed
+
+## Notes
+- Remove ability to do one-off commands?
+- Seems pretty tightly coupled as it is now. The global scope stuff doesn't

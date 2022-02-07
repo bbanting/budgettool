@@ -176,7 +176,42 @@ class Entry:
 
 
 class EntryList(UserList):
-    pass
+    def __init__(self):
+        super().__init__()
+        self._check_file()
+        with open(f"{config.active_year}.csv", "r", newline="") as fp:
+            lines = list(csv.reader(fp))
+        for line in lines[1:]:
+            self.append(Entry.from_csv(line))
+
+    def _check_file(self) -> None:
+        try:
+            with open(f"{config.active_year}.csv", "r+"):
+                pass
+        except PermissionError:
+            print("You do not have the necessary file permissions.")
+            quit()
+        except FileNotFoundError:
+            with open(f"{config.active_year}.csv", "w", newline="") as fp:
+                csv.writer(fp).writerow(HEADERS)
+
+    def _overwrite(self):
+        """Overwrite the csv file with current entries."""
+        self._check_file()
+        rows = []
+        rows.append(list(HEADERS))
+        for e in self:
+            rows.append(e.to_csv())
+        with open(f"{config.active_year}.csv", "w", newline="") as fp:
+            csv.writer(fp).writerows(rows)
+
+    def __setitem__(self, key, val):
+        super().__setitem__(key, val)
+        self._overwrite()
+
+    def append(self, item):
+        super().append(item)
+        self._overwrite()
 
 
 def match_month(name:str) -> int:
@@ -278,22 +313,21 @@ def get_note(*args) -> str:
         return note
 
 
-def _get_entries(month=None, typ=None, tags=[]) -> List[Entry]:
-    """Filter and return entries based on input."""
+def _filter_entries(month=None, typ=None, tags=[]) -> List[Entry]:
+    """
+    Filter and return entries based on input.
+    Raise exception if none found
+    """
     if month is None and config.active_year == TODAY.year:
         month = TODAY.month
     elif month is None and config.active_year != TODAY.year:
         month = 12
 
-    check_file(config.active_year)
-    with open(f"{config.active_year}.csv", "r", newline="") as f:
-        lines = list(csv.reader(f))
-        if len(lines) < 2:
-            raise BTError("Record is empty.")
+    if len(_entries) == 0:
+        raise BTError("Record is empty.")
 
-    entries = [Entry.from_csv(line) for line in lines[1:]]
     filtered_entries = []
-    for e in entries:
+    for e in _entries:
         if e.hidden:
             continue
         if month != "year" and e.date.month != month:
@@ -338,7 +372,7 @@ def list_entries(*args):
     month, typ, tags = _process_search_terms(*args)
 
     try:
-        entries = _get_entries(month, typ, tags)
+        entries = _filter_entries(month, typ, tags)
     except BTError as e:
         print(e)
     else:
@@ -354,7 +388,7 @@ def summarize(*args):
     """Print a summary of the specifies entries."""
     month, typ, tags = _process_search_terms(*args)
     try:
-        entries = _get_entries(month, typ, tags)
+        entries = _filter_entries(month, typ, tags)
     except BTError as e:
         print(e)
     else:
@@ -387,16 +421,6 @@ def add_entry(*args):
             csv.writer(f).writerow(entry.to_csv())
 
 
-def _overwrite_entries(entries: List[Entry]):
-    rows = []
-    rows.append(list(HEADERS))
-    for e in entries:
-        rows.append(e.to_csv())
-    check_file(config.active_year)
-    with open(f"{config.active_year}.csv", "w", newline="") as f:
-        csv.writer(f).writerows(rows)
-
-
 def delete_entry(*args):
     """Takes an ID and deletes the corresponding entry"""
     try:
@@ -404,8 +428,7 @@ def delete_entry(*args):
     except (ValueError, IndexError):
         print("Invalid ID")
     else:
-        entries = _get_entries(month="year")
-        for e in entries:
+        for e in _entries:
             if e.id == id:
                 ans = None
                 date = e.date.strftime("%b %d")
@@ -413,7 +436,7 @@ def delete_entry(*args):
                     ans = input(f"Are you sure you want to delete entry {e.id}? ({date}: {e.dollars}, {e.note})\n")
                 if ans in ("yes", "y"):
                     e.hidden = True
-                    _overwrite_entries(entries)
+                    _entries._overwrite()
                 break
         else:
             print("Entry not found.")
@@ -438,11 +461,12 @@ def edit_entry(*args):
         return
 
     # Make the change
-    entries = _get_entries(month="year")
+    entries = _filter_entries(month="year")
     for e in entries:
         if e.id == id:
-            setattr(e, attr, globals()[Entry.editable_fields[attr]](e.amount))
-            _overwrite_entries(entries)
+            func = globals()[Entry.editable_fields[attr]](e.amount)
+            setattr(e, attr, func)
+            _entries._overwrite()
             break
     else:
         print("Entry not found.")
@@ -502,9 +526,6 @@ def shell():
 
 
 def main(sysargs: List[str]):
-    global config
-    config = Config()
-    check_file(TODAY.year)
     try:
         if not sysargs:
             shell()
@@ -515,4 +536,6 @@ def main(sysargs: List[str]):
 
 
 if __name__=="__main__":
+    config = Config()
+    _entries = EntryList()
     main(sys.argv[1:])
