@@ -48,12 +48,6 @@ TAGSW = 12
 NOTEW = None
 
 
-def check_file(year):
-    if not os.path.exists(f"{year}.csv"):
-        with open(f"{year}.csv", "w", newline="") as fp:
-            csv.writer(fp).writerow(HEADERS)
-
-
 def to_bool(string):
     if string == "True":
         return True
@@ -156,15 +150,11 @@ class Entry:
 
     def generate_id(self) -> int:
         """Generate a new unused ID for a new entry."""
-        check_file(TODAY.year)
-        with open(f"{config.active_year}.csv", "r", newline="") as f:
-            lines = list(csv.reader(f))
-            if len(lines) > 1:
-                line = lines[-1]
-                prev_id = int(line[0])
-                return prev_id + 1
-            else:
-                return 1
+        if len(entry_list) > 1:
+            prev_id = entry_list[-1].id
+            return prev_id + 1
+        else:
+            return 1
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
@@ -173,6 +163,10 @@ class Entry:
         if len(tags) > 12:
             tags = tags[:9] + "..."
         return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.dollars:{AMOUNTW}} {tags:{TAGSW}} {note}"
+
+    def edit(self, attr, value):
+        setattr(self, attr, value)
+        entry_list._overwrite()
 
 
 class EntryList(UserList):
@@ -204,10 +198,6 @@ class EntryList(UserList):
             rows.append(e.to_csv())
         with open(f"{config.active_year}.csv", "w", newline="") as fp:
             csv.writer(fp).writerows(rows)
-
-    def __setitem__(self, key, val):
-        super().__setitem__(key, val)
-        self._overwrite()
 
     def append(self, item):
         super().append(item)
@@ -323,11 +313,11 @@ def _filter_entries(month=None, typ=None, tags=[]) -> List[Entry]:
     elif month is None and config.active_year != TODAY.year:
         month = 12
 
-    if len(_entries) == 0:
+    if len(entry_list) == 0:
         raise BTError("Record is empty.")
 
     filtered_entries = []
-    for e in _entries:
+    for e in entry_list:
         if e.hidden:
             continue
         if month != "year" and e.date.month != month:
@@ -416,9 +406,7 @@ def add_entry(*args):
         pass # Exit the command
     else:
         entry = Entry(date, amount, tags, note)
-        check_file(config.active_year)
-        with open(f"{config.active_year}.csv", "a", newline="") as f:
-            csv.writer(f).writerow(entry.to_csv())
+        entry_list.append(entry)
 
 
 def delete_entry(*args):
@@ -428,15 +416,14 @@ def delete_entry(*args):
     except (ValueError, IndexError):
         print("Invalid ID")
     else:
-        for e in _entries:
+        for e in entry_list:
             if e.id == id:
                 ans = None
                 date = e.date.strftime("%b %d")
                 while ans not in ("yes", "no", "y", "n"):
-                    ans = input(f"Are you sure you want to delete entry {e.id}? ({date}: {e.dollars}, {e.note})\n")
+                    ans = input(f"Are you sure you want to delete entry {e.id}? ({date}: {e.dollars})\n")
                 if ans in ("yes", "y"):
-                    e.hidden = True
-                    _entries._overwrite()
+                    e.edit("hidden", True)
                 break
         else:
             print("Entry not found.")
@@ -461,12 +448,10 @@ def edit_entry(*args):
         return
 
     # Make the change
-    entries = _filter_entries(month="year")
-    for e in entries:
+    for e in entry_list:
         if e.id == id:
-            func = globals()[Entry.editable_fields[attr]](e.amount)
-            setattr(e, attr, func)
-            _entries._overwrite()
+            new_value = globals()[Entry.editable_fields[attr]]()
+            e.edit(attr, new_value)
             break
     else:
         print("Entry not found.")
@@ -537,5 +522,5 @@ def main(sysargs: List[str]):
 
 if __name__=="__main__":
     config = Config()
-    _entries = EntryList()
+    entry_list = EntryList()
     main(sys.argv[1:])

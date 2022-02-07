@@ -16,27 +16,28 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Preset expenses and bills (goals)
     - tags attached to goals 
         - any and all relationships
-- [ ] Get entry ID more efficiently
+- [x] Get entry ID more efficiently
 - [ ] Show hidden entries, ability to permanently delete
 - [ ] Implement undo and redo?
 - [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
-- [ ] Write tests
-- [x] Account for file errors (permissions)
-- [ ] List old months when no entries in latest month
 - [ ] Go back a step in adding an entry (or editing)
-- [ ] List n last entries
+- [ ] Write tests
+- [ ] List old months when no entries in latest month
+- [ ] List n last entries (/n)
 - [ ] Make summarize more insightful
 - [ ] Search descriptions
-- [ ] Refactor error checking for csv file
+- [x] Refactor error checking for csv file
 - [ ] Calendar view
 - [ ] Fix formatting in light of tags (remove tags from output?)
 - [ ] Any and all relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Check for invalid csv formatting on each entry and give helpful error
-- [ ] Changing entry attrs trigger file overwrite
-- [x] cache entries; update cache as well as file when changed
+- [x] Changing entry attrs trigger file overwrite
 
 ## Notes
 - Remove ability to do one-off commands?
-- Seems pretty tightly coupled as it is now. The global scope stuff doesn't
+- Seems pretty tightly coupled as it is now.
+  - Entry is tied to EntryList through global variable
+  - EntryList is tied to Config through global variable
+  - Can I make this better?
