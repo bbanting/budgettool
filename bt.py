@@ -51,8 +51,10 @@ NOTEW = None
 def to_bool(string):
     if string == "True":
         return True
-    else:
+    elif string == "False":
         return False
+    else:
+        raise BTError("Invalid format.")
 
 
 class BTError(Exception):
@@ -60,7 +62,7 @@ class BTError(Exception):
 
 
 class Config:
-    """A class to manage the state of the programs configuration"""
+    """A class to manage the state of the programs configuration."""
     def __init__(self) -> None:
         Config.check_file()
         with open("config.json", "r") as fp:
@@ -68,6 +70,7 @@ class Config:
 
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
+        # self.old_tags = cfgdata["old_tags"]
         self.bills = cfgdata["bills"]
 
     def update(self, attr, value) -> None:
@@ -104,6 +107,7 @@ class Entry:
         "amount":   "get_amount", 
         "tags":     "get_tags",
         "note":     "get_note",
+        "date":     "get_date",
         }
 
     def __init__(self, date: str, amount: Decimal, tags: List, note:str,
@@ -129,9 +133,9 @@ class Entry:
     @property
     def dollars(self) -> str:
         if self.amount > 0:
-            return f"+${self.amount}"
+            return f"+${self.amount:.2f}"
         else:
-            return f"-${abs(self.amount)}"
+            return f"-${abs(self.amount):.2f}"
 
     @classmethod
     def from_csv(cls, data: list):
@@ -140,13 +144,15 @@ class Entry:
         id = int(id)
         date = datetime.strptime(date, "%Y/%m/%d")
         amount = Decimal(amount)
-        tags = tags.split(" ")
+        tags = _verify_tags(tags.split(" "))
         hidden = to_bool(hidden)
+
         return cls(date, amount, tags, note, hidden=hidden, id=id)
 
     def to_csv(self) -> List:
+        """Convert entry into list for writing by the csv module."""
         date = self.date.strftime("%Y/%m/%d")
-        return [self.id, date, f"{self.amount:.2f}", " ".join(self.tags), self.note, self.hidden]
+        return [self.id, date, f"{self.amount}", " ".join(self.tags), self.note, self.hidden]
 
     def generate_id(self) -> int:
         """Generate a new unused ID for a new entry."""
@@ -155,6 +161,11 @@ class Entry:
             return prev_id + 1
         else:
             return 1
+
+    def edit(self, attr, value):
+        """Set an attribute and overwrite the file."""
+        setattr(self, attr, value)
+        entry_list._overwrite()
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
@@ -164,21 +175,32 @@ class Entry:
             tags = tags[:9] + "..."
         return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.dollars:{AMOUNTW}} {tags:{TAGSW}} {note}"
 
-    def edit(self, attr, value):
-        setattr(self, attr, value)
-        entry_list._overwrite()
-
 
 class EntryList(UserList):
     def __init__(self):
+        """Initialize and check for errors."""
         super().__init__()
         self._check_file()
+
         with open(f"{config.active_year}.csv", "r", newline="") as fp:
             lines = list(csv.reader(fp))
-        for line in lines[1:]:
-            self.append(Entry.from_csv(line))
+        if lines[0] != list(HEADERS):
+            print(f"Error: Invalid CSV headers.")
+            quit()
+
+        entries = []
+        for i, ln in enumerate(lines[1:]):
+            try:
+                entry = Entry.from_csv(ln)
+            except (ValueError, InvalidOperation, BTError):
+                print(f"Error parsing line {i+2}. Your CSV file may be corrupted.")
+                quit()
+            else:
+                entries.append(entry)
+        self.extend(entries)
 
     def _check_file(self) -> None:
+        """Ensure the CSV file can be opened barring a permission error."""
         try:
             with open(f"{config.active_year}.csv", "r+"):
                 pass
@@ -203,8 +225,13 @@ class EntryList(UserList):
         super().append(item)
         self._overwrite()
 
+    def remove(self, item):
+        super().remove(item)
+        self._overwrite()
 
-def match_month(name:str) -> int:
+
+def _match_month(name:str) -> int:
+    """Return month number based on input."""
     if name.isdigit() and int(name) in range(1, 13):
         return int(name)
     
@@ -217,9 +244,10 @@ def match_month(name:str) -> int:
 
 
 def get_date(quick_input=None, *args):
+    """Retrieve the date input from the user."""
     # Short-circuit if called through quick add
     if quick_input:
-        return match_month(quick_input)
+        return _match_month(quick_input)
 
     while True:
         user_input = input("Date: ")
@@ -233,7 +261,7 @@ def get_date(quick_input=None, *args):
         elif len(user_input.split()) == 2:
             month, day = user_input.split(" ")
             try:
-                month, day = match_month(month), int(day)
+                month, day = _match_month(month), int(day)
             except (BTError, ValueError):
                 print("Invalid input.")
                 continue
@@ -244,6 +272,7 @@ def get_date(quick_input=None, *args):
 
 
 def get_amount(*args):
+    """Retrieve the amount input from the user."""
     while True:
         amount = input("Amount: ").strip()
         if amount.lower() == "back":
@@ -263,7 +292,8 @@ def get_amount(*args):
                 return amount
 
 
-def _search_tag(query) -> str:
+def _match_tag(query: str) -> str:
+    """Check if string matches a tag. If so, return the tag."""
     query = query.strip().lower()
     results = []
 
@@ -277,7 +307,19 @@ def _search_tag(query) -> str:
         return results[0]
 
 
+def _verify_tags(tags: List):
+    """
+    Raise error if one of the tags are invalid;
+    Otherwise return list back.
+    """
+    for t in tags:
+        if t not in config.tags:
+            raise BTError("Invalid tag.")
+    return tags
+
+
 def get_tags(*args) -> List:
+    """Get tag(s) input from user."""
     while True:
         tags = input("Tags: ")
         if tags.lower().strip() == "back":
@@ -288,14 +330,14 @@ def get_tags(*args) -> List:
         else:
             tags = tags.split(" ")
 
-        if not all(tags := [_search_tag(t) for t in tags]):
+        if not all(tags := [_match_tag(t) for t in tags]):
             print("Invalid tags given.")
             continue
         return tags
             
 
 def get_note(*args) -> str:
-    """Get the note content from the user"""
+    """Get note input from the user"""
     while True:
         note = input("Note: ")
         if note.lower() == "back":
@@ -334,12 +376,13 @@ def _filter_entries(month=None, typ=None, tags=[]) -> List[Entry]:
 
 
 def _process_search_terms(*args) -> tuple:
+    """Parse user input and return valid parameters to filter entries by."""
     month, typ, tags  = None, None, []
     for arg in args:
         arg = arg.lower()
         if not month:
             try:
-                month = match_month(arg) ### examine
+                month = _match_month(arg) ### examine
             except BTError:
                 if arg in ("year", "all"):
                     month = "year"
@@ -350,7 +393,7 @@ def _process_search_terms(*args) -> tuple:
             if arg in ("expense", "income"):
                 typ = arg
                 continue
-        if t := _search_tag(arg):
+        if t := _match_tag(arg):
             tags.append(t)
             continue
 
@@ -458,16 +501,18 @@ def edit_entry(*args):
 
 
 def show_bills(*args):
+    """Print the bills; placeholder function."""
     for k, v in config.bills.items():
         print(f"{k}:\t{v}")
 
 
 def manage_config(*args):
+    """Interface for user to manage the configuration file."""
     pass
 
 
 def switch_year(*args):
-    """Switches to different year."""
+    """Switches to different year.""" ### Maybe don't write to config??
     if len(args) > 0 and args[0].isdigit():
         year = int(args[0])
         if os.path.exists(f"{year}.csv"):
@@ -488,6 +533,7 @@ def btinput() -> str:
 
 
 def process_command(sysargs):
+    """Determine which function to call based on input."""
     command = sysargs[0].lower()
     if command not in COMMANDS and command != "":
         func = globals()[COMMANDS["sum"]]

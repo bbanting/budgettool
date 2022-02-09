@@ -1,7 +1,7 @@
 id,date,amount,tags,note,hidden
 1,2022/01/04,-658.00,Bills,Rent for Jan,False
 2,2022/01/04,-99.68,Bills,Car insurance,False
-3,2022/01/10,-52.00,Gas,Gas for airport trip,False
+3,2022/01/10,-72,Gas,Gas for airport trip,False
 4,2022/01/11,-25.48,Food,Got pizza,False
 5,2022/01/12,45.00,Other Jim,Sold some pokemon cards,False
 6,2022/01/29,87.32,Other Barb,Found $87 on the street,False
@@ -9,4 +9,4 @@ id,date,amount,tags,note,hidden
 8,2022/01/30,1400.34,Workplace Barb,Paycheck,False
 9,2022/01/20,-3.28,Food,Got some chips,False
 10,2022/02/02,250.00,Workplace Jim,,False
-11,2022/02/03,-70.00,Jim Other,Got physiotherapy,False
+11,2022/02/03,-72,Jim Other,Got physiotherapy,False
