@@ -30,9 +30,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Any and all relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [x] Check for invalid csv formatting on each entry and give helpful error
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
-- [ ] Watch dog for current year when changed from outside the shell
+- [ ] Watch dog or timeout for current year when changed from outside the shell
 
 ## Notes
 - Remove ability to do one-off commands?

@@ -64,41 +64,59 @@ class BTError(Exception):
 class Config:
     """A class to manage the state of the programs configuration."""
     def __init__(self) -> None:
-        Config.check_file()
+        Config._check_file()
         with open("config.json", "r") as fp:
                 cfgdata = json.load(fp)
 
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
-        # self.old_tags = cfgdata["old_tags"]
+        self.old_tags = cfgdata["old_tags"]
         self.bills = cfgdata["bills"]
 
-    def update(self, attr, value) -> None:
-        """Update attribute and overwrite file."""
-        setattr(self, attr, value)
-
-        Config.check_file()
+    def _overwrite(self) -> None:
+        """Overwrite file with current state."""
+        Config._check_file()
         with open("config.json", "w") as fp:
             json.dump(self.to_dict(), fp)
     
     def to_dict(self) -> dict:
         return {"active_year": self.active_year,
                 "tags": self.tags,
+                "old_tags": self.old_tags,
                 "bills": self.bills,
                 }
 
+    def add_tag(self, name: str):
+        if name not in self.tags:
+            self.tags.append(name)
+            if name in self.old_tags:
+                self.old_tags.remove(name)
+            self._overwrite()
+        else:
+            raise BTError("Tag already exists.")
+
+    def remove_tag(self, name: str):
+        if name in self.tags:
+            self.tags.remove(name)
+            if name not in self.old_tags:
+                self.old_tags.append(name)
+            self._overwrite()
+        else:
+            raise BTError("Tag not found.")
+        
+            
     @staticmethod
-    def check_file():
+    def _check_file():
         """Check if the config exists."""
         try:
-            with open("config.json", "r") as fp:
+            with open("config.json", "r+") as fp:
                 pass
         except PermissionError:
             print("You do not have the necessary file permissions.")
             quit()
         except FileNotFoundError:
             with open("config.json", "w") as fp:
-                cfg = {"active_year": TODAY.year, "tags": [], "bills": {}}
+                cfg = {"active_year": TODAY.year, "tags": [], "old_tags": [], "bills": {}}
                 json.dump(cfg, fp)
 
 
@@ -508,7 +526,23 @@ def show_bills(*args):
 
 def manage_config(*args):
     """Interface for user to manage the configuration file."""
-    pass
+    if "tag" in args or "tags" in args:
+        if "add" in args:
+            tag_name = input("Tag name: ").strip().lower()
+            try:
+                config.add_tag(tag_name)
+            except BTError as e:
+                print(e)
+        elif "remove" in args:
+            tag_name = input("Tag name: ").strip().lower()
+            try:
+                config.remove_tag(tag_name)
+            except BTError as e:
+                print(e)
+        else:
+            print(", ".join(config.tags))
+    else:
+        print("Invalid command.")
 
 
 def switch_year(*args):
@@ -527,7 +561,7 @@ def quit_program(*args):
     quit()
 
 
-def btinput() -> str:
+def btinput(context) -> str:
     """Wrapper for builtin input function"""
     pass
 
