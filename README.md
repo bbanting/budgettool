@@ -32,6 +32,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - ! and + are reserved and cant be used in tag names
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
+- [ ] Put records in records directory
 
 ## Notes
 - Remove ability to do one-off commands?
@@ -39,3 +40,11 @@ I made this because I like to code and want to improve. I can't see this being u
   - Entry is tied to EntryList through global variable
   - EntryList is tied to Config through global variable
   - Can I make this better?
+- Might be worth creating a common way to parse arguments that all commands can use
+  - All command functions annotated with their keyword names
+  - as well as argument sets (branches)
+  - each argument has a validator, either standard or custom, and a name
+  - a validator takes one argument and returns a value or raises an error
+  - functions continue on the first branch to match
+    - contain dict with arguments for that branch
+    - irrelevant args are either removed or stored in 'args' key

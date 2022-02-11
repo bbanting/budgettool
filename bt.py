@@ -10,6 +10,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
+import parser
 
 
 TODAY = datetime.now()
@@ -543,6 +544,14 @@ def manage_config(*args):
             print(", ".join(config.tags))
     else:
         print("Invalid command.")
+
+
+def manage_tags(*args):
+    pass
+
+
+def manage_goals(*args):
+    pass
 
 
 def switch_year(*args):
