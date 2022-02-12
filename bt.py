@@ -10,27 +10,13 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-import parser
+from parser import route_command, command, branch, vliteral, vnotliteral, vbool, ParseError
 
 
 TODAY = datetime.now()
 
 HEADERS = ("id","date","amount","tags","note","hidden")
 
-COMMANDS = {
-    "list":     "list_entries",
-    "add":      "add_entry",
-    "bills":    "show_bills",
-    "edit":     "edit_entry",
-    "del":      "delete_entry",
-    "config":   "manage_config",
-    "sum":      "summarize",
-    # "graph":  "graph_entries",
-    # "help":   "help",
-    "switch":   "switch_year",
-    "quit":     "quit_program",
-    "q":        "quit_program",
-}
 
 MONTHS = {
     "January": 1, "February": 2, "March": 3, "April": 4,
@@ -39,7 +25,7 @@ MONTHS = {
 }
 
 # Words that cannot be used in tags
-KEYWORDS = ("income", "expense", "year", "all") + tuple(MONTHS)
+KEYWORDS = ("income", "expense", "year", "all", "tag") + tuple(MONTHS)
 
 # Widths for display columns
 IDW = 8
@@ -119,6 +105,20 @@ class Config:
             with open("config.json", "w") as fp:
                 cfg = {"active_year": TODAY.year, "tags": [], "old_tags": [], "bills": {}}
                 json.dump(cfg, fp)
+
+if __name__=="__main__":
+    config = Config()
+
+
+def _verify_tags(tags: List):
+    """
+    Raise error if one of the tags are invalid;
+    Otherwise return list back.
+    """
+    for t in tags:
+        if t not in (config.tags + config.old_tags):
+            raise BTError("Invalid tag.")
+    return tags
 
 
 class Entry:
@@ -248,6 +248,9 @@ class EntryList(UserList):
         super().remove(item)
         self._overwrite()
 
+if __name__=="__main__":
+    entry_list = EntryList()
+
 
 def _match_month(name:str) -> int:
     """Return month number based on input."""
@@ -324,17 +327,6 @@ def _match_tag(query: str) -> str:
         return None
     else:
         return results[0]
-
-
-def _verify_tags(tags: List):
-    """
-    Raise error if one of the tags are invalid;
-    Otherwise return list back.
-    """
-    for t in tags:
-        if t not in config.tags:
-            raise BTError("Invalid tag.")
-    return tags
 
 
 def get_tags(*args) -> List:
@@ -457,7 +449,7 @@ def summarize(*args):
 #     entry = Entry(TODAY.strftime("%Y/%m/%d"), amount, category, note)
 
 
-def add_entry(*args):
+def add_entry(args):
     """Create an entry from user input and append to csv file."""
     try:
         date = get_date()
@@ -471,43 +463,64 @@ def add_entry(*args):
         entry_list.append(entry)
 
 
-def delete_entry(*args):
-    """Takes an ID and deletes the corresponding entry"""
-    try:
-        id = int(args[0])
-    except (ValueError, IndexError):
-        print("Invalid ID")
+def del_entry(args):
+    """Remove an entry by it's ID."""
+    id = int(args[0])
+    for e in entry_list:
+        if e.id == id:
+            ans = None
+            date = e.date.strftime("%b %d")
+            while ans not in ("yes", "no", "y", "n"):
+                ans = input(f"(Y/n) Are you sure you want to delete entry {e.id}? ({date}: {e.dollars})\n").lower()
+            if ans in ("yes", "y"):
+                e.edit("hidden", True)
+            break
     else:
-        for e in entry_list:
-            if e.id == id:
-                ans = None
-                date = e.date.strftime("%b %d")
-                while ans not in ("yes", "no", "y", "n"):
-                    ans = input(f"Are you sure you want to delete entry {e.id}? ({date}: {e.dollars})\n")
-                if ans in ("yes", "y"):
-                    e.edit("hidden", True)
-                break
-        else:
-            print("Entry not found.")
+        print("Entry not found.")
 
 
-def edit_entry(*args):
-    """Takes an ID and data type and allows user to change value"""
-    # Check the input
-    if len(args) < 2:
-        print("Invalid input.")
-        return
-
+def add_tag(args):
+    """Add a tag to the config file."""
+    tag_name = args[1]
     try:
-        id = int(args[0])
-    except ValueError:
-        print("Invalid ID.")
-        return
+        config.add_tag(tag_name)
+    except BTError as e:
+        print(e)
 
-    attr = args[1]
-    if attr.lower() not in Entry.editable_fields:
-        print("Invalid attribute.")
-        return
+def del_tag(args):
+    """Remove a tag from the config file."""
+    tag_name = args[1]
+    try:
+        config.remove_tag(tag_name)
+    except BTError as e:
+        print(e)
+
+
+@branch("entry")
+@branch("tag", vliteral("tag"), vnotliteral(config.tags))
+@command("add")
+def add_command(args, branch=None):
+    if branch == "entry":
+        add_entry(args)
+    elif branch == "tag":
+        add_tag(args)
+
+
+@branch("entry", vbool(str.isdigit))
+@branch("tag", vliteral("tag"), vliteral(config.tags))
+@command("del", "delete", "remove")
+def delete_command(args, branch=None):
+    if branch == "tag":
+        del_tag(args)
+    elif branch == "entry":
+        del_entry(args)
+
+
+@branch("main", vbool(str.isdigit), vliteral(Entry.editable_fields))
+@command("edit")
+def edit_entry(args, branch=None):
+    """Takes an ID and data type and allows user to change value"""
+    id, attr = int(args[0]), args[1]
 
     # Make the change
     for e in entry_list:
@@ -519,35 +532,11 @@ def edit_entry(*args):
         print("Entry not found.")
 
 
-def show_bills(*args):
+@command("bills")
+def show_bills(args, branch=None):
     """Print the bills; placeholder function."""
     for k, v in config.bills.items():
         print(f"{k}:\t{v}")
-
-
-def manage_config(*args):
-    """Interface for user to manage the configuration file."""
-    if "tag" in args or "tags" in args:
-        if "add" in args:
-            tag_name = input("Tag name: ").strip().lower()
-            try:
-                config.add_tag(tag_name)
-            except BTError as e:
-                print(e)
-        elif "remove" in args:
-            tag_name = input("Tag name: ").strip().lower()
-            try:
-                config.remove_tag(tag_name)
-            except BTError as e:
-                print(e)
-        else:
-            print(", ".join(config.tags))
-    else:
-        print("Invalid command.")
-
-
-def manage_tags(*args):
-    pass
 
 
 def manage_goals(*args):
@@ -566,7 +555,8 @@ def switch_year(*args):
     print("Invalid year input.")
         
 
-def quit_program(*args):
+@command("q", "quit")
+def quit_program(args, branch=None):
     quit()
 
 
@@ -575,27 +565,15 @@ def btinput(context) -> str:
     pass
 
 
-def process_command(sysargs):
-    """Determine which function to call based on input."""
-    command = sysargs[0].lower()
-    if command not in COMMANDS and command != "":
-        func = globals()[COMMANDS["sum"]]
-        func(*sysargs)
-    elif command not in COMMANDS:
-        raise BTError("Command not found.")
-    else:
-        func = globals()[COMMANDS[command]]
-        func(*sysargs[1:])
-
-
 def shell():
     print("Budget Tool")
     print(f"Records for {config.active_year} are active.")
     while True:
         user_input = list(input("> ").strip().split(" "))
         try:
-            process_command(user_input)
-        except BTError as e:
+            print(config.tags)
+            route_command(user_input)
+        except (ParseError, BTError) as e:
             print(e)
 
 
@@ -604,12 +582,10 @@ def main(sysargs: List[str]):
         if not sysargs:
             shell()
         else:
-            process_command(sysargs)
+            route_command(sysargs)
     except KeyboardInterrupt:
         print("")
 
 
 if __name__=="__main__":
-    config = Config()
-    entry_list = EntryList()
     main(sys.argv[1:])

@@ -7,7 +7,6 @@ I made this because I like to code and want to improve. I can't see this being u
 ## To Do
 
 - [ ] Help command
-- [ ] Config command
 - [ ] Incorporate graphing
     - bar graph categories for year and month
     - monthly income and expenses over year
@@ -33,6 +32,10 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
+- [ ] return an args dictionary including the branch instead of a list
+- [ ] Fix branch fallthrough behaviour and extra arguments problem
+  - extra args should probably stop the command
+- [ ] n parameter for validators so they are skipped once n is reached?
 
 ## Notes
 - Remove ability to do one-off commands?
@@ -48,3 +51,4 @@ I made this because I like to code and want to improve. I can't see this being u
   - functions continue on the first branch to match
     - contain dict with arguments for that branch
     - irrelevant args are either removed or stored in 'args' key
+- Parser solves some problems but still isn't really user friendly (namely branches)
