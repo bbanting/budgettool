@@ -32,10 +32,11 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
-- [ ] return an args dictionary including the branch instead of a list
+- [x] return an args dictionary including the branch instead of a list
 - [ ] Fix branch fallthrough behaviour and extra arguments problem
   - extra args should probably stop the command
-- [ ] n parameter for validators so they are skipped once n is reached?
+  - Branch class with comparison operator overloading?
+- [ ] Validate processed data dict before returning; make sure no duplicate keys
 
 ## Notes
 - Remove ability to do one-off commands?

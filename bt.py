@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser import route_command, command, branch, vliteral, vnotliteral, vbool, ParseError
+from parser import route_command, command, branch, ParseError, Vlit, Vnlit, Vbool
 
 
 TODAY = datetime.now()
@@ -411,7 +411,8 @@ def _process_search_terms(*args) -> tuple:
     return (month, typ, tags)
 
 
-def list_entries(*args):
+@command("list")
+def list_entries(*args, **kwargs):
     """Print the specified entries."""
     month, typ, tags = _process_search_terms(*args)
 
@@ -428,7 +429,8 @@ def list_entries(*args):
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
-def summarize(*args):
+@command("sum", "summarize")
+def summarize(*args, **kwargs):
     """Print a summary of the specifies entries."""
     month, typ, tags = _process_search_terms(*args)
     try:
@@ -487,6 +489,7 @@ def add_tag(args):
     except BTError as e:
         print(e)
 
+
 def del_tag(args):
     """Remove a tag from the config file."""
     tag_name = args[1]
@@ -497,30 +500,32 @@ def del_tag(args):
 
 
 @branch("entry")
-@branch("tag", vliteral("tag"), vnotliteral(config.tags))
+@branch("entry", Vlit("entry"))
+@branch("tag", Vlit("tag"), Vnlit(config.tags))
 @command("add")
-def add_command(args, branch=None):
-    if branch == "entry":
+def add_command(*args, **kwargs):
+    if kwargs["branch"] == "entry":
         add_entry(args)
-    elif branch == "tag":
+    elif kwargs["branch"] == "tag":
         add_tag(args)
 
 
-@branch("entry", vbool(str.isdigit))
-@branch("tag", vliteral("tag"), vliteral(config.tags))
+@branch("entry", Vbool(str.isdigit))
+@branch("tag", Vlit("tag"), Vlit(config.tags))
 @command("del", "delete", "remove")
-def delete_command(args, branch=None):
+def delete_command(*args, **kwargs):
     if branch == "tag":
         del_tag(args)
     elif branch == "entry":
         del_entry(args)
 
 
-@branch("main", vbool(str.isdigit), vliteral(Entry.editable_fields))
+@branch("main", Vbool(str.isdigit), Vlit(Entry.editable_fields))
 @command("edit")
-def edit_entry(args, branch=None):
+def edit_entry(*args, **kwargs):
     """Takes an ID and data type and allows user to change value"""
-    id, attr = int(args[0]), args[1]
+    id = int(kwargs["vbool"])
+    attr = kwargs["vlit"]
 
     # Make the change
     for e in entry_list:
@@ -533,17 +538,17 @@ def edit_entry(args, branch=None):
 
 
 @command("bills")
-def show_bills(args, branch=None):
+def show_bills(*args, **kwargs):
     """Print the bills; placeholder function."""
     for k, v in config.bills.items():
         print(f"{k}:\t{v}")
 
 
-def manage_goals(*args):
+def manage_goals(*args, **kwargs):
     pass
 
 
-def switch_year(*args):
+def switch_year(*args, **kwargs):
     """Switches to different year.""" ### Maybe don't write to config??
     if len(args) > 0 and args[0].isdigit():
         year = int(args[0])
@@ -556,7 +561,7 @@ def switch_year(*args):
         
 
 @command("q", "quit")
-def quit_program(args, branch=None):
+def quit_program(*args, **kwargs):
     quit()
 
 
@@ -571,7 +576,6 @@ def shell():
     while True:
         user_input = list(input("> ").strip().split(" "))
         try:
-            print(config.tags)
             route_command(user_input)
         except (ParseError, BTError) as e:
             print(e)

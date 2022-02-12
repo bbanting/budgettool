@@ -1,7 +1,8 @@
 ### Small module for parsing arguments
 
 from functools import wraps
-from nis import match
+from typing import Union, Any
+import copy
 
 
 command_register = []
@@ -10,13 +11,116 @@ class ParseError(Exception):
     pass
 
 
+class ValidatorError(Exception):
+    pass
+
+
+class Validator():
+    def __init__(self, key=None, plural=False):
+        if key:
+            if type(key) is not str:
+                raise ValidatorError("Invalid key.")
+        else:
+            key = self.__class__.__qualname__.lower()
+        self.key = key
+        self.plural = plural
+
+    def __call__(self, args):
+        data = []
+        to_remove = []
+        for arg in args:
+            if (result := self.validate(arg)) is not None:
+                data.append(result)
+                to_remove.append(arg)
+                if not self.plural:
+                    break
+        if data:
+            [args.remove(x) for x in to_remove]
+            data = data if self.plural else data[0]
+            return {self.key: data}
+        else:
+            return None
+    
+    def validate(self, value) -> Union[Any, None]:
+        """This method must be overwritten and must return None on failure."""
+        raise ValidatorError("Validator not implemented")
+
+
+class Vlit(Validator):
+    """
+    If the input value matches any of the literals, it is returned
+    """
+    def __init__(self, literal, lower=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.literal = literal
+        self.lower = lower
+    def validate(self, value: str) -> Union[Any, None]:
+        if hasattr(self.literal, "__iter__") and type(self.literal) != str:
+            if value.lower() in [v.lower() for v in self.literal]:
+                ret_val = value
+            else:
+                ret_val = None
+        else: 
+            if value.lower() == self.literal.lower():
+                ret_val = value
+            else:
+                ret_val = None
+        if self.lower:
+            ret_val = ret_val.lower()
+        return ret_val
+
+
+class Vnlit(Vlit):
+    def validate(self, value: str) -> Union[Any, None]:
+        if hasattr(self.literal, "__iter__") and type(self.literal) != str:
+            if value.lower() in [v.lower() for v in self.literal]:
+                ret_val = None
+            else:
+                ret_val = value
+        else: 
+            if value.lower() == self.literal.lower():
+                ret_val = None
+            else:
+                ret_val = value
+        if self.lower:
+            ret_val = ret_val.lower()
+        return ret_val
+
+
+class Vbool(Validator):
+    """
+    Factory for validator functions based on provided function.
+    The function must return a boolean, e.g. str.isalpha, and may be
+    either a string method or user-defined function that takes a string.
+    If the input value matches any of the literals, it is returned
+    """    
+    def __init__(self, func, lower=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.func = func
+        self.lower = lower
+
+    def validate(self, value: str):
+        if hasattr(str, self.func.__name__):
+            if getattr(value, self.func.__name__)():
+                ret_val = value
+            else:
+                ret_val = None
+        else:
+            if self.func(value):
+                ret_val = value
+            else:
+                ret_val = None
+        if self.lower:
+            ret_val = ret_val.lower()
+        return ret_val
+
+
 def command(*names: tuple[str]):
     """Decorator to mark a function as a command and name it."""
     def decorator(f):
         f.names = names
         f.branches = []
         command_register.append(f)
-        print(f"Registering command {f.__qualname__}")
         @wraps(f)
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
@@ -37,78 +141,6 @@ def branch(name, *validators):
             return f(*args, **kwargs)
         return wrapper
     return decorator
-
-
-def vliteral(match_value, plural=False):
-    """
-    Factory for validator functions based on string literals. 
-    If the input value matches any of the literals, it is returned
-    """
-    def validator(input_val: str):
-        if hasattr(match_value, "__iter__") and type(match_value) != str:
-            if input_val.lower() in [v.lower() for v in match_value]:
-                return input_val
-            else:
-                return None
-        else: 
-            if input_val.lower() == match_value.lower():
-                return input_val
-            else:
-                return None
-    validator.plural = plural
-    return validator
-
-
-def vnotliteral(match_value, plural=False):
-    def validator(input_val: str):
-        if hasattr(match_value, "__iter__") and type(match_value) != str:
-            if input_val.lower() in [v.lower() for v in match_value]:
-                return None
-            else:
-                return input_val
-        else: 
-            if input_val.lower() == match_value.lower():
-                return None
-            else:
-                return input_val
-    validator.plural = plural
-    return validator
-
-
-def vbool(f, plural=False): ### Not working entirely as I want it to
-    """
-    Factory for validator functions based on provided function.
-    The function must return a boolean, e.g. str.isalpha, and may be
-    either a string method or user-defined function that takes a string.
-    If the input value matches any of the literals, it is returned
-    """
-    def validator(input_val: str):
-        if hasattr(str, f.__name__):
-            if getattr(input_val, f.__name__)():
-                return input_val
-            else:
-                return None
-        else:
-            if f(input_val):
-                return input_val
-            else:
-                return None
-    validator.plural = plural
-    return validator
-
-
-def run_validator(validator, args, arguments):
-    data = []
-    for arg in args:
-        if (result := validator(arg)) is not None:
-            if result not in arguments:
-                data.append(result)
-                if not validator.plural:
-                    break
-    if data:
-        return data if validator.plural else data[0]
-    else:
-        return None
 
 
 def route_command(args):
@@ -132,20 +164,23 @@ def route_command(args):
     
     # Determine branch and return name and args
     for branch in command.branches:
-        if len(branch["validators"]) > len(args[1:]):
+        branch_args = copy.copy(args[1:])
+        processed_data = {}
+        if len(branch["validators"]) > len(branch_args):
             continue
-        arguments = []
         for validator in branch["validators"]:
-            data = run_validator(validator, args[1:], arguments)
-            if data is None:
-                # Validator failed, go to next branch
-                break 
-            else:
-                ### Maybe include the name and make a dict
-                arguments.append(data)
+            if branch_args:
+                data = validator(branch_args)
+                if data is None:
+                    # Validator failed, go to next branch
+                    break 
+                else:
+                    ### Maybe include the name and make a dict
+                    processed_data.update(data)
         else:
             # If all validators were successful, execute the command
-            command(arguments, branch=branch["name"])
+            processed_data.update({"branch": branch["name"]})
+            command(**processed_data)
             break
     else:
         raise ParseError("No branches matched.")
