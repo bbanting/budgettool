@@ -1,4 +1,4 @@
-### Small module for parsing arguments
+# Small module for parsing arguments
 
 from functools import wraps
 from typing import Union, Any, List

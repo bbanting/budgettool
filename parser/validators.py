@@ -1,10 +1,12 @@
 from typing import Union, Any
 
+
 class ValidatorError(Exception):
     pass
 
 
 class Validator():
+    """Base class from which validators are derived."""
     def __init__(self, key=None, plural=False):
         if key:
             if (type(key) is not str) or (key.lower() == "branch"):
@@ -35,48 +37,44 @@ class Validator():
         raise ValidatorError("Validator not implemented")
 
 
-class Vlit(Validator):
+class VLit(Validator):
     """
-    If the input value matches any of the literals, it is returned
+    If the input value matches any of the literals, it is returned.
+    Otherwise, return None.
     """
-    def __init__(self, literal, lower=False, *args, **kwargs):
+    def __init__(self, literal, lower=False, strict=False, invert=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.literal = literal
         self.lower = lower
+        self.strict = strict
+        self.invert = invert
+
+    def compare(self, lval: str, rval: str):
+        if self.strict:
+            return lval == rval
+        else:
+            return lval.lower() == rval.lower()
+
     def validate(self, value: str) -> Union[Any, None]:
+        found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
-            if value.lower() in [v.lower() for v in self.literal]:
-                ret_val = value
+            if all([True if type(x) is str else False for x in self.literal]):
+                for l in self.literal:
+                    if self.compare(value, l):
+                        found = True
             else:
-                ret_val = None
+                raise ValidatorError("Literal must be str or an iterable containing only str.")
         else: 
-            if value.lower() == self.literal.lower():
-                ret_val = value
-            else:
-                ret_val = None
-        if self.lower:
-            ret_val = ret_val.lower()
-        return ret_val
+            if self.compare(value, self.literal):
+                found = True
+
+        if not found if self.invert else found:
+            return value if not self.lower else value.lower()
+        else:
+            return None
 
 
-class Vnlit(Vlit):
-    def validate(self, value: str) -> Union[Any, None]:
-        if hasattr(self.literal, "__iter__") and type(self.literal) != str:
-            if value.lower() in [v.lower() for v in self.literal]:
-                ret_val = None
-            else:
-                ret_val = value
-        else: 
-            if value.lower() == self.literal.lower():
-                ret_val = None
-            else:
-                ret_val = value
-        if self.lower:
-            ret_val = ret_val.lower()
-        return ret_val
-
-
-class Vbool(Validator):
+class VBool(Validator):
     """
     Factory for validator functions based on provided function.
     The function must return a boolean, e.g. str.isalpha, and may be
@@ -103,6 +101,14 @@ class Vbool(Validator):
             ret_val = ret_val.lower()
         return ret_val
 
+
 class VAny(Validator):
     """Accepts any value."""
-    pass
+    def __init__(self, lower=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lower = lower
+    
+    def validate(self, value) -> Union[Any, None]:
+        if self.lower:
+            return value.lower()
+        return value

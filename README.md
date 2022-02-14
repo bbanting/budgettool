@@ -35,7 +35,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Fix branch fallthrough behaviour and extra arguments problem
   - extra args should probably stop the command
   - Branch class with comparison operator overloading?
-- [x] Validate processed data dict before returning; make sure no duplicate keys
 - [ ] Fix case in resolve_key_conflicts where key is provided that interferes with numbering scheme
   - It won't match as a duplicate initially but will conflict after numbers are appended to previous items
 

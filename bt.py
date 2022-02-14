@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List
 from collections import UserList
 from parser.parser import route_command, command, branch, ParseError
-from parser.validators import Vlit, Vnlit, Vbool
+from parser.validators import VLit, VBool
 
 
 TODAY = datetime.now()
@@ -500,8 +500,8 @@ def del_tag(args):
 
 
 @branch("entry")
-@branch("entry", Vlit("entry"))
-@branch("tag", Vlit("tag"), Vnlit(config.tags))
+@branch("entry", VLit("entry"))
+@branch("tag", VLit("tag"), VLit(config.tags, invert=True))
 @command("add")
 def add_command(*args, **kwargs):
     if kwargs["branch"] == "entry":
@@ -510,8 +510,8 @@ def add_command(*args, **kwargs):
         add_tag(args)
 
 
-@branch("entry", Vbool(str.isdigit))
-@branch("tag", Vlit("tag"), Vlit(config.tags))
+@branch("entry", VBool(str.isdigit))
+@branch("tag", VLit("tag"), VLit(config.tags))
 @command("del", "delete", "remove")
 def delete_command(*args, **kwargs):
     if branch == "tag":
@@ -520,7 +520,7 @@ def delete_command(*args, **kwargs):
         del_entry(args)
 
 
-@branch("main", Vbool(str.isdigit), Vlit(Entry.editable_fields))
+@branch("main", VBool(str.isdigit), VLit(Entry.editable_fields))
 @command("edit")
 def edit_entry(*args, **kwargs):
     """Takes an ID and data type and allows user to change value"""
