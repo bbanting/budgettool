@@ -32,11 +32,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
-- [x] return an args dictionary including the branch instead of a list
 - [ ] Fix branch fallthrough behaviour and extra arguments problem
   - extra args should probably stop the command
   - Branch class with comparison operator overloading?
-- [ ] Validate processed data dict before returning; make sure no duplicate keys
+- [x] Validate processed data dict before returning; make sure no duplicate keys
+- [ ] Fix case in resolve_key_conflicts where key is provided that interferes with numbering scheme
+  - It won't match as a duplicate initially but will conflict after numbers are appended to previous items
 
 ## Notes
 - Remove ability to do one-off commands?

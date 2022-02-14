@@ -1,7 +1,7 @@
 id,date,amount,tags,note,hidden
 1,2022/01/04,-800,Bills,Rent for Jan,False
 2,2022/01/04,-100,Bills,Car insurance,False
-3,2022/01/10,-68,Gas,Gas for airport trip,False
+3,2022/01/10,-70,Gas,Gas for airport trip,False
 4,2022/01/11,-25.48,Food,Got pizza,False
 5,2022/01/12,45.00,Other Jim,Sold some pokemon cards,False
 6,2022/01/29,87.32,Other Barb,Found $87 on the street,False

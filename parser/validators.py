@@ -1,15 +1,4 @@
-### Small module for parsing arguments
-
-from functools import wraps
 from typing import Union, Any
-import copy
-
-
-command_register = []
-
-class ParseError(Exception):
-    pass
-
 
 class ValidatorError(Exception):
     pass
@@ -18,14 +7,14 @@ class ValidatorError(Exception):
 class Validator():
     def __init__(self, key=None, plural=False):
         if key:
-            if type(key) is not str:
+            if (type(key) is not str) or (key.lower() == "branch"):
                 raise ValidatorError("Invalid key.")
         else:
             key = self.__class__.__qualname__.lower()
         self.key = key
         self.plural = plural
 
-    def __call__(self, args):
+    def __call__(self, args) -> tuple:
         data = []
         to_remove = []
         for arg in args:
@@ -37,7 +26,7 @@ class Validator():
         if data:
             [args.remove(x) for x in to_remove]
             data = data if self.plural else data[0]
-            return {self.key: data}
+            return (self.key, data)
         else:
             return None
     
@@ -114,73 +103,6 @@ class Vbool(Validator):
             ret_val = ret_val.lower()
         return ret_val
 
-
-def command(*names: tuple[str]):
-    """Decorator to mark a function as a command and name it."""
-    def decorator(f):
-        f.names = names
-        f.branches = []
-        command_register.append(f)
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def branch(name, *validators):
-    """Decorator that defines a branch."""
-    def decorator(f):
-        branch = {
-            "name": name,
-            "validators": validators,
-        }
-        f.branches.append(branch)
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def route_command(args):
-    """Process user input, route to appropriate function."""
-    if not args[0]:
-        return
-
-    # Find the function
-    command_name = args[0].lower()
-    for f in command_register:
-        if command_name in f.names:
-            command = f
-            break
-    else:
-        raise ParseError("Command not found.")
-
-    # If command has no branches, run it
-    if not command.branches:
-        command(args[1:], branch=None)
-        return
-    
-    # Determine branch and return name and args
-    for branch in command.branches:
-        branch_args = copy.copy(args[1:])
-        processed_data = {}
-        if len(branch["validators"]) > len(branch_args):
-            continue
-        for validator in branch["validators"]:
-            if branch_args:
-                data = validator(branch_args)
-                if data is None:
-                    # Validator failed, go to next branch
-                    break 
-                else:
-                    ### Maybe include the name and make a dict
-                    processed_data.update(data)
-        else:
-            # If all validators were successful, execute the command
-            processed_data.update({"branch": branch["name"]})
-            command(**processed_data)
-            break
-    else:
-        raise ParseError("No branches matched.")
+class VAny(Validator):
+    """Accepts any value."""
+    pass

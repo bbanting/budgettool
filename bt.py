@@ -10,13 +10,13 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser import route_command, command, branch, ParseError, Vlit, Vnlit, Vbool
+from parser.parser import route_command, command, branch, ParseError
+from parser.validators import Vlit, Vnlit, Vbool
 
 
 TODAY = datetime.now()
 
 HEADERS = ("id","date","amount","tags","note","hidden")
-
 
 MONTHS = {
     "January": 1, "February": 2, "March": 3, "April": 4,
