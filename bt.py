@@ -274,7 +274,7 @@ def _match_month(name:str) -> int:
     if name.isdigit() and int(name) in range(1, 13):
         return int(name)
     
-    name = name.title()
+    name = name.lower()
     for month in MONTHS:
         if month.startswith(name): 
             return MONTHS[month]
@@ -373,7 +373,7 @@ def get_note(*args) -> str:
         return note
 
 
-def _filter_entries(month=None, typ=None, tags=[]) -> List[Entry]:
+def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     """
     Filter and return entries based on input.
     Raise exception if none found
@@ -403,52 +403,13 @@ def _filter_entries(month=None, typ=None, tags=[]) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-def _process_search_terms(*args) -> tuple:
-    """Parse user input and return valid parameters to filter entries by."""
-    month, typ, tags  = None, None, []
-    for arg in args:
-        arg = arg.lower()
-        if not month:
-            try:
-                month = _match_month(arg) ### examine
-            except BTError:
-                if arg in ("year", "all"):
-                    month = "year"
-                    continue
-            else:
-                continue
-        if not typ:
-            if arg in ("expense", "income"):
-                typ = arg
-                continue
-        if t := _match_tag(arg):
-            tags.append(t)
-            continue
-
-    return (month, typ, tags)
-
-
-### 
-# THIS IS BAD.
-# Also not necessary for current implementation but just trying to see how
-# bad branching can get.
-
-# Currently its displaying january by default and specifying months doesn't work.
-###
-@branch("")
-@branch("", VMonth())
-@branch("", VLit(config.tags, key="tags", lower=True, plural=True))
-@branch("", VLit(("income", "expense"), key="type", lower=True))
-@branch("", VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
-@branch("", VLit(("income", "expense"), key="type", lower=True), VLit(config.tags, key="tags", lower=True, plural=True))
-@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth())
 @branch("", VLit(("income", "expense"), key="type", lower=True), VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
 @command("list")
 def list_entries(*args, **kwargs):
     """Print the specified entries."""
-    data = [kwargs.get("vlit", ""), kwargs.get("type", ""), kwargs.get("vmonth", "")]
-    data.extend(kwargs.get("tags", []))
-    month, typ, tags = _process_search_terms(*data)
+    month = kwargs.get("vmonth")
+    typ = kwargs.get("type")
+    tags = kwargs.get("tags")
 
     try:
         entries = _filter_entries(month, typ, tags)
@@ -463,10 +424,14 @@ def list_entries(*args, **kwargs):
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
+@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
 @command("sum", "summarize")
 def summarize(*args, **kwargs):
     """Print a summary of the specifies entries."""
-    month, typ, tags = _process_search_terms(*args)
+    month = kwargs.get("vmonth")
+    typ = kwargs.get("type")
+    tags = kwargs.get("tags")
+
     try:
         entries = _filter_entries(month, typ, tags)
     except BTError as e:

@@ -7,7 +7,7 @@ class ValidatorError(Exception):
 
 class Validator():
     """Base class from which validators are derived."""
-    def __init__(self, key=None, plural=False):
+    def __init__(self, key=None, plural=False, required=False):
         if key:
             if (type(key) is not str) or (key.lower() == "branch"):
                 raise ValidatorError("Invalid key.")
@@ -15,6 +15,7 @@ class Validator():
             key = self.__class__.__qualname__.lower()
         self.key = key
         self.plural = plural
+        self.required = required
 
     def __call__(self, args) -> tuple:
         data = []

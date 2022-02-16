@@ -1,14 +1,14 @@
 id,date,amount,tags,note,hidden
-1,2022/01/04,-800,Bills,Rent for Jan,False
-2,2022/01/04,-100,Bills,Car insurance,False
-3,2022/01/10,-70,Gas,Gas for airport trip,False
-4,2022/01/11,-25.48,Food,Got pizza,False
-5,2022/01/12,45.00,Other Jim,Sold some pokemon cards,False
-6,2022/01/29,87.32,Other Barb,Found $87 on the street,False
-7,2022/01/30,-43.21,Food,Got some popsicles,False
-8,2022/01/30,1400.34,Workplace Barb,Paycheck,False
-9,2022/01/20,-3.28,Food,Got some chips,False
-10,2022/02/02,250.00,Workplace Jim,,False
-11,2022/02/03,-72,Jim Other,Got physiotherapy,False
-12,2022/02/11,-12,Food,Bought some donuts,False
-13,2022/02/12,-15,Other,Went to the theatre,False
+1,2022/01/04,-800,bills,Rent for Jan,False
+2,2022/01/04,-100,bills,Car insurance,False
+3,2022/01/10,-70,gas,Gas for airport trip,False
+4,2022/01/11,-25.48,food,Got pizza,False
+5,2022/01/12,45.00,other jim,Sold some pokemon cards,False
+6,2022/01/29,87.32,other barb,Found $87 on the street,False
+7,2022/01/30,-43.21,food,Got some popsicles,False
+8,2022/01/30,1400.34,workplace barb,Paycheck,False
+9,2022/01/20,-3.28,food,Got some chips,False
+10,2022/02/02,250.00,workplace jim,,False
+11,2022/02/03,-72,jim other,Got physiotherapy,False
+12,2022/02/11,-12,food,Bought some donuts,False
+13,2022/02/12,-15,other,Went to the theatre,False

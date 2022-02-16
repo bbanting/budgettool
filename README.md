@@ -37,6 +37,7 @@ I made this because I like to code and want to improve. I can't see this being u
   - Branch class with comparison operator overloading?
 - [ ] Fix case in resolve_key_conflicts where key is provided that interferes with numbering scheme
   - It won't match as a duplicate initially but will conflict after numbers are appended to previous items
+- [ ] Allow validators to be optional or required
 
 ## Notes
 - Remove ability to do one-off commands?

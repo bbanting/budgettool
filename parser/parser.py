@@ -90,9 +90,11 @@ def route_command(args):
         for validator in branch["validators"]:
             if branch_args:
                 data = validator(branch_args)
-                if data is None:
+                if data is None and validator.required:
                     # Validator failed, go to next branch
-                    break 
+                    break
+                elif data is None and not validator.requried:
+                    continue
                 else:
                     processed_data.append(data)
         else:
