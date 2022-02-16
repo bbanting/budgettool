@@ -78,7 +78,7 @@ def route_command(args):
 
     # If command has no branches, run it
     if not command.branches:
-        command(args[1:], branch=None)
+        command(*args[1:], branch=None)
         return
     
     # Determine branch and return name and args

@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List
 from collections import UserList
 from parser.parser import route_command, command, branch, ParseError
-from parser.validators import VLit, VBool
+from parser.validators import VAny, VLit, VBool, Validator
 
 
 TODAY = datetime.now()
@@ -19,9 +19,9 @@ TODAY = datetime.now()
 HEADERS = ("id","date","amount","tags","note","hidden")
 
 MONTHS = {
-    "January": 1, "February": 2, "March": 3, "April": 4,
-    "May": 5, "June": 6, "July": 7, "August": 8,
-    "September": 9, "October": 10, "November": 11, "December": 12,
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
 }
 
 # Words that cannot be used in tags
@@ -252,6 +252,23 @@ if __name__=="__main__":
     entry_list = EntryList()
 
 
+class VMonth(Validator):
+    def validate(self, value):
+        """Return month number based on input."""
+        if value.isdigit() and int(value) in range(1, 13):
+            return int(value)
+        
+        name = value.lower()
+        for month in MONTHS:
+            if month.startswith(name): 
+                return MONTHS[month]
+        
+        if name in ("all", "year"):
+            return "year"
+
+        return None
+
+
 def _match_month(name:str) -> int:
     """Return month number based on input."""
     if name.isdigit() and int(name) in range(1, 13):
@@ -411,10 +428,27 @@ def _process_search_terms(*args) -> tuple:
     return (month, typ, tags)
 
 
+### 
+# THIS IS BAD.
+# Also not necessary for current implementation but just trying to see how
+# bad branching can get.
+
+# Currently its displaying january by default and specifying months doesn't work.
+###
+@branch("")
+@branch("", VMonth())
+@branch("", VLit(config.tags, key="tags", lower=True, plural=True))
+@branch("", VLit(("income", "expense"), key="type", lower=True))
+@branch("", VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
+@branch("", VLit(("income", "expense"), key="type", lower=True), VLit(config.tags, key="tags", lower=True, plural=True))
+@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth())
+@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
 @command("list")
 def list_entries(*args, **kwargs):
     """Print the specified entries."""
-    month, typ, tags = _process_search_terms(*args)
+    data = [kwargs.get("vlit", ""), kwargs.get("type", ""), kwargs.get("vmonth", "")]
+    data.extend(kwargs.get("tags", []))
+    month, typ, tags = _process_search_terms(*data)
 
     try:
         entries = _filter_entries(month, typ, tags)

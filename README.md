@@ -53,3 +53,6 @@ I made this because I like to code and want to improve. I can't see this being u
     - contain dict with arguments for that branch
     - irrelevant args are either removed or stored in 'args' key
 - Parser solves some problems but still isn't really user friendly (namely branches)
+- Can all cases be solved with one branch?
+- Would it be better to take a class-based approach with branches?
+- Optional validators in branch?
