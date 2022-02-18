@@ -37,7 +37,7 @@ I made this because I like to code and want to improve. I can't see this being u
   - Branch class with comparison operator overloading?
 - [ ] Fix case in resolve_key_conflicts where key is provided that interferes with numbering scheme
   - It won't match as a duplicate initially but will conflict after numbers are appended to previous items
-- [ ] Allow validators to be optional or required
+- [x] Allow validators to be optional or required
 
 ## Notes
 - Remove ability to do one-off commands?
@@ -57,3 +57,5 @@ I made this because I like to code and want to improve. I can't see this being u
 - Can all cases be solved with one branch?
 - Would it be better to take a class-based approach with branches?
 - Optional validators in branch?
+- An option would be to use sqlite and have the option to export to csv instead
+- Using the preset validators is too bulky for a decorator

@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser.parser import route_command, command, branch, ParseError
+from parser import route_command, command, branch, ParseError
 from parser.validators import VAny, VLit, VBool, Validator
 
 
@@ -403,14 +403,14 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
 @command("list")
-def list_entries(*args, **kwargs):
+def list_entries(
+    typ=VLit(("income", "expense"), lower=True), 
+    month=VMonth(), 
+    tags=VLit(config.tags, lower=True, plural=True),
+    errors=None,
+    extra=None):
     """Print the specified entries."""
-    month = kwargs.get("vmonth")
-    typ = kwargs.get("type")
-    tags = kwargs.get("tags")
-
     try:
         entries = _filter_entries(month, typ, tags)
     except BTError as e:
@@ -424,14 +424,14 @@ def list_entries(*args, **kwargs):
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
-@branch("", VLit(("income", "expense"), key="type", lower=True), VMonth(), VLit(config.tags, key="tags", lower=True, plural=True))
 @command("sum", "summarize")
-def summarize(*args, **kwargs):
+def summarize(
+    typ=VLit(("income", "expense"), lower=True), 
+    month=VMonth(), 
+    tags=VLit(config.tags, lower=True, plural=True),
+    errors=None,
+    extra=None):
     """Print a summary of the specifies entries."""
-    month = kwargs.get("vmonth")
-    typ = kwargs.get("type")
-    tags = kwargs.get("tags")
-
     try:
         entries = _filter_entries(month, typ, tags)
     except BTError as e:
@@ -498,9 +498,9 @@ def del_tag(args):
         print(e)
 
 
-@branch("entry")
-@branch("entry", VLit("entry"))
-@branch("tag", VLit("tag"), VLit(config.tags, invert=True))
+#@branch("entry")
+#@branch("entry", VLit("entry"))
+#@branch("tag", VLit("tag"), VLit(config.tags, invert=True))
 @command("add")
 def add_command(*args, **kwargs):
     if kwargs["branch"] == "entry":
@@ -509,8 +509,8 @@ def add_command(*args, **kwargs):
         add_tag(args)
 
 
-@branch("entry", VBool(str.isdigit))
-@branch("tag", VLit("tag"), VLit(config.tags))
+#@branch("entry", VBool(str.isdigit))
+#@branch("tag", VLit("tag"), VLit(config.tags))
 @command("del", "delete", "remove")
 def delete_command(*args, **kwargs):
     if branch == "tag":
@@ -519,7 +519,7 @@ def delete_command(*args, **kwargs):
         del_entry(args)
 
 
-@branch("main", VBool(str.isdigit), VLit(Entry.editable_fields))
+#@branch("main", VBool(str.isdigit), VLit(Entry.editable_fields))
 @command("edit")
 def edit_entry(*args, **kwargs):
     """Takes an ID and data type and allows user to change value"""
@@ -560,7 +560,7 @@ def switch_year(*args, **kwargs):
         
 
 @command("q", "quit")
-def quit_program(*args, **kwargs):
+def quit_program():
     quit()
 
 

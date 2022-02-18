@@ -1,11 +1,12 @@
 from typing import Union, Any
+import abc
 
 
 class ValidatorError(Exception):
     pass
 
 
-class Validator():
+class Validator(metaclass=abc.ABCMeta):
     """Base class from which validators are derived."""
     def __init__(self, key=None, plural=False, required=False):
         if key:
@@ -17,7 +18,7 @@ class Validator():
         self.plural = plural
         self.required = required
 
-    def __call__(self, args) -> tuple:
+    def __call__(self, args) -> Any:
         data = []
         to_remove = []
         for arg in args:
@@ -29,13 +30,17 @@ class Validator():
         if data:
             [args.remove(x) for x in to_remove]
             data = data if self.plural else data[0]
-            return (self.key, data)
+            return data
         else:
             return None
     
-    def validate(self, value) -> Union[Any, None]:
-        """This method must be overwritten and must return None on failure."""
-        raise ValidatorError("Validator not implemented")
+    @abc.abstractmethod
+    def validate(self, value: str) -> Union[Any, None]:
+        """
+        This method must return None on failure 
+        and a validated value on success.
+        """
+        pass
 
 
 class VLit(Validator):
@@ -63,6 +68,7 @@ class VLit(Validator):
                 for l in self.literal:
                     if self.compare(value, l):
                         found = True
+                        break
             else:
                 raise ValidatorError("Literal must be str or an iterable containing only str.")
         else: 
@@ -77,10 +83,9 @@ class VLit(Validator):
 
 class VBool(Validator):
     """
-    Factory for validator functions based on provided function.
-    The function must return a boolean, e.g. str.isalpha, and may be
+    Func must return a boolean, e.g. str.isalpha, and may be
     either a string method or user-defined function that takes a string.
-    If the input value matches any of the literals, it is returned
+    If func returns true when passed value, value is returned, otherwise None.
     """    
     def __init__(self, func, lower=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
