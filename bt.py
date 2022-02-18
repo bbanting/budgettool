@@ -10,8 +10,8 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser import route_command, command, branch, ParseError
-from parser.validators import VAny, VLit, VBool, Validator
+from parser import route_command, command, branch, ParseUserError
+from parser.validators import VLit, VBool, Validator
 
 
 TODAY = datetime.now()
@@ -409,7 +409,7 @@ def list_entries(
     month=VMonth(), 
     tags=VLit(config.tags, lower=True, plural=True),
     errors=None,
-    extra=None):
+    extra=None,):
     """Print the specified entries."""
     try:
         entries = _filter_entries(month, typ, tags)
@@ -576,7 +576,7 @@ def shell():
         user_input = list(input("> ").strip().split(" "))
         try:
             route_command(user_input)
-        except (ParseError, BTError) as e:
+        except (ParseUserError, BTError) as e:
             print(e)
 
 

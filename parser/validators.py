@@ -1,24 +1,30 @@
 from typing import Union, Any
 import abc
 
+import parser.base
+
 
 class ValidatorError(Exception):
     pass
 
 
 class Validator(metaclass=abc.ABCMeta):
-    """Base class from which validators are derived."""
-    def __init__(self, key=None, plural=False, required=False):
-        if key:
-            if (type(key) is not str) or (key.lower() == "branch"):
-                raise ValidatorError("Invalid key.")
-        else:
-            key = self.__class__.__qualname__.lower()
-        self.key = key
+    """
+    Base class from which validators are derived.
+    A validator is passed a list of arguments and calls validate on each until
+    a non-None value is returned. If only None is returned, the validator
+    returns it's default, which defaults to None.
+
+    plural: Allows more than one value to be returned from validate.
+    required: The command will fail if set to True.
+    default: Specify a different value to return on failure.
+    """
+    def __init__(self, plural=False, required=False, default=None):
         self.plural = plural
         self.required = required
+        self.default = default
 
-    def __call__(self, args) -> Any:
+    def __call__(self, args:list) -> Any:
         data = []
         to_remove = []
         for arg in args:
@@ -32,7 +38,9 @@ class Validator(metaclass=abc.ABCMeta):
             data = data if self.plural else data[0]
             return data
         else:
-            return None
+            if self.required:
+                raise parser.base.ParseUserError("Command is missing required input.")
+            return self.default
     
     @abc.abstractmethod
     def validate(self, value: str) -> Union[Any, None]:

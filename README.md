@@ -32,12 +32,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
-- [ ] Fix branch fallthrough behaviour and extra arguments problem
-  - extra args should probably stop the command
-  - Branch class with comparison operator overloading?
-- [ ] Fix case in resolve_key_conflicts where key is provided that interferes with numbering scheme
-  - It won't match as a duplicate initially but will conflict after numbers are appended to previous items
-- [x] Allow validators to be optional or required
 
 ## Notes
 - Remove ability to do one-off commands?
@@ -45,17 +39,9 @@ I made this because I like to code and want to improve. I can't see this being u
   - Entry is tied to EntryList through global variable
   - EntryList is tied to Config through global variable
   - Can I make this better?
-- Might be worth creating a common way to parse arguments that all commands can use
-  - All command functions annotated with their keyword names
-  - as well as argument sets (branches)
-  - each argument has a validator, either standard or custom, and a name
-  - a validator takes one argument and returns a value or raises an error
-  - functions continue on the first branch to match
-    - contain dict with arguments for that branch
-    - irrelevant args are either removed or stored in 'args' key
 - Parser solves some problems but still isn't really user friendly (namely branches)
-- Can all cases be solved with one branch?
 - Would it be better to take a class-based approach with branches?
-- Optional validators in branch?
+  - Command class that provides a level of abstraction
 - An option would be to use sqlite and have the option to export to csv instead
 - Using the preset validators is too bulky for a decorator
+- route_command function is getting a bit beefy

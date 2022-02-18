@@ -12,6 +12,10 @@ class ParseError(Exception):
     pass
 
 
+class ParseUserError(Exception):
+    pass
+
+
 def command(*names):
     """Decorator to mark a function as a command and name it."""
     def decorator(f):
@@ -47,31 +51,34 @@ def branch(name, *validators):
 
 def route_command(args):
     """Process user input, route to appropriate function."""
+    # ensure it's a list and first item isn't ''
+    args = list(args) 
     if not args[0]:
         return
 
     # Get the function
     command = command_register.get(args[0])
     if not command:
-        raise ParseError("Command not found.")
+        raise ParseUserError("Command not found.")
     args.remove(args[0])
 
     argspec = inspect.getfullargspec(command)
-    # The code below expect defaults to be an iterable not None
+    # Turn defaults into an iterable to match args
     if argspec.defaults == None:
         argspec = argspec._replace(defaults=[])
-
-    keys = [k for k in argspec.args if k.lower() not in ("errors", "extra")]
-    validators = [v for v in argspec.defaults if isinstance(v, Validator)]
+    # Ensure argspec is valid
+    if len(argspec.args) != len(argspec.defaults):
+        raise ParseError("Every parameter must have a default.")
+    # Keep only the params with validators for iterating over
+    params = zip(argspec.args, argspec.defaults)
+    params = [p for p in params if isinstance(p[1], Validator)]
 
     validated_data = {}
     errors = []
-    for key, validator in zip(keys, validators):
+    for key, validator in params:
         if args:
             data = validator(args)
-            if data is None and validator.required:
-                raise ParseError("Command is missing required input.")
-            elif data is None and not validator.required:
+            if data is None:
                 validated_data.update({key: None})
                 errors.append(key)
                 continue
@@ -79,7 +86,7 @@ def route_command(args):
                 validated_data.update({key: data})
         else:
             if validator.required:
-                raise ParseError("Command is missing required input.")
+                raise ParseUserError("Command is missing required input.")
             validated_data.update({key: None})
             errors.append(key)
 
