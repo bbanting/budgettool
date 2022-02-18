@@ -126,3 +126,39 @@ class VAny(Validator):
         if self.lower:
             return value.lower()
         return value
+
+
+class VComment(Validator):
+    """
+    Looks for a comment in args. Higher indexes and strings with spaces
+    are prioritized.
+    """
+    def __call__(self, args:list) -> Any:
+        data = []
+        to_remove = []
+        if filtered_args := [a for a in args if " " in a]:
+            for arg in filtered_args[::-1]:
+                if (result := self.validate(arg)) is not None:
+                    data.append(result)
+                    to_remove.append(arg)
+                    if not self.plural:
+                        break
+        else:
+            for arg in args[::-1]:
+                if (result := self.validate(arg)) is not None:
+                    data.append(result)
+                    to_remove.append(arg)
+                    if not self.plural:
+                        break
+            
+        if data:
+            [args.remove(x) for x in to_remove]
+            data = data if self.plural else data[0]
+            return data
+        else:
+            if self.required:
+                raise parser.base.ParseUserError("Command is missing required input.")
+            return self.default
+    
+    def validate(self, value: str) -> str:
+        return value

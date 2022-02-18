@@ -6,12 +6,13 @@ import sys
 import os
 import csv
 import json
+import shlex
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
 from parser import route_command, command, branch, ParseUserError
-from parser.validators import VLit, VBool, Validator
+from parser.validators import VLit, VBool, Validator, VComment
 
 
 TODAY = datetime.now()
@@ -408,6 +409,7 @@ def list_entries(
     typ=VLit(("income", "expense"), lower=True), 
     month=VMonth(), 
     tags=VLit(config.tags, lower=True, plural=True),
+    comment=VComment(),
     errors=None,
     extra=None,):
     """Print the specified entries."""
@@ -573,7 +575,7 @@ def shell():
     print("Budget Tool")
     print(f"Records for {config.active_year} are active.")
     while True:
-        user_input = list(input("> ").strip().split(" "))
+        user_input = shlex.split(input("> "))
         try:
             route_command(user_input)
         except (ParseUserError, BTError) as e:

@@ -11,7 +11,6 @@ command_register = {}
 class ParseError(Exception):
     pass
 
-
 class ParseUserError(Exception):
     pass
 
@@ -32,24 +31,7 @@ def command(*names):
     return decorator
 
 
-def branch(name, *validators):
-    """Decorator that defines a branch."""
-    def decorator(f):
-        if type(name) is not str:
-            raise ParseError("Branch name must be of type str.")
-        branch = {
-            "name": name,
-            "validators": validators,
-        }
-        f.branches.append(branch)
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def route_command(args):
+def route_command(args:List[str]):
     """Process user input, route to appropriate function."""
     # ensure it's a list and first item isn't ''
     args = list(args) 
