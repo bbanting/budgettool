@@ -11,7 +11,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser import route_command, command, branch, ParseUserError
+from parser import route_command, command, ParseUserError
 from parser.validators import VLit, VBool, Validator, VComment
 
 
@@ -266,7 +266,6 @@ class VMonth(Validator):
         
         if name in ("all", "year"):
             return "year"
-
         return None
 
 
@@ -406,13 +405,12 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
 
 @command("list")
 def list_entries(
-    typ=VLit(("income", "expense"), lower=True), 
+    typ=VLit(("income", "expense", "expenses"), lower=True), 
     month=VMonth(), 
     tags=VLit(config.tags, lower=True, plural=True),
-    comment=VComment(),
     errors=None,
     extra=None,):
-    """Print the specified entries."""
+    """Print the entries. Filtered by the user by type, month, and tags."""
     try:
         entries = _filter_entries(month, typ, tags)
     except BTError as e:
@@ -428,12 +426,12 @@ def list_entries(
 
 @command("sum", "summarize")
 def summarize(
-    typ=VLit(("income", "expense"), lower=True), 
+    typ=VLit(("income", "expense", "expenses"), lower=True), 
     month=VMonth(), 
     tags=VLit(config.tags, lower=True, plural=True),
     errors=None,
     extra=None):
-    """Print a summary of the specifies entries."""
+    """Print a summary of the entries. Filtered by the user by type, month, and tags."""
     try:
         entries = _filter_entries(month, typ, tags)
     except BTError as e:
@@ -452,8 +450,8 @@ def summarize(
 #     entry = Entry(TODAY.strftime("%Y/%m/%d"), amount, category, note)
 
 
-def add_entry(args):
-    """Create an entry from user input and append to csv file."""
+def add_entry():
+    """Create an entry from a series of user input and append to csv file."""
     try:
         date = get_date()
         amount = get_amount()
@@ -466,9 +464,9 @@ def add_entry(args):
         entry_list.append(entry)
 
 
-def del_entry(args):
+def del_entry(id):
     """Remove an entry by it's ID."""
-    id = int(args[0])
+    id = int(id)
     for e in entry_list:
         if e.id == id:
             ans = None
@@ -482,81 +480,78 @@ def del_entry(args):
         print("Entry not found.")
 
 
-def add_tag(args):
+def add_tag(name):
     """Add a tag to the config file."""
-    tag_name = args[1]
     try:
-        config.add_tag(tag_name)
+        config.add_tag(name)
     except BTError as e:
         print(e)
 
 
-def del_tag(args):
+def del_tag(name):
     """Remove a tag from the config file."""
-    tag_name = args[1]
     try:
-        config.remove_tag(tag_name)
+        config.remove_tag(name)
     except BTError as e:
         print(e)
 
 
-#@branch("entry")
-#@branch("entry", VLit("entry"))
-#@branch("tag", VLit("tag"), VLit(config.tags, invert=True))
 @command("add")
-def add_command(*args, **kwargs):
-    if kwargs["branch"] == "entry":
-        add_entry(args)
-    elif kwargs["branch"] == "tag":
-        add_tag(args)
+def add_command(
+    typ=VLit(("entry", "tag"), lower=True),
+    name=VLit(config.tags, invert=True)):
+    """Generic add command that routes to either add_tag or add_entry."""
+    if not typ or typ == "entry":
+        add_entry()
+    elif typ == "tag":
+        add_tag(name)
 
 
-#@branch("entry", VBool(str.isdigit))
-#@branch("tag", VLit("tag"), VLit(config.tags))
 @command("del", "delete", "remove")
-def delete_command(*args, **kwargs):
-    if branch == "tag":
-        del_tag(args)
-    elif branch == "entry":
-        del_entry(args)
+def delete_command(
+    typ=VLit(("tag", "entry"), lower=True), 
+    name=VLit(config.tags), 
+    id=VBool(str.isdigit)):
+    """Generic delete command that routes to either del_tag or del_entry."""
+    if not typ or typ == "entry":
+        del_entry(id)
+    elif typ == "tag":
+        del_tag(name)
 
 
-#@branch("main", VBool(str.isdigit), VLit(Entry.editable_fields))
 @command("edit")
-def edit_entry(*args, **kwargs):
+def edit_entry(
+    id=VBool(str.isdigit, required=True), 
+    field=VLit(Entry.editable_fields, lower=True, required=True)):
     """Takes an ID and data type and allows user to change value"""
-    id = int(kwargs["vbool"])
-    attr = kwargs["vlit"]
-
-    # Make the change
+    id = int(id)
     for e in entry_list:
         if e.id == id:
-            new_value = globals()[Entry.editable_fields[attr]]()
-            e.edit(attr, new_value)
+            new_value = globals()[Entry.editable_fields[field]]()
+            e.edit(field, new_value)
             break
     else:
         print("Entry not found.")
 
 
 @command("bills")
-def show_bills(*args, **kwargs):
+def show_bills():
     """Print the bills; placeholder function."""
     for k, v in config.bills.items():
         print(f"{k}:\t{v}")
 
 
-def manage_goals(*args, **kwargs):
+def manage_goals():
     pass
 
 
-def switch_year(*args, **kwargs):
+def switch_year(year=VBool(str.isdigit, required=True)):
     """Switches to different year.""" ### Maybe don't write to config??
-    if len(args) > 0 and args[0].isdigit():
-        year = int(args[0])
-        if os.path.exists(f"{year}.csv"):
-            config.active_year = year
-            print(f"Records for {year} are now active.")
-            return
+    year = int(year)
+    if os.path.exists(f"{year}.csv"):
+        config.active_year = year
+        print(f"Records for {year} are now active.")
+        return
 
     print("Invalid year input.")
         

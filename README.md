@@ -41,7 +41,7 @@ I made this because I like to code and want to improve. I can't see this being u
   - Can I make this better?
 - Parser solves some problems but still isn't really user friendly (namely branches)
 - Would it be better to take a class-based approach with branches?
-  - Command class that provides a level of abstraction
+  - Command/router class that provides a level of abstraction
 - An option would be to use sqlite and have the option to export to csv instead
 - Using the preset validators is too bulky for a decorator
 - route_command function is getting a bit beefy
