@@ -32,6 +32,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
+- [x] Validate new tags
 
 ## Notes
 - Remove ability to do one-off commands?
@@ -39,9 +40,9 @@ I made this because I like to code and want to improve. I can't see this being u
   - Entry is tied to EntryList through global variable
   - EntryList is tied to Config through global variable
   - Can I make this better?
-- Parser solves some problems but still isn't really user friendly (namely branches)
 - Would it be better to take a class-based approach with branches?
   - Command/router class that provides a level of abstraction
 - An option would be to use sqlite and have the option to export to csv instead
-- Using the preset validators is too bulky for a decorator
 - route_command function is getting a bit beefy
+- Should validator return exception instead of None? Raised if required
+- catch parseusererror in route command?

@@ -78,7 +78,7 @@ class VLit(Validator):
                         found = True
                         break
             else:
-                raise ValidatorError("Literal must be str or an iterable containing only str.")
+                raise parser.base.ParseError("Literal must be str or an iterable containing only str.")
         else: 
             if self.compare(value, self.literal):
                 found = True

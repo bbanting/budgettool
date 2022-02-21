@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import List
 from collections import UserList
 from parser import route_command, command, ParseUserError
-from parser.validators import VLit, VBool, Validator, VComment
+from parser.validators import VLit, VBool, Validator, VComment, VAny
 
 
 TODAY = datetime.now()
@@ -68,6 +68,7 @@ class Config:
             json.dump(self.to_dict(), fp)
     
     def to_dict(self) -> dict:
+        """Returns a dictionary representation of the config."""
         return {"active_year": self.active_year,
                 "tags": self.tags,
                 "old_tags": self.old_tags,
@@ -75,15 +76,16 @@ class Config:
                 }
 
     def add_tag(self, name: str):
-        if name not in self.tags:
-            self.tags.append(name)
-            if name in self.old_tags:
-                self.old_tags.remove(name)
-            self._overwrite()
-        else:
-            raise BTError("Tag already exists.")
+        """
+        Takes a str and adds it to config as a tag.
+        """
+        self.tags.append(name)
+        if name in self.old_tags:
+            self.old_tags.remove(name)
+        self._overwrite()
 
     def remove_tag(self, name: str):
+        """Removes a tag from the config."""
         if name in self.tags:
             self.tags.remove(name)
             if name not in self.old_tags:
@@ -107,8 +109,8 @@ class Config:
                 cfg = {"active_year": TODAY.year, "tags": [], "old_tags": [], "bills": {}}
                 json.dump(cfg, fp)
 
-if __name__=="__main__":
-    config = Config()
+# if __name__=="__main__":
+#     config = Config()
 
 
 def _verify_tags(tags: List):
@@ -249,13 +251,10 @@ class EntryList(UserList):
         super().remove(item)
         self._overwrite()
 
-if __name__=="__main__":
-    entry_list = EntryList()
-
 
 class VMonth(Validator):
+    """Verify that input refers to a month; if so, return it as int."""
     def validate(self, value):
-        """Return month number based on input."""
         if value.isdigit() and int(value) in range(1, 13):
             return int(value)
         
@@ -267,6 +266,32 @@ class VMonth(Validator):
         if name in ("all", "year"):
             return "year"
         return None
+
+
+class VTag(Validator):
+    """Verify that input belongs to the user's tags; if so, return it."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(plural=True, *args, **kwargs)
+
+    def validate(self, value):
+        if value.lower() in config.tags:
+            return value.lower()
+        else:
+            return None
+
+
+class VNewTag(Validator):
+    """Verify that str is a valid name for a new tag."""
+    def validate(self, value: str):
+        value = value.lower()
+        if value in KEYWORDS:
+            raise ParseUserError("Tag name may not be a keyword.")
+        if ("+" in value) or ("!" in value):
+            raise ParseUserError("Tag name may not contain '+' or '!'.")
+        if value in self.tags:
+            raise ParseUserError("Tag already exists.")
+
+        return value
 
 
 def _match_month(name:str) -> int:
@@ -373,6 +398,13 @@ def get_note(*args) -> str:
         return note
 
 
+def check_tag(tag, tag_list) -> bool:
+    if tag in tag_list:
+        return True
+    else:
+        return False
+
+
 def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     """
     Filter and return entries based on input.
@@ -395,6 +427,7 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
         if typ and typ != e.type:
             continue
         if tags and not any([True if t in e.tags else False for t in tags]):
+        # if tags and not any([check_tag(t, e.tags) for t in tags]):
             continue
         filtered_entries.append(e)
 
@@ -407,7 +440,7 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
 def list_entries(
     typ=VLit(("income", "expense", "expenses"), lower=True), 
     month=VMonth(), 
-    tags=VLit(config.tags, lower=True, plural=True),
+    tags=VTag(),
     errors=None,
     extra=None,):
     """Print the entries. Filtered by the user by type, month, and tags."""
@@ -428,7 +461,7 @@ def list_entries(
 def summarize(
     typ=VLit(("income", "expense", "expenses"), lower=True), 
     month=VMonth(), 
-    tags=VLit(config.tags, lower=True, plural=True),
+    tags=VTag(),
     errors=None,
     extra=None):
     """Print a summary of the entries. Filtered by the user by type, month, and tags."""
@@ -499,7 +532,7 @@ def del_tag(name):
 @command("add")
 def add_command(
     typ=VLit(("entry", "tag"), lower=True),
-    name=VLit(config.tags, invert=True)):
+    name=VNewTag()):
     """Generic add command that routes to either add_tag or add_entry."""
     if not typ or typ == "entry":
         add_entry()
@@ -510,7 +543,7 @@ def add_command(
 @command("del", "delete", "remove")
 def delete_command(
     typ=VLit(("tag", "entry"), lower=True), 
-    name=VLit(config.tags), 
+    name=VTag(), 
     id=VBool(str.isdigit)):
     """Generic delete command that routes to either del_tag or del_entry."""
     if not typ or typ == "entry":
@@ -588,4 +621,6 @@ def main(sysargs: List[str]):
 
 
 if __name__=="__main__":
+    config = Config()
+    entry_list = EntryList()
     main(sys.argv[1:])
