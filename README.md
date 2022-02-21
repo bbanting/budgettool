@@ -32,9 +32,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] Put records in records directory
-- [x] Validate new tags
 
 ## Notes
+
 - Remove ability to do one-off commands?
 - Seems pretty tightly coupled as it is now.
   - Entry is tied to EntryList through global variable
@@ -46,3 +46,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - route_command function is getting a bit beefy
 - Should validator return exception instead of None? Raised if required
 - catch parseusererror in route command?
+- Make arg order matter and allow flexibility through branching?
+  - square brackets around validators to indicate order doesnt matter
+  - branches are created dynamically; command does not work if no branches work
+  - make Or and And classes

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import List
 from collections import UserList
 from parser import route_command, command, ParseUserError
-from parser.validators import VLit, VBool, Validator, VComment, VAny
+from parser.validators import VLit, VBool, Validator, VComment, VAny, ValidatorError
 
 
 TODAY = datetime.now()
@@ -265,7 +265,7 @@ class VMonth(Validator):
         
         if name in ("all", "year"):
             return "year"
-        return None
+        return ValidatorError("Month not found")
 
 
 class VTag(Validator):
@@ -277,7 +277,7 @@ class VTag(Validator):
         if value.lower() in config.tags:
             return value.lower()
         else:
-            return None
+            return ValidatorError("Tag not found.")
 
 
 class VNewTag(Validator):
@@ -285,11 +285,11 @@ class VNewTag(Validator):
     def validate(self, value: str):
         value = value.lower()
         if value in KEYWORDS:
-            raise ParseUserError("Tag name may not be a keyword.")
+            return ValidatorError("Tag name may not be a keyword.")
         if ("+" in value) or ("!" in value):
-            raise ParseUserError("Tag name may not contain '+' or '!'.")
-        if value in self.tags:
-            raise ParseUserError("Tag already exists.")
+            return ValidatorError("Tag name may not contain '+' or '!'.")
+        if value in config.tags:
+            return ValidatorError("Tag already exists.")
 
         return value
 

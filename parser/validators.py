@@ -25,27 +25,34 @@ class Validator(metaclass=abc.ABCMeta):
         self.default = default
 
     def __call__(self, args:list) -> Any:
+        """"""
         data = []
         to_remove = []
+        error_msg = None
         for arg in args:
-            if (result := self.validate(arg)) is not None:
+            result = self.validate(arg)
+            if isinstance(result, ValidatorError):
+                # The error message is determined by the first error returned
+                if not error_msg:
+                    error_msg = str(result)
+            else:
                 data.append(result)
                 to_remove.append(arg)
                 if not self.plural:
                     break
-        if data:
+        if not data:
+            if self.required:
+                raise ValidatorError(error_msg)
+            return self.default
+        else:
             [args.remove(x) for x in to_remove]
             data = data if self.plural else data[0]
             return data
-        else:
-            if self.required:
-                raise parser.base.ParseUserError("Command is missing required input.")
-            return self.default
     
     @abc.abstractmethod
-    def validate(self, value: str) -> Union[Any, None]:
+    def validate(self, value: str) -> Union[Any, ValidatorError]:
         """
-        This method must return None on failure 
+        This method must return ValidatorError on failure 
         and a validated value on success.
         """
         pass
@@ -83,10 +90,12 @@ class VLit(Validator):
             if self.compare(value, self.literal):
                 found = True
 
-        if not found if self.invert else found:
+        if self.invert:
+            found = not found
+        if found:
             return value if not self.lower else value.lower()
         else:
-            return None
+            return self.default
 
 
 class VBool(Validator):
@@ -105,10 +114,10 @@ class VBool(Validator):
             if getattr(value, self.func.__name__)():
                 ret_val = value
             else:
-                ret_val = None
+                ret_val = self.default
         else:
             if self.func(value):
-                ret_val = value
+                ret_val = self.default
             else:
                 ret_val = None
         if self.lower:

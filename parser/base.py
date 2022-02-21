@@ -3,7 +3,7 @@
 from functools import wraps
 from typing import Union, Any, List
 import inspect
-from .validators import Validator
+from .validators import Validator, ValidatorError
 
 
 command_register = {}
@@ -56,25 +56,19 @@ def route_command(args:List[str]):
     params = [p for p in params if isinstance(p[1], Validator)]
 
     validated_data = {}
-    errors = []
+    # errors = []
     for key, validator in params:
         if args:
             data = validator(args)
-            if data is None:
-                validated_data.update({key: None})
-                errors.append(key)
-                continue
-            else:
-                validated_data.update({key: data})
+            validated_data.update({key: data})
         else:
             if validator.required:
-                raise ParseUserError("Command is missing required input.")
-            validated_data.update({key: None})
-            errors.append(key)
+                raise ValidatorError("Command is missing required input.")
+            validated_data.update({key: validator.default})
 
     # Execute the command
-    if "errors" in argspec.args:
-        validated_data.update({"errors": errors})
+    # if "errors" in argspec.args:
+    #     validated_data.update({"errors": errors})
     if "extra" in argspec.args:
         validated_data.update({"extra": args})
     command(**validated_data)
