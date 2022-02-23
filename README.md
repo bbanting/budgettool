@@ -46,7 +46,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - route_command function is getting a bit beefy
 - Should validator return exception instead of None? Raised if required
 - catch parseusererror in route command?
-- Make arg order matter and allow flexibility through branching?
+- Make arg order matter and allow flexibility through a spec param in command
   - square brackets around validators to indicate order doesnt matter
   - branches are created dynamically; command does not work if no branches work
-  - make Or and And classes
+    - order matters, loop on args?
+    - extra args are not silenced, but raise errors
+    - how to determine branch priority?
+  - By default param ordering is strict and all params are required
+  - Is there a better way to specifiy an argument is optional?
+- Problem: specifying args when the command is used for two different functions

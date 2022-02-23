@@ -19,9 +19,9 @@ class Validator(metaclass=abc.ABCMeta):
     required: The command will fail if set to True.
     default: Specify a different value to return on failure.
     """
-    def __init__(self, plural=False, required=False, default=None):
+    def __init__(self, plural=False, req=False, default=None):
         self.plural = plural
-        self.required = required
+        self.required = req
         self.default = default
 
     def __call__(self, args:list) -> Any:

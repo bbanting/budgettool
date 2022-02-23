@@ -290,8 +290,18 @@ class VNewTag(Validator):
             return ValidatorError("Tag name may not contain '+' or '!'.")
         if value in config.tags:
             return ValidatorError("Tag already exists.")
-
         return value
+
+
+class VType(Validator):
+    """Capture the type of entry."""
+    def validate(self, value: str):
+        value = value.lower()
+        if value == "income":
+            return value
+        elif value in ("expense", "expenses"):
+            return "expense"
+        raise ValidatorError("Invalid type.")
 
 
 def _match_month(name:str) -> int:
@@ -436,13 +446,8 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-@command("list")
-def list_entries(
-    typ=VLit(("income", "expense", "expenses"), lower=True), 
-    month=VMonth(), 
-    tags=VTag(),
-    errors=None,
-    extra=None,):
+@command("list", spec=(["typ", "month"], "tags"))
+def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
     """Print the entries. Filtered by the user by type, month, and tags."""
     try:
         entries = _filter_entries(month, typ, tags)
@@ -457,13 +462,8 @@ def list_entries(
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
-@command("sum", "summarize")
-def summarize(
-    typ=VLit(("income", "expense", "expenses"), lower=True), 
-    month=VMonth(), 
-    tags=VTag(),
-    errors=None,
-    extra=None):
+@command("sum", "summarize", spec=(["typ", "month"], "tags"))
+def summarize(typ=VType(), month=VMonth(), tags=VTag()):
     """Print a summary of the entries. Filtered by the user by type, month, and tags."""
     try:
         entries = _filter_entries(month, typ, tags)
@@ -530,19 +530,19 @@ def del_tag(name):
 
 
 @command("add")
-def add_command(
-    typ=VLit(("entry", "tag"), lower=True),
-    name=VNewTag()):
+def add_command(typ=VLit(("entry", "tag")), name=VNewTag()):
     """Generic add command that routes to either add_tag or add_entry."""
+    typ = typ.lower()
     if not typ or typ == "entry":
         add_entry()
     elif typ == "tag":
         add_tag(name)
 
 
-@command("del", "delete", "remove")
+@command("del", "delete", "remove", spec=("typ", ["name", "id"]))
 def delete_command(
-    typ=VLit(("tag", "entry"), lower=True), 
+    typ=VLit(("tag", "entry", ), 
+    default="entry", lower=True), 
     name=VTag(), 
     id=VBool(str.isdigit)):
     """Generic delete command that routes to either del_tag or del_entry."""
