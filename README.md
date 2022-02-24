@@ -35,23 +35,8 @@ I made this because I like to code and want to improve. I can't see this being u
 
 ## Notes
 
-- Remove ability to do one-off commands?
 - Seems pretty tightly coupled as it is now.
   - Entry is tied to EntryList through global variable
   - EntryList is tied to Config through global variable
   - Can I make this better?
-- Would it be better to take a class-based approach with branches?
-  - Command/router class that provides a level of abstraction
 - An option would be to use sqlite and have the option to export to csv instead
-- route_command function is getting a bit beefy
-- Should validator return exception instead of None? Raised if required
-- catch parseusererror in route command?
-- Make arg order matter and allow flexibility through a spec param in command
-  - square brackets around validators to indicate order doesnt matter
-  - branches are created dynamically; command does not work if no branches work
-    - order matters, loop on args?
-    - extra args are not silenced, but raise errors
-    - how to determine branch priority?
-  - By default param ordering is strict and all params are required
-  - Is there a better way to specifiy an argument is optional?
-- Problem: specifying args when the command is used for two different functions

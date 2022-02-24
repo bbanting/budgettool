@@ -11,8 +11,7 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List
 from collections import UserList
-from parser import route_command, command, ParseUserError
-from parser.validators import VLit, VBool, Validator, VComment, VAny, ValidatorError
+from parser import route_command, command, VLit, VBool, Validator, ValidatorError, VComment
 
 
 TODAY = datetime.now()
@@ -301,7 +300,7 @@ class VType(Validator):
             return value
         elif value in ("expense", "expenses"):
             return "expense"
-        raise ValidatorError("Invalid type.")
+        return ValidatorError("Invalid type.")
 
 
 def _match_month(name:str) -> int:
@@ -446,7 +445,7 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-@command("list", spec=(["typ", "month"], "tags"))
+@command("list")
 def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
     """Print the entries. Filtered by the user by type, month, and tags."""
     try:
@@ -462,7 +461,7 @@ def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
-@command("sum", "summarize", spec=(["typ", "month"], "tags"))
+@command("sum", "summarize")
 def summarize(typ=VType(), month=VMonth(), tags=VTag()):
     """Print a summary of the entries. Filtered by the user by type, month, and tags."""
     try:
@@ -539,7 +538,7 @@ def add_command(typ=VLit(("entry", "tag")), name=VNewTag()):
         add_tag(name)
 
 
-@command("del", "delete", "remove", spec=("typ", ["name", "id"]))
+@command("del", "delete", "remove")
 def delete_command(
     typ=VLit(("tag", "entry", ), 
     default="entry", lower=True), 
@@ -554,8 +553,8 @@ def delete_command(
 
 @command("edit")
 def edit_entry(
-    id=VBool(str.isdigit, required=True), 
-    field=VLit(Entry.editable_fields, lower=True, required=True)):
+    id=VBool(str.isdigit, req=True), 
+    field=VLit(Entry.editable_fields, lower=True, req=True)):
     """Takes an ID and data type and allows user to change value"""
     id = int(id)
     for e in entry_list:
@@ -578,7 +577,7 @@ def manage_goals():
     pass
 
 
-def switch_year(year=VBool(str.isdigit, required=True)):
+def switch_year(year=VBool(str.isdigit, req=True)):
     """Switches to different year.""" ### Maybe don't write to config??
     year = int(year)
     if os.path.exists(f"{year}.csv"):
@@ -606,7 +605,7 @@ def shell():
         user_input = shlex.split(input("> "))
         try:
             route_command(user_input)
-        except (ParseUserError, BTError) as e:
+        except BTError as e:
             print(e)
 
 
