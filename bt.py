@@ -50,11 +50,13 @@ class BTError(Exception):
 
 class Config:
     """A class to manage the state of the programs configuration."""
-    def __init__(self) -> None:
-        Config._check_file()
-        with open("config.json", "r") as fp:
+    def __init__(self, filename) -> None:
+        self.filename = filename
+        self._check_file()
+        with open(filename, "r") as fp:
                 cfgdata = json.load(fp)
 
+        self.filename = filename
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
         self.old_tags = cfgdata["old_tags"]
@@ -62,8 +64,8 @@ class Config:
 
     def _overwrite(self) -> None:
         """Overwrite file with current state."""
-        Config._check_file()
-        with open("config.json", "w") as fp:
+        self._check_file()
+        with open(self.filename, "w") as fp:
             json.dump(self.to_dict(), fp)
     
     def to_dict(self) -> dict:
@@ -75,9 +77,9 @@ class Config:
                 }
 
     def add_tag(self, name: str):
-        """
-        Takes a str and adds it to config as a tag.
-        """
+        """Takes a str and adds it to config as a tag."""
+        if not name:
+            raise BTError("Name not supplied.")
         self.tags.append(name)
         if name in self.old_tags:
             self.old_tags.remove(name)
@@ -85,6 +87,8 @@ class Config:
 
     def remove_tag(self, name: str):
         """Removes a tag from the config."""
+        if not name:
+            raise BTError("Name not supplied.")
         if name in self.tags:
             self.tags.remove(name)
             if name not in self.old_tags:
@@ -92,24 +96,19 @@ class Config:
             self._overwrite()
         else:
             raise BTError("Tag not found.")
-        
-            
-    @staticmethod
-    def _check_file():
-        """Check if the config exists."""
+
+    def _check_file(self):
+        """Ensures the config exists and the user has file permissions."""
         try:
-            with open("config.json", "r+") as fp:
+            with open(self.filename, "r+") as fp:
                 pass
         except PermissionError:
             print("You do not have the necessary file permissions.")
             quit()
         except FileNotFoundError:
-            with open("config.json", "w") as fp:
+            with open(self.filename, "w") as fp:
                 cfg = {"active_year": TODAY.year, "tags": [], "old_tags": [], "bills": {}}
                 json.dump(cfg, fp)
-
-# if __name__=="__main__":
-#     config = Config()
 
 
 def _verify_tags(tags: List):
@@ -514,24 +513,17 @@ def del_entry(id):
 
 def add_tag(name):
     """Add a tag to the config file."""
-    try:
-        config.add_tag(name)
-    except BTError as e:
-        print(e)
+    config.add_tag(name)
 
 
 def del_tag(name):
     """Remove a tag from the config file."""
-    try:
-        config.remove_tag(name)
-    except BTError as e:
-        print(e)
+    config.remove_tag(name)
 
 
 @command("add")
-def add_command(typ=VLit(("entry", "tag")), name=VNewTag()):
+def add_command(typ=VLit(("entry", "tag"), lower=True), name=VNewTag()):
     """Generic add command that routes to either add_tag or add_entry."""
-    typ = typ.lower()
     if not typ or typ == "entry":
         add_entry()
     elif typ == "tag":
@@ -540,8 +532,7 @@ def add_command(typ=VLit(("entry", "tag")), name=VNewTag()):
 
 @command("del", "delete", "remove")
 def delete_command(
-    typ=VLit(("tag", "entry", ), 
-    default="entry", lower=True), 
+    typ=VLit(("tag", "entry", ), default="entry", lower=True), 
     name=VTag(), 
     id=VBool(str.isdigit)):
     """Generic delete command that routes to either del_tag or del_entry."""
@@ -620,6 +611,6 @@ def main(sysargs: List[str]):
 
 
 if __name__=="__main__":
-    config = Config()
+    config = Config("config.json")
     entry_list = EntryList()
     main(sys.argv[1:])

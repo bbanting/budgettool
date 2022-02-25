@@ -40,3 +40,4 @@ I made this because I like to code and want to improve. I can't see this being u
   - EntryList is tied to Config through global variable
   - Can I make this better?
 - An option would be to use sqlite and have the option to export to csv instead
+- Add command is trying to do two things at once: this is an issue

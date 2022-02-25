@@ -40,12 +40,13 @@ class Validator(metaclass=abc.ABCMeta):
 
         if not data:
             if self.required:
-                raise ValidatorError("Command is missing required input.")
+                raise ValidatorError("Command is missing required input")
             return self.default
-        else:
-            [args.remove(x) for x in to_remove]
-            data = data if self.plural else data[0]
-            return data
+        
+        [args.remove(x) for x in to_remove]
+        if len(data) == 1:
+            data = data[0]
+        return data
     
     @abc.abstractmethod
     def validate(self, value: str) -> Union[Any, ValidatorError]:

@@ -67,10 +67,10 @@ def route_command(args:List[str]):
             data = validator(args)
             validated_data.update({key: data})
         except ValidatorError as e:
-            print(e)
+            print(f"{e}: {key}")
             return
     if args: # Should be empty if successful
-        print(f"Unrecognized input: {', '.join(args)}")
+        print(f"Invalid input: {', '.join(args)}")
         return
 
     command(**validated_data)
