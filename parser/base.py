@@ -1,7 +1,7 @@
 # Small module for parsing arguments
 
 from functools import wraps
-from typing import Union, Any, List
+from typing import Union, Any, List, Callable
 import inspect
 from .validators import Validator, ValidatorError
 
@@ -12,9 +12,10 @@ class ParseError(Exception):
     pass
 
 
-def command(*names):
+def command(*names, complements=()):
     """Decorator to mark a function as a command and name it."""
     def decorator(f):
+        f.complements = complements
         for n in names:
             if type(n) == str:
                 command_register.update({n: f})
@@ -26,6 +27,22 @@ def command(*names):
             return f(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def router():
+    pass
+    # Still deciding if this should be a thing.
+
+
+def get_command(args) -> Union[Callable, None]:
+    """Return the command function."""
+    command = command_register.get(args.pop(0))
+    if command and command.complements:
+        if args and args[0].lower() in command.complements:
+            c = args.pop(0)
+            return command(complement=c)
+        return command() # default complement
+    return command
 
 
 def get_command_params(command) -> List[tuple[str, Validator]]:
@@ -53,11 +70,10 @@ def route_command(args:List[str]):
         return
     
     # Get the function
-    command = command_register.get(args[0])
+    command = get_command(args)
     if not command:
-        print("Command not found.")
+        print("Command not found")
         return
-    args.remove(args[0])
 
     # Execute the command
     params = get_command_params(command)

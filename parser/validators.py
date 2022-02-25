@@ -1,5 +1,5 @@
 from email.policy import default
-from typing import Union, Any
+from typing import Union, Any, List
 import abc
 
 import parser.base
@@ -25,8 +25,8 @@ class Validator(metaclass=abc.ABCMeta):
         self.required = req
         self.default = default
 
-    def __call__(self, args:list) -> Any:
-        """"""
+    def __call__(self, args:list) -> Union[Any, List[Any]]:
+        """Calls validate on a list of arguments."""
         data = []
         to_remove = []
         for arg in args:

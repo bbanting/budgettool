@@ -9,9 +9,10 @@ import json
 import shlex
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from collections import UserList
-from parser import route_command, command, VLit, VBool, Validator, ValidatorError, VComment
+import parser
+from parser.validators import VLit, VBool, Validator, ValidatorError, VComment
 
 
 TODAY = datetime.now()
@@ -254,7 +255,7 @@ class EntryList(UserList):
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
-    def validate(self, value):
+    def validate(self, value) -> Union[int, str, ValidatorError]:
         if value.isdigit() and int(value) in range(1, 13):
             return int(value)
         
@@ -273,7 +274,7 @@ class VTag(Validator):
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)
 
-    def validate(self, value):
+    def validate(self, value) -> Union[str, ValidatorError]:
         if value.lower() in config.tags:
             return value.lower()
         else:
@@ -282,7 +283,7 @@ class VTag(Validator):
 
 class VNewTag(Validator):
     """Verify that str is a valid name for a new tag."""
-    def validate(self, value: str):
+    def validate(self, value: str) -> Union[str, ValidatorError]:
         value = value.lower()
         if value in KEYWORDS:
             return ValidatorError("Tag name may not be a keyword.")
@@ -295,13 +296,21 @@ class VNewTag(Validator):
 
 class VType(Validator):
     """Capture the type of entry."""
-    def validate(self, value: str):
+    def validate(self, value: str) -> Union[str, ValidatorError]:
         value = value.lower()
         if value == "income":
             return value
         elif value in ("expense", "expenses"):
             return "expense"
         return ValidatorError("Invalid type.")
+
+
+class VID(Validator):
+    """Capture an ID"""
+    def validate(self, value: str) -> Union[int, ValidatorError]:
+        if value.isdigit() and len(value) <= 4:
+            return int(value)
+        return ValidatorError("Invalid ID")
 
 
 def _match_month(name:str) -> int:
@@ -446,7 +455,7 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-@command("list")
+@parser.command("list")
 def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
     """Print the entries. Filtered by the user by type, month, and tags."""
     try:
@@ -462,7 +471,7 @@ def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
         print(f"\nTOTAL: {sign}${abs(total)}")
         
 
-@command("sum", "summarize")
+@parser.command("sum", "summarize")
 def summarize(typ=VType(), month=VMonth(), tags=VTag()):
     """Print a summary of the entries. Filtered by the user by type, month, and tags."""
     try:
@@ -497,9 +506,8 @@ def add_entry():
         entry_list.append(entry)
 
 
-def del_entry(id):
+def del_entry(id=VID(req=True)):
     """Remove an entry by it's ID."""
-    id = int(id)
     for e in entry_list:
         if e.id == id:
             ans = None
@@ -513,38 +521,35 @@ def del_entry(id):
         print("Entry not found.")
 
 
-def add_tag(name):
+def add_tag(name=VNewTag(req=True)):
     """Add a tag to the config file."""
     config.add_tag(name)
 
 
-def del_tag(name):
+def del_tag(name=VTag(req=True)):
     """Remove a tag from the config file."""
     config.remove_tag(name)
 
 
-@command("add")
-def add_command(typ=VLit(("entry", "tag"), lower=True), name=VNewTag()):
+@parser.command("add", complements=("entry", "tag"))
+def add_command(complement="entry"):
     """Generic add command that routes to either add_tag or add_entry."""
-    if not typ or typ == "entry":
-        add_entry()
-    elif typ == "tag":
-        add_tag(name)
+    if complement == "entry":
+        return add_entry
+    elif complement == "tag":
+        return add_tag
 
 
-@command("del", "delete", "remove")
-def delete_command(
-    typ=VLit(("tag", "entry", ), default="entry", lower=True), 
-    name=VTag(), 
-    id=VBool(str.isdigit)):
+@parser.command("del", "delete", "remove", complements=("entry", "tag"))
+def delete_command(complement="entry"):
     """Generic delete command that routes to either del_tag or del_entry."""
-    if not typ or typ == "entry":
-        del_entry(id)
-    elif typ == "tag":
-        del_tag(name)
+    if complement == "entry":
+        return del_entry
+    elif complement == "tag":
+        return del_tag
 
 
-@command("edit")
+@parser.command("edit")
 def edit_entry(
     id=VBool(str.isdigit, req=True), 
     field=VLit(Entry.editable_fields, lower=True, req=True)):
@@ -559,7 +564,7 @@ def edit_entry(
         print("Entry not found.")
 
 
-@command("bills")
+@parser.command("bills")
 def show_bills():
     """Print the bills; placeholder function."""
     for k, v in config.bills.items():
@@ -581,7 +586,7 @@ def switch_year(year=VBool(str.isdigit, req=True)):
     print("Invalid year input.")
         
 
-@command("q", "quit")
+@parser.command("q", "quit")
 def quit_program():
     quit()
 
@@ -598,7 +603,7 @@ def shell():
     while True:
         user_input = shlex.split(input("> "))
         try:
-            route_command(user_input)
+            parser.route_command(user_input)
         except BTError as e:
             print(e)
 
@@ -608,7 +613,7 @@ def main(sysargs: List[str]):
         if not sysargs:
             shell()
         else:
-            route_command(sysargs)
+            parser.route_command(sysargs)
     except KeyboardInterrupt:
         print("")
 
