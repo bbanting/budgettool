@@ -50,13 +50,12 @@ class BTError(Exception):
 
 class Config:
     """A class to manage the state of the programs configuration."""
-    def __init__(self, filename) -> None:
+    def __init__(self, filename: str) -> None:
         self.filename = filename
         self._check_file()
         with open(filename, "r") as fp:
                 cfgdata = json.load(fp)
-
-        self.filename = filename
+        self.shell = False
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
         self.old_tags = cfgdata["old_tags"]
@@ -197,12 +196,14 @@ class Entry:
 
 
 class EntryList(UserList):
-    def __init__(self):
+    """A list to group entry sets together and handle saving them to disk."""
+    def __init__(self, directory: str) -> None:
         """Initialize and check for errors."""
         super().__init__()
+        self.directory = directory
         self._check_file()
 
-        with open(f"{config.active_year}.csv", "r", newline="") as fp:
+        with open(f"{self.directory}/{config.active_year}.csv", "r", newline="") as fp:
             lines = list(csv.reader(fp))
         if lines[0] != list(HEADERS):
             print(f"Error: Invalid CSV headers.")
@@ -221,14 +222,15 @@ class EntryList(UserList):
 
     def _check_file(self) -> None:
         """Ensure the CSV file can be opened barring a permission error."""
+        os.makedirs(f"{os.getcwd()}/{self.directory}", exist_ok=True)
         try:
-            with open(f"{config.active_year}.csv", "r+"):
+            with open(f"{self.directory}/{config.active_year}.csv", "r+"):
                 pass
         except PermissionError:
             print("You do not have the necessary file permissions.")
             quit()
         except FileNotFoundError:
-            with open(f"{config.active_year}.csv", "w", newline="") as fp:
+            with open(f"{self.directory}/{config.active_year}.csv", "w", newline="") as fp:
                 csv.writer(fp).writerow(HEADERS)
 
     def _overwrite(self):
@@ -238,7 +240,7 @@ class EntryList(UserList):
         rows.append(list(HEADERS))
         for e in self:
             rows.append(e.to_csv())
-        with open(f"{config.active_year}.csv", "w", newline="") as fp:
+        with open(f"{self.directory}/{config.active_year}.csv", "w", newline="") as fp:
             csv.writer(fp).writerows(rows)
 
     def append(self, item):
@@ -590,6 +592,7 @@ def btinput(context) -> str:
 
 
 def shell():
+    config.shell = True
     print("Budget Tool")
     print(f"Records for {config.active_year} are active.")
     while True:
@@ -612,5 +615,5 @@ def main(sysargs: List[str]):
 
 if __name__=="__main__":
     config = Config("config.json")
-    entry_list = EntryList()
+    entry_list = EntryList("records")
     main(sys.argv[1:])

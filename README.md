@@ -31,7 +31,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - ! and + are reserved and cant be used in tag names
 - [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
-- [ ] Put records in records directory
+- [x] Put records in records directory
 
 ## Notes
 
