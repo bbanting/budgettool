@@ -18,7 +18,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Show hidden entries, ability to permanently delete
 - [ ] Implement undo and redo?
 - [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
-- [ ] Go back a step in adding an entry (or editing)
+  - [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
 - [ ] List old months when no entries in latest month
 - [ ] List n last entries (/n)
@@ -32,6 +32,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [x] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [x] Put records in records directory
+- [ ] When an entry is made for year that doesn't have a file, make a file
 
 ## Notes
 
