@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import List, Union
 from collections import UserList
 import parser
-from parser.validators import VLit, VBool, Validator, ValidatorError, VComment
+from parser.validator import VLit, VBool, Validator, ValidatorError, VComment
 
 
 TODAY = datetime.now()
@@ -78,8 +78,6 @@ class Config:
 
     def add_tag(self, name: str):
         """Takes a str and adds it to config as a tag."""
-        if not name:
-            raise BTError("Name not supplied.")
         self.tags.append(name)
         if name in self.old_tags:
             self.old_tags.remove(name)
@@ -87,11 +85,9 @@ class Config:
 
     def remove_tag(self, name: str):
         """Removes a tag from the config."""
-        if not name:
-            raise BTError("Name not supplied.")
         if name in self.tags:
             self.tags.remove(name)
-            if name not in self.old_tags:
+            if name in {t for e in entry_list for t in e.tags}:
                 self.old_tags.append(name)
             self._overwrite()
         else:
@@ -256,17 +252,33 @@ class EntryList(UserList):
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
     def validate(self, value) -> Union[int, str, ValidatorError]:
-        if value.isdigit() and int(value) in range(1, 13):
-            return int(value)
+        # if value.isdigit() and int(value) in range(1, 13):
+        #     return int(value)
         
         name = value.lower()
         for month in MONTHS:
             if month.startswith(name): 
                 return MONTHS[month]
         
-        if name in ("all", "year"):
+        if not self.strict and name in ("all", "year"):
             return "year"
         return ValidatorError("Month not found")
+
+
+class VDay(Validator):
+    """Verify and capture day of a month."""
+    def validate(self, value) -> Union[int, ValidatorError]:
+        if value.isdigit() and int(value) in range(1, 32):
+            return int(value)
+        return ValidatorError("Invalid day number")
+
+
+class VYear(Validator):
+    """Verify and capture year number."""
+    def validate(self, value) -> Union[int, ValidatorError]:
+        if value.isdigit() and len(value) == 4:
+            return int(value)
+        return ValidatorError("Invalid year number")
 
 
 class VTag(Validator):
@@ -313,43 +325,19 @@ class VID(Validator):
         return ValidatorError("Invalid ID")
 
 
-def _match_month(name:str) -> int:
-    """Return month number based on input."""
-    if name.isdigit() and int(name) in range(1, 13):
-        return int(name)
-    
-    name = name.lower()
-    for month in MONTHS:
-        if month.startswith(name): 
-            return MONTHS[month]
-    else:
-        raise BTError("Invalid month input.")
-
-
-def get_date(quick_input=None, *args):
+def get_date(*args):
     """Retrieve the date input from the user."""
-    # Short-circuit if called through quick add
-    if quick_input:
-        return _match_month(quick_input)
-
     while True:
-        user_input = input("Date: ")
-        if user_input.lower() == "back":
-            raise BTError("Command terminated.")
+        user_input = input("Date: ").split()
         if not user_input and TODAY.year != config.active_year:
-            print("Can't infer date when not in current year.")
-            continue
-        if not user_input:
+            print("Can't infer date when current year not active.")
+        elif not user_input:
             return TODAY
-        elif len(user_input.split()) == 2:
-            month, day = user_input.split(" ")
-            try:
-                month, day = _match_month(month), int(day)
-            except (BTError, ValueError):
-                print("Invalid input.")
-                continue
-            else:
-                return datetime(config.active_year, month, day)
+        elif len(user_input) >= 2 <= 3:
+            month = VMonth(strict=True)(user_input)
+            day = VDay()(user_input)
+            year = VYear(default=config.active_year)(user_input)
+            return datetime(year, month, day)
         else:
             print("Invalid input.")
 
@@ -508,7 +496,7 @@ def add_entry():
 
 def del_entry(id=VID(req=True)):
     """Remove an entry by it's ID."""
-    for e in entry_list:
+    for e in entry_list[::-1]:
         if e.id == id:
             ans = None
             date = e.date.strftime("%b %d")
@@ -531,21 +519,21 @@ def del_tag(name=VTag(req=True)):
     config.remove_tag(name)
 
 
-@parser.command("add", complements=("entry", "tag"))
-def add_command(complement="entry"):
+@parser.fork_command("add", forks=("entry", "tag"))
+def add_command(fork="entry"):
     """Generic add command that routes to either add_tag or add_entry."""
-    if complement == "entry":
+    if fork == "entry":
         return add_entry
-    elif complement == "tag":
+    elif fork == "tag":
         return add_tag
 
 
-@parser.command("del", "delete", "remove", complements=("entry", "tag"))
-def delete_command(complement="entry"):
+@parser.fork_command("del", "delete", "remove", forks=("entry", "tag"))
+def delete_command(fork="entry"):
     """Generic delete command that routes to either del_tag or del_entry."""
-    if complement == "entry":
+    if fork == "entry":
         return del_entry
-    elif complement == "tag":
+    elif fork == "tag":
         return del_tag
 
 

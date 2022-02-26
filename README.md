@@ -29,7 +29,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Any and all relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] When tags are removed by user, put into "old_tags" if there are entries that reference it
+- [x] When tags are removed by user, put into "old_tags" if there are entries that reference it
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [x] Put records in records directory
 
@@ -40,4 +40,6 @@ I made this because I like to code and want to improve. I can't see this being u
   - EntryList is tied to Config through global variable
   - Can I make this better?
 - An option would be to use sqlite and have the option to export to csv instead
-- Add command is trying to do two things at once: this is an issue
+- Possible to have no tags on entry?
+- Is changing year necessary if an entry can easily be made with a different year?
+- Is hiding entries necessary if there is undo/redo?

@@ -1,2 +1,2 @@
-from .base import command, router, route_command
-from .validators import Validator, ValidatorError, VLit, VBool, VComment, VAny
+from .base import command, fork_command, route_command
+from .validator import Validator, ValidatorError, VLit, VBool, VComment, VAny

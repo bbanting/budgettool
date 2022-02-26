@@ -3,7 +3,7 @@
 from functools import wraps
 from typing import Union, Any, List, Callable
 import inspect
-from .validators import Validator, ValidatorError
+from .validator import Validator, ValidatorError
 
 
 command_register = {}
@@ -12,10 +12,10 @@ class ParseError(Exception):
     pass
 
 
-def command(*names, complements=()):
+def command(*names, forks=()):
     """Decorator to mark a function as a command and name it."""
     def decorator(f):
-        f.complements = complements
+        f.forks = forks
         for n in names:
             if type(n) == str:
                 command_register.update({n: f})
@@ -29,18 +29,22 @@ def command(*names, complements=()):
     return decorator
 
 
-def router():
-    pass
-    # Still deciding if this should be a thing.
+"""
+Purely semantic difference for code clarity purposes.
+A fork_command returns a function and instead of normal parameters
+with Validators, it has one paramter, fork. The default for the 
+fork parameter is the default fork that will be chosen.
+"""
+fork_command = command
 
 
 def get_command(args) -> Union[Callable, None]:
     """Return the command function."""
     command = command_register.get(args.pop(0))
-    if command and command.complements:
-        if args and args[0].lower() in command.complements:
+    if command and command.forks:
+        if args and args[0].lower() in command.forks:
             c = args.pop(0)
-            return command(complement=c)
+            return command(fork=c)
         return command() # default complement
     return command
 
@@ -86,7 +90,7 @@ def route_command(args:List[str]):
             print(f"{e}: {key}")
             return
     if args: # Should be empty if successful
-        print(f"Invalid input: {', '.join(args)}")
+        print(f"Unrecognized input: {', '.join(args)}")
         return
 
     command(**validated_data)
