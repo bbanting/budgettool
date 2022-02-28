@@ -30,7 +30,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Watch dog or timeout for current year when changed from outside the shell
-- [ ] When an entry is made for year that doesn't have a file, make a file
+- [x] When an entry is made for year that doesn't have a file, make a file
 
 ## Notes
 

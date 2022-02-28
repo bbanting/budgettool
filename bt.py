@@ -179,7 +179,7 @@ class Entry:
 
     def generate_id(self) -> int:
         """Generate a new unused ID for a new entry."""
-        if len(self.parent_record) > 1:
+        if len(self.parent_record) > 0:
             prev_id = self.parent_record[-1].id
             return prev_id + 1
         else:
@@ -200,8 +200,20 @@ class Entry:
 
 
 class MasterRecord(collections.UserDict):
-    """A master class to hold all yearly records."""
-    pass
+    """A class to hold all YearlyRecords."""
+    def add_yearly_record(self, year: int) -> YearlyRecord:
+        self[year] = YearlyRecord(year)
+
+    def __iter__(self):
+        return super().__iter__()
+        # Overwrite this to allow traversing between years
+    
+    def __getitem__(self, key: int):
+        try:
+            super().__getitem__(key)
+        except KeyError:
+            self.update({key: YearlyRecord(key)})
+        return super().__getitem__(key)
 
 
 class YearlyRecord(collections.UserList):
@@ -210,7 +222,7 @@ class YearlyRecord(collections.UserList):
     handle saving them to disk.
     """
     def __init__(self, year: int) -> None:
-        """Initialize and check for errors."""
+        """Initialize and check for file errors."""
         super().__init__()
 
         self.year = year
@@ -624,5 +636,5 @@ def main(sysargs: List[str]):
 
 if __name__=="__main__":
     config = Config("config.json")
-    active_records = {TODAY.year: YearlyRecord(TODAY.year)}
+    active_records = MasterRecord({TODAY.year: YearlyRecord(TODAY.year)})
     main(sys.argv[1:])
