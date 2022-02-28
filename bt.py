@@ -2,18 +2,21 @@
 # Created by Ben Banting
 # A simple tool to keep track of expenses and earnings.
 
+from __future__ import annotations
 import sys
 import os
 import csv
 import json
 import shlex
+import collections
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List, Union
-from collections import UserList
 import parser
 from parser.validator import VLit, VBool, Validator, ValidatorError, VComment
 
+
+ENTRY_FOLDER = "records"
 
 TODAY = datetime.now()
 
@@ -87,8 +90,8 @@ class Config:
         """Removes a tag from the config."""
         if name in self.tags:
             self.tags.remove(name)
-            if name in {t for e in entry_list for t in e.tags}:
-                self.old_tags.append(name)
+            # if name in {t for e in entry_list for t in e.tags}:
+            self.old_tags.append(name)
             self._overwrite()
         else:
             raise BTError("Tag not found.")
@@ -126,7 +129,7 @@ class Entry:
         "date":     "get_date",
         }
 
-    def __init__(self, date: str, amount: Decimal, tags: List, note:str,
+    def __init__(self, date: datetime, amount: Decimal, tags: List, note:str,
                     hidden:bool=False, id:int=0):
         self.date = date
         self.amount = amount
@@ -153,6 +156,10 @@ class Entry:
         else:
             return f"-${abs(self.amount):.2f}"
 
+    @property
+    def parent_record(self) -> YearlyRecord:
+        return active_records[self.date.year]
+
     @classmethod
     def from_csv(cls, data: list):
         """Contruct an entry from a csv line."""
@@ -172,8 +179,8 @@ class Entry:
 
     def generate_id(self) -> int:
         """Generate a new unused ID for a new entry."""
-        if len(entry_list) > 1:
-            prev_id = entry_list[-1].id
+        if len(self.parent_record) > 1:
+            prev_id = self.parent_record[-1].id
             return prev_id + 1
         else:
             return 1
@@ -181,7 +188,7 @@ class Entry:
     def edit(self, attr, value):
         """Set an attribute and overwrite the file."""
         setattr(self, attr, value)
-        entry_list._overwrite()
+        self.parent_record._overwrite()
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
@@ -192,15 +199,24 @@ class Entry:
         return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.dollars:{AMOUNTW}} {tags:{TAGSW}} {note}"
 
 
-class EntryList(UserList):
-    """A list to group entry sets together and handle saving them to disk."""
-    def __init__(self, directory: str) -> None:
+class MasterRecord(collections.UserDict):
+    """A master class to hold all yearly records."""
+    pass
+
+
+class YearlyRecord(collections.UserList):
+    """
+    A list to group entry sets together by year and 
+    handle saving them to disk.
+    """
+    def __init__(self, year: int) -> None:
         """Initialize and check for errors."""
         super().__init__()
-        self.directory = directory
+
+        self.year = year
         self._check_file()
 
-        with open(f"{self.directory}/{config.active_year}.csv", "r", newline="") as fp:
+        with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r", newline="") as fp:
             lines = list(csv.reader(fp))
         if lines[0] != list(HEADERS):
             print(f"Error: Invalid CSV headers.")
@@ -219,15 +235,15 @@ class EntryList(UserList):
 
     def _check_file(self) -> None:
         """Ensure the CSV file can be opened barring a permission error."""
-        os.makedirs(f"{os.getcwd()}/{self.directory}", exist_ok=True)
+        os.makedirs(f"{os.getcwd()}/{ENTRY_FOLDER}", exist_ok=True)
         try:
-            with open(f"{self.directory}/{config.active_year}.csv", "r+"):
+            with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r+"):
                 pass
         except PermissionError:
             print("You do not have the necessary file permissions.")
             quit()
         except FileNotFoundError:
-            with open(f"{self.directory}/{config.active_year}.csv", "w", newline="") as fp:
+            with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
                 csv.writer(fp).writerow(HEADERS)
 
     def _overwrite(self):
@@ -237,7 +253,7 @@ class EntryList(UserList):
         rows.append(list(HEADERS))
         for e in self:
             rows.append(e.to_csv())
-        with open(f"{self.directory}/{config.active_year}.csv", "w", newline="") as fp:
+        with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
             csv.writer(fp).writerows(rows)
 
     def append(self, item):
@@ -325,7 +341,7 @@ class VID(Validator):
         return ValidatorError("Invalid ID")
 
 
-def get_date(*args):
+def get_date():
     """Retrieve the date input from the user."""
     while True:
         user_input = input("Date: ").split()
@@ -342,7 +358,7 @@ def get_date(*args):
             print("Invalid input.")
 
 
-def get_amount(*args):
+def get_amount():
     """Retrieve the amount input from the user."""
     while True:
         amount = input("Amount: ").strip()
@@ -378,7 +394,7 @@ def _match_tag(query: str) -> str:
         return results[0]
 
 
-def get_tags(*args) -> List:
+def get_tags() -> List:
     """Get tag(s) input from user."""
     while True:
         tags = input("Tags: ")
@@ -396,7 +412,7 @@ def get_tags(*args) -> List:
         return tags
             
 
-def get_note(*args) -> str:
+def get_note() -> str:
     """Get note input from the user"""
     while True:
         note = input("Note: ")
@@ -422,11 +438,11 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     elif month is None and config.active_year != TODAY.year:
         month = 12
 
-    if len(entry_list) == 0:
+    if len(active_records[config.active_year]) == 0:
         raise BTError("Record is empty.")
 
     filtered_entries = []
-    for e in entry_list:
+    for e in active_records[config.active_year]:
         if e.hidden:
             continue
         if month != "year" and e.date.month != month:
@@ -491,12 +507,12 @@ def add_entry():
         pass # Exit the command
     else:
         entry = Entry(date, amount, tags, note)
-        entry_list.append(entry)
+        active_records[date.year].append(entry)
 
 
 def del_entry(id=VID(req=True)):
     """Remove an entry by it's ID."""
-    for e in entry_list[::-1]:
+    for e in active_records[config.active_year][::-1]:
         if e.id == id:
             ans = None
             date = e.date.strftime("%b %d")
@@ -543,7 +559,7 @@ def edit_entry(
     field=VLit(Entry.editable_fields, lower=True, req=True)):
     """Takes an ID and data type and allows user to change value"""
     id = int(id)
-    for e in entry_list:
+    for e in active_records[config.active_year]:
         if e.id == id:
             new_value = globals()[Entry.editable_fields[field]]()
             e.edit(field, new_value)
@@ -563,15 +579,15 @@ def manage_goals():
     pass
 
 
-def switch_year(year=VBool(str.isdigit, req=True)):
-    """Switches to different year.""" ### Maybe don't write to config??
-    year = int(year)
-    if os.path.exists(f"{year}.csv"):
-        config.active_year = year
-        print(f"Records for {year} are now active.")
-        return
+# def switch_year(year=VBool(str.isdigit, req=True)):
+#     """Switches to different year.""" ### Maybe don't write to config??
+#     year = int(year)
+#     if os.path.exists(f"{year}.csv"):
+#         config.active_year = year
+#         print(f"Records for {year} are now active.")
+#         return
 
-    print("Invalid year input.")
+#     print("Invalid year input.")
         
 
 @parser.command("q", "quit")
@@ -608,5 +624,5 @@ def main(sysargs: List[str]):
 
 if __name__=="__main__":
     config = Config("config.json")
-    entry_list = EntryList("records")
+    active_records = {TODAY.year: YearlyRecord(TODAY.year)}
     main(sys.argv[1:])
