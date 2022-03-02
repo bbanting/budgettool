@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import List, Union
 import parser
 from parser.validator import VLit, VBool, Validator, ValidatorError, VComment
+from parser.base import Command, CommandController
 
 
 ENTRY_FOLDER = "records"
@@ -110,17 +111,6 @@ class Config:
                 json.dump(cfg, fp)
 
 
-def _verify_tags(tags: List):
-    """
-    Raise error if one of the tags are invalid;
-    Otherwise return list back.
-    """
-    for t in tags:
-        if t not in (config.tags + config.old_tags):
-            raise BTError("Invalid tag.")
-    return tags
-
-
 class Entry:
     editable_fields = {
         "amount":   "get_amount", 
@@ -161,13 +151,24 @@ class Entry:
         return active_records[self.date.year]
 
     @classmethod
+    def _verify_tags(tags: List):
+        """
+        Raise error if one of the tags are invalid;
+        Otherwise return list back.
+        """
+        for t in tags:
+            if t not in (config.tags + config.old_tags):
+                raise BTError("Invalid tag.")
+        return tags
+
+    @classmethod
     def from_csv(cls, data: list):
         """Contruct an entry from a csv line."""
         id, date, amount, tags, note, hidden = data
         id = int(id)
         date = datetime.strptime(date, "%Y/%m/%d")
         amount = Decimal(amount)
-        tags = _verify_tags(tags.split(" "))
+        tags = Entry._verify_tags(tags.split(" "))
         hidden = to_bool(hidden)
 
         return cls(date, amount, tags, note, hidden=hidden, id=id)
@@ -485,7 +486,26 @@ def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
             print(entry)
         sign = "-" if total < 0 else ""
         print(f"\nTOTAL: {sign}${abs(total)}")
+
+
+class ListCommand(Command):
+    names = ["list"]
+    params = {
+        "typ": VType(),
+        "month": VMonth(),
+        "tags": VTag(),
+        }
+    
+    def execute(self):
+        entries = _filter_entries(self.data["month"], self.data["typ"], self.data["tags"])
         
+        print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+        total = sum([e.amount for e in entries])
+        for entry in entries:
+            print(entry)
+        sign = "-" if total < 0 else ""
+        print(f"\nTOTAL: {sign}${abs(total)}")
+
 
 @parser.command("sum", "summarize")
 def summarize(typ=VType(), month=VMonth(), tags=VTag()):
@@ -619,7 +639,9 @@ def shell():
     while True:
         user_input = shlex.split(input("> "))
         try:
-            parser.route_command(user_input)
+            controller = CommandController()
+            controller.register(ListCommand)
+            controller.route_command(user_input)
         except BTError as e:
             print(e)
 
@@ -629,7 +651,9 @@ def main(sysargs: List[str]):
         if not sysargs:
             shell()
         else:
-            parser.route_command(sysargs)
+            controller = CommandController()
+            controller.route_command(sysargs)
+            # Catch BTError?
     except KeyboardInterrupt:
         print("")
 

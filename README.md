@@ -30,7 +30,6 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Watch dog or timeout for current year when changed from outside the shell
-- [x] When an entry is made for year that doesn't have a file, make a file
 
 ## Notes
 
@@ -43,7 +42,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - Is changing year necessary if an entry can easily be made with a different year?
 - Is hiding entries necessary if there is undo/redo?
 - Replace "year" and "all" with year number
-- If there's no active year, how to differentiate ids between years
+- If there's no active year, how to differentiate ids between years when selecting for edit and delete?
   - hexadeciaml ids?
 - A master records class; when iterated over, checks most recent years first
   - All records from all years are available but this way there isn't one ginormous file
