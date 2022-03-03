@@ -1,46 +1,20 @@
 # Small module for parsing arguments
 
 from __future__ import annotations
-from functools import wraps
-from typing import Union, Any, List, Callable
+from typing import Union, Any, List
 import inspect
 from .validator import Validator, ValidatorError
 import abc
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
-command_register = {}
 
 class ParseError(Exception):
     pass
 
 class CommandError(Exception):
     pass
-
-
-def command(*names, forks=()):
-    """Decorator to mark a function as a command and name it."""
-    def decorator(f):
-        f.forks = forks
-        for n in names:
-            if type(n) == str:
-                command_register.update({n: f})
-            else:
-                raise ParseError("Invalid command name format.")
-        
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-"""
-Purely semantic difference for code clarity purposes.
-A fork_command returns a function and instead of normal parameters
-with Validators, it has one paramter, fork. The default for the 
-fork parameter is the default fork that will be chosen.
-"""
-fork_command = command
 
 
 class CommandController:
@@ -67,6 +41,16 @@ class CommandController:
             return command.fork(command.default)
         return command
 
+    def execute(self, command: Command) -> None:
+        """Wrapper around execute methods to give the option to include
+        parameters."""
+        argspec = inspect.getfullargspec(command.execute)
+        # If more than just self is specified, include **data in the call
+        if len(argspec.args) > 1:
+            command.execute(**command.data)
+        else:
+            command.execute()
+
     def route_command(self, args:List[str]):
         """Process user input, execute appropriate function."""
         # Ensure it's a list and first item isn't ''
@@ -86,7 +70,7 @@ class CommandController:
         except CommandError as e:
             print(e)
         else:
-            command.execute()
+            self.execute(command)
             if "undo" in type(command).__dict__:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()

@@ -471,8 +471,8 @@ class ListCommand(parser.Command):
         "tags": VTag(),
         }
     
-    def execute(self):
-        entries = _filter_entries(self.data["month"], self.data["typ"], self.data["tags"])
+    def execute(self, month, typ, tags):
+        entries = _filter_entries(month, typ, tags)
 
         print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = sum([e.amount for e in entries])
@@ -482,7 +482,7 @@ class ListCommand(parser.Command):
         print(f"\nTOTAL: {sign}${abs(total)}")
 
 
-@parser.command("sum", "summarize")
+# @parser.command("sum", "summarize")
 def summarize(typ=VType(), month=VMonth(), tags=VTag()):
     """Print a summary of the entries. Filtered by the user by type, month, and tags."""
     try:
@@ -587,7 +587,7 @@ class RemoveCommand(parser.ForkCommand):
     default = "entry"
 
 
-@parser.command("edit")
+# @parser.command("edit")
 def edit_entry(
     id=VBool(str.isdigit, req=True), 
     field=VLit(Entry.editable_fields, lower=True, req=True)):
@@ -602,7 +602,28 @@ def edit_entry(
         print("Entry not found.")
 
 
-@parser.command("bills")
+class EditEntryCommand(parser.Command):
+    """Takes an ID and field and allows user to change the value."""
+    names = ("edit",)
+    params = {
+        "id": VBool(str.isdigit, req=True),
+        "field": VLit(Entry.editable_fields, lower=True, req=True),
+    }
+
+    def execute(self):
+        id = int(self.data["id"])
+        field = self.data["field"]
+        for e in active_records[config.active_year]:
+            if e.id != id:
+                continue
+            new_value = globals()[e.editable_fields[field]]()
+            e.edit(field, new_value)
+            break
+        else:
+            print("Entry not found.")
+
+
+# @parser.command("bills")
 def show_bills():
     """Print the bills; placeholder function."""
     for k, v in config.bills.items():
@@ -623,11 +644,6 @@ def manage_goals():
 
 #     print("Invalid year input.")
         
-
-@parser.command("q", "quit")
-def quit_program():
-    quit()
-
 
 class QuitCommand(parser.Command):
     names = ("q", "quit")
