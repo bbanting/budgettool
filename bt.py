@@ -14,7 +14,6 @@ from datetime import datetime
 from typing import List, Union
 import parser
 from parser.validator import VLit, VBool, Validator, ValidatorError, VComment
-from parser.base import Command, CommandController
 
 
 ENTRY_FOLDER = "records"
@@ -150,7 +149,7 @@ class Entry:
     def parent_record(self) -> YearlyRecord:
         return active_records[self.date.year]
 
-    @classmethod
+    @staticmethod
     def _verify_tags(tags: List):
         """
         Raise error if one of the tags are invalid;
@@ -168,7 +167,7 @@ class Entry:
         id = int(id)
         date = datetime.strptime(date, "%Y/%m/%d")
         amount = Decimal(amount)
-        tags = Entry._verify_tags(tags.split(" "))
+        tags = cls._verify_tags(tags.split(" "))
         hidden = to_bool(hidden)
 
         return cls(date, amount, tags, note, hidden=hidden, id=id)
@@ -488,8 +487,8 @@ def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
         print(f"\nTOTAL: {sign}${abs(total)}")
 
 
-class ListCommand(Command):
-    names = ["list"]
+class ListCommand(parser.Command):
+    names = ("list",)
     params = {
         "typ": VType(),
         "month": VMonth(),
@@ -498,7 +497,7 @@ class ListCommand(Command):
     
     def execute(self):
         entries = _filter_entries(self.data["month"], self.data["typ"], self.data["tags"])
-        
+
         print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = sum([e.amount for e in entries])
         for entry in entries:
@@ -567,6 +566,22 @@ def del_tag(name=VTag(req=True)):
     config.remove_tag(name)
 
 
+class AddCommand(parser.Command):
+    names = ("add",)
+    params = {
+        "name": VNewTag(req=True),
+    }
+
+    def execute(self):
+        config.add_tag(self.data["name"])
+
+    def undo(self):
+        config.remove_tag(self.data["name"])
+
+    def redo(self):
+        config.add_tag(self.data["name"])
+
+
 @parser.fork_command("add", forks=("entry", "tag"))
 def add_command(fork="entry"):
     """Generic add command that routes to either add_tag or add_entry."""
@@ -627,31 +642,41 @@ def quit_program():
     quit()
 
 
+class QuitCommand(parser.Command):
+    names = ("q", "quit")
+
+    def execute(self):
+        quit()
+
+
 def btinput(context) -> str:
     """Wrapper for builtin input function"""
     pass
 
 
-def shell():
+def shell(controller):
     config.shell = True
     print("Budget Tool")
     print(f"Records for {config.active_year} are active.")
     while True:
         user_input = shlex.split(input("> "))
         try:
-            controller = CommandController()
-            controller.register(ListCommand)
             controller.route_command(user_input)
         except BTError as e:
             print(e)
 
 
 def main(sysargs: List[str]):
+    controller = parser.CommandController()
+    controller.register(ListCommand)
+    controller.register(parser.UndoCommand)
+    controller.register(parser.RedoCommand)
+    controller.register(QuitCommand)
+    controller.register(AddCommand)
     try:
         if not sysargs:
-            shell()
+            shell(controller)
         else:
-            controller = CommandController()
             controller.route_command(sysargs)
             # Catch BTError?
     except KeyboardInterrupt:

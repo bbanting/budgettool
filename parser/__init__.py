@@ -1,2 +1,2 @@
-from .base import command, fork_command, route_command
+from .base import Command, CommandController, UndoCommand, RedoCommand, command, fork_command
 from .validator import Validator, ValidatorError, VLit, VBool, VComment, VAny

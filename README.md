@@ -16,7 +16,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - tags attached to goals 
         - any and all relationships
 - [ ] Show hidden entries, ability to permanently delete
-- [ ] Implement undo and redo?
+- [x] Implement undo and redo?
 - [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
   - [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
@@ -30,6 +30,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Watch dog or timeout for current year when changed from outside the shell
+- [ ] For ListCommand, also print out the criteria the entries are being filtered on
 
 ## Notes
 

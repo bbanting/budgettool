@@ -34,42 +34,49 @@ def command(*names, forks=()):
     return decorator
 
 
-
 class CommandController:
     def __init__(self) -> None:
-        self.commands = {}
+        self.command_register = {}
         self.undo_stack = []
         self.redo_stack = []
 
-    def undo(self):
-        pass
+    def undo(self) -> None:
+        if not self.undo_stack:
+            return
+        command = self.undo_stack.pop()
+        self.redo_stack.append(command)
+        command.undo()
 
-    def redo(self):
-        pass
+    def redo(self) -> None:
+        if not self.redo_stack:
+            return
+        command = self.redo_stack.pop()
+        self.undo_stack.append(command)
+        command.redo()
 
-    def register(self, command: Command, names: str=None) -> None:
-        if not names:
-            names = command.names
-        for n in names:
+    def register(self, command: Command) -> None:
+        """Attach the controller to the command and append command to commands list"""
+        command.controller = self
+        for n in command.names:
             if type(n) != str:
                 raise ParseError("Invalid command name format.")
-            self.commands.update({n: command})
+            self.command_register.update({n: command})
 
     def get_command(self, args) -> Union[Callable, None]:
         """Return the command function."""
-        command = self.commands.get(args.pop(0))
-        if command and command.forks:
-            if args and args[0].lower() in command.forks:
-                c = args.pop(0)
-                return command(fork=c)
-            return command() # default complement
+        command = self.command_register.get(args.pop(0))
+        # if command and command.forks:
+        #     if args and args[0].lower() in command.forks:
+        #         f = args.pop(0)
+        #         return command(fork=f)
+        #     return command() # default complement
         return command
 
     def route_command(self, args:List[str]):
         """Process user input, execute appropriate function."""
         # Ensure it's a list and first item isn't ''
         args = list(args) 
-        if not args[0]:
+        if not args or not args[0]:
             return
         
         # Get the function
@@ -80,24 +87,27 @@ class CommandController:
 
         # Execute the command
         try:
-            command = command_cls()
+            command = command_cls(args)
         except CommandError as e:
             print(e)
         else:
             command.execute()
-            if command.undo:
+            if "undo" in type(command).__dict__:
                 self.undo_stack.append(command)
+                self.redo_stack.clear()
 
 
 class Command(metaclass=abc.ABCMeta):
-    """Base class for a command. Kwargs replaced by dict class attr."""
-    names: List[str] = []
+    """Base class for a command."""
+    names: tuple[str] = []
     params: dict[str, Validator] = {}
+    data: dict[str, Any]
+    controller: CommandController
     
     def __init__(self, args: List[str]) -> None:
         """Ensures passed data is valid."""
         self.data = {}
-        for key, validator in self.params:
+        for key, validator in self.params.items():
             try:
                 result = validator(args)
                 self.data.update({key: result})
@@ -106,31 +116,40 @@ class Command(metaclass=abc.ABCMeta):
         if args: # Should be empty if successful
             raise CommandError(f"Unrecognized input: {', '.join(args)}")
 
-    # def _get_params(self) -> List[tuple[str, Validator]]:
-    #     """
-    #     Take a command function and output its parameters as a list
-    #     of tuples containing a key and validator.
-    #     """
-    #     params = []
-    #     for x in self.__dict__:
-    #         if not isinstance(self.__dict__[x], Validator):
-    #             continue
-    #         params.append((x, self.__dict__[x]))
-
     @abc.abstractmethod
-    def execute(self):
+    def execute(self) -> None:
         """
         User defines what the command does with the validated data 
         in self.data.
         """
         pass
 
-    def undo(self):
+    def undo(self) -> None:
         raise NotImplementedError("Undo has not been implemented.")
     
-    def redo(self):
+    def redo(self) -> None:
         raise NotImplementedError("Redo has not been implemented.")
-    
+
+
+class UndoCommand(Command):
+    """Undo the last command."""
+    names = ("undo",)
+
+    def execute(self) -> None:
+        if not self.controller.undo_stack:
+            print("Nothing to undo.")
+        self.controller.undo()
+
+
+class RedoCommand(Command):
+    """Redo the last command."""
+    names = ("redo",)
+
+    def execute(self) -> None:
+        if not self.controller.redo_stack:
+            print("Nothing to redo.")
+        self.controller.redo()
+
 
 """
 Purely semantic difference for code clarity purposes.
