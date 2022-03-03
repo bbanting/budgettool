@@ -433,13 +433,6 @@ def get_note() -> str:
         return note
 
 
-def check_tag(tag, tag_list) -> bool:
-    if tag in tag_list:
-        return True
-    else:
-        return False
-
-
 def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
     """
     Filter and return entries based on input.
@@ -462,29 +455,12 @@ def _filter_entries(month=None, typ=None, tags=()) -> List[Entry]:
         if typ and typ != e.type:
             continue
         if tags and not any([True if t in e.tags else False for t in tags]):
-        # if tags and not any([check_tag(t, e.tags) for t in tags]):
             continue
         filtered_entries.append(e)
 
     if not filtered_entries:
         raise BTError("No entries found.")
     return sorted(filtered_entries, key=lambda x: x.date)
-
-
-@parser.command("list")
-def list_entries(typ=VType(), month=VMonth(), tags=VTag()):
-    """Print the entries. Filtered by the user by type, month, and tags."""
-    try:
-        entries = _filter_entries(month, typ, tags)
-    except BTError as e:
-        print(e)
-    else:
-        print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
-        total = sum([e.amount for e in entries])
-        for entry in entries:
-            print(entry)
-        sign = "-" if total < 0 else ""
-        print(f"\nTOTAL: {sign}${abs(total)}")
 
 
 class ListCommand(parser.Command):
@@ -527,47 +503,21 @@ def summarize(typ=VType(), month=VMonth(), tags=VTag()):
 #     entry = Entry(TODAY.strftime("%Y/%m/%d"), amount, category, note)
 
 
-def add_entry():
-    """Create an entry from a series of user input and append to csv file."""
-    try:
-        date = get_date()
-        amount = get_amount()
-        tags = get_tags()
-        note = get_note()
-    except BTError:
-        pass # Exit the command
-    else:
-        entry = Entry(date, amount, tags, note)
-        active_records[date.year].append(entry)
+class AddEntryCommand(parser.Command):
+    def execute(self):
+        try:
+            date = get_date()
+            amount = get_amount()
+            tags = get_tags()
+            note = get_note()
+        except BTError:
+            pass # Exit the command
+        else:
+            entry = Entry(date, amount, tags, note)
+            active_records[date.year].append(entry)
 
 
-def del_entry(id=VID(req=True)):
-    """Remove an entry by it's ID."""
-    for e in active_records[config.active_year][::-1]:
-        if e.id == id:
-            ans = None
-            date = e.date.strftime("%b %d")
-            while ans not in ("yes", "no", "y", "n"):
-                ans = input(f"(Y/n) Are you sure you want to delete entry {e.id}? ({date}: {e.dollars})\n").lower()
-            if ans in ("yes", "y"):
-                e.edit("hidden", True)
-            break
-    else:
-        print("Entry not found.")
-
-
-def add_tag(name=VNewTag(req=True)):
-    """Add a tag to the config file."""
-    config.add_tag(name)
-
-
-def del_tag(name=VTag(req=True)):
-    """Remove a tag from the config file."""
-    config.remove_tag(name)
-
-
-class AddCommand(parser.Command):
-    names = ("add",)
+class AddTagCommand(parser.Command):
     params = {
         "name": VNewTag(req=True),
     }
@@ -582,22 +532,59 @@ class AddCommand(parser.Command):
         config.add_tag(self.data["name"])
 
 
-@parser.fork_command("add", forks=("entry", "tag"))
-def add_command(fork="entry"):
-    """Generic add command that routes to either add_tag or add_entry."""
-    if fork == "entry":
-        return add_entry
-    elif fork == "tag":
-        return add_tag
+class AddCommand(parser.ForkCommand):
+    names = ("add",)
+    forks = {
+        "entry": AddEntryCommand,
+        "tag": AddTagCommand
+    }
+    default = "entry"
 
 
-@parser.fork_command("del", "delete", "remove", forks=("entry", "tag"))
-def delete_command(fork="entry"):
-    """Generic delete command that routes to either del_tag or del_entry."""
-    if fork == "entry":
-        return del_entry
-    elif fork == "tag":
-        return del_tag
+class RemoveEntryCommand(parser.Command):
+    """Remove and Entry by its ID."""
+    params = {
+        "id": VID(req=True),
+    }
+
+    def execute(self):
+        for e in active_records[config.active_year][::-1]:
+            if e.id != id:
+                continue
+            ans = None
+            date = e.date.strftime("%b %d")
+            while ans not in ("yes", "no", "y", "n"):
+                ans = input(f"(Y/n) Are you sure you want to delete entry {e.id}? ({date}: {e.dollars})\n").lower()
+            if ans in ("yes", "y"):
+                e.edit("hidden", True)
+            break
+        else:
+            print("Entry not found.")
+
+
+class RemoveTagCommand(parser.Command):
+    """Remove a tag by its name."""
+    params = {
+        "name": VTag(req=True),
+    }
+
+    def execute(self):
+        config.remove_tag(self.data["name"])
+
+    def undo(self):
+        config.add_tag(self.data["name"])
+
+    def redo(self):
+        config.remove_tag(self.data["name"])
+
+
+class RemoveCommand(parser.ForkCommand):
+    names = ("del", "delete", "remove")
+    forks = {
+        "entry": RemoveEntryCommand,
+        "tag": RemoveTagCommand
+    }
+    default = "entry"
 
 
 @parser.command("edit")
@@ -673,6 +660,12 @@ def main(sysargs: List[str]):
     controller.register(parser.RedoCommand)
     controller.register(QuitCommand)
     controller.register(AddCommand)
+    controller.register(RemoveCommand)
+    controller.register(RemoveEntryCommand)
+    controller.register(RemoveTagCommand)
+    controller.register(AddEntryCommand)
+    controller.register(AddTagCommand)
+
     try:
         if not sysargs:
             shell(controller)

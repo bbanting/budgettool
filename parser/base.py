@@ -34,25 +34,20 @@ def command(*names, forks=()):
     return decorator
 
 
+"""
+Purely semantic difference for code clarity purposes.
+A fork_command returns a function and instead of normal parameters
+with Validators, it has one paramter, fork. The default for the 
+fork parameter is the default fork that will be chosen.
+"""
+fork_command = command
+
+
 class CommandController:
     def __init__(self) -> None:
         self.command_register = {}
         self.undo_stack = []
         self.redo_stack = []
-
-    def undo(self) -> None:
-        if not self.undo_stack:
-            return
-        command = self.undo_stack.pop()
-        self.redo_stack.append(command)
-        command.undo()
-
-    def redo(self) -> None:
-        if not self.redo_stack:
-            return
-        command = self.redo_stack.pop()
-        self.undo_stack.append(command)
-        command.redo()
 
     def register(self, command: Command) -> None:
         """Attach the controller to the command and append command to commands list"""
@@ -62,14 +57,14 @@ class CommandController:
                 raise ParseError("Invalid command name format.")
             self.command_register.update({n: command})
 
-    def get_command(self, args) -> Union[Callable, None]:
+    def get_command(self, args) -> Union[Command, None]:
         """Return the command function."""
         command = self.command_register.get(args.pop(0))
-        # if command and command.forks:
-        #     if args and args[0].lower() in command.forks:
-        #         f = args.pop(0)
-        #         return command(fork=f)
-        #     return command() # default complement
+        # Check for and process fork command
+        if isinstance(command, ForkCommand):
+            if args and args[0] in command.forks:
+                return command.fork(args.pop(0))
+            return command.fork(command.default)
         return command
 
     def route_command(self, args:List[str]):
@@ -95,18 +90,31 @@ class CommandController:
             if "undo" in type(command).__dict__:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
+    
+    def undo(self) -> None:
+        if not self.undo_stack:
+            return
+        command = self.undo_stack.pop()
+        self.redo_stack.append(command)
+        command.undo()
+
+    def redo(self) -> None:
+        if not self.redo_stack:
+            return
+        command = self.redo_stack.pop()
+        self.undo_stack.append(command)
+        command.redo()
 
 
 class Command(metaclass=abc.ABCMeta):
     """Base class for a command."""
-    names: tuple[str] = []
+    names: tuple[str] = ()
     params: dict[str, Validator] = {}
-    data: dict[str, Any]
+    data: dict[str, Any] = {}
     controller: CommandController
     
     def __init__(self, args: List[str]) -> None:
         """Ensures passed data is valid."""
-        self.data = {}
         for key, validator in self.params.items():
             try:
                 result = validator(args)
@@ -131,6 +139,18 @@ class Command(metaclass=abc.ABCMeta):
         raise NotImplementedError("Redo has not been implemented.")
 
 
+class ForkCommand():
+    """A class for two-word commands that fork based on the second word."""
+    names: tuple[str] = ()
+    forks: dict[str, Command] = {}
+    default: Union[str, None] = None
+
+    def fork(self, chosen_fork) -> Command:
+        if not chosen_fork:
+            return None
+        return self.forks[chosen_fork]
+
+
 class UndoCommand(Command):
     """Undo the last command."""
     names = ("undo",)
@@ -149,12 +169,3 @@ class RedoCommand(Command):
         if not self.controller.redo_stack:
             print("Nothing to redo.")
         self.controller.redo()
-
-
-"""
-Purely semantic difference for code clarity purposes.
-A fork_command returns a function and instead of normal parameters
-with Validators, it has one paramter, fork. The default for the 
-fork parameter is the default fork that will be chosen.
-"""
-fork_command = command
