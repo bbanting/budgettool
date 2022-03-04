@@ -30,9 +30,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] For ListCommand, also print out the criteria the entries are being filtered on
 - [ ] Make a less verbose alternative to CommandController.register()
-- [x] Create all undo and redo methods on comamnds
-- [ ] remove hidden field
-- [ ] Switch from using Decimal to int for amounts (faster and smaller)
+- [x] remove hidden field
+- [x] Switch from using Decimal to int for amounts (faster and smaller)
 
 ## Notes
 
@@ -42,9 +41,8 @@ I made this because I like to code and want to improve. I can't see this being u
   - Can I make this better?
 - An option would be to use sqlite and have the option to export to csv instead
 - Possible to have no tags on entry?
-- Is changing year necessary if an entry can easily be made with a different year?
-- Is hiding entries necessary if there is undo/redo?
 - Replace "year" and "all" with year number
+- Is changing year necessary if an entry can easily be made with a different year?
 - If there's no active year, how to differentiate ids between years when selecting for edit and delete?
   - hexadeciaml ids?
 - A master records class; when iterated over, checks most recent years first

@@ -12,7 +12,6 @@ import collections
 import logging
 import parser
 import copy
-from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List, Union
 from parser.validator import VLit, VBool, Validator, ValidatorError, VComment
@@ -23,7 +22,7 @@ ENTRY_FOLDER = "records"
 
 TODAY = datetime.now()
 
-HEADERS = ("id","date","amount","tags","note","hidden")
+HEADERS = ("id","date","amount","tags","note")
 
 MONTHS = {
     "january": 1, "february": 2, "march": 3, "april": 4,
@@ -40,15 +39,6 @@ DATEW = 8
 AMOUNTW = 10
 TAGSW = 12
 NOTEW = None
-
-
-def to_bool(string):
-    if string == "True":
-        return True
-    elif string == "False":
-        return False
-    else:
-        raise BTError("Invalid format.")
 
 
 class BTError(Exception):
@@ -123,13 +113,11 @@ class Entry:
         "date":     "get_date",
         }
 
-    def __init__(self, date: datetime, amount: Decimal, tags: List, note:str,
-                    hidden:bool=False, id:int=0):
+    def __init__(self, date: datetime, amount: int, tags: List, note:str, id:int=0):
         self.date = date
         self.amount = amount
         self.tags = tags
         self.note = note
-        self.hidden = hidden
 
         if id:
             self.id = id
@@ -144,15 +132,32 @@ class Entry:
             return "expense"
 
     @property
-    def dollars(self) -> str:
-        if self.amount > 0:
-            return f"+${self.amount:.2f}"
-        else:
-            return f"-${abs(self.amount):.2f}"
-
-    @property
     def parent_record(self) -> YearlyRecord:
         return active_records[self.date.year]
+
+    @classmethod
+    def from_csv(cls, data: list):
+        """Contruct an entry from a csv line."""
+        id, date, amount, tags, note = data
+        id = int(id)
+        date = datetime.strptime(date, "%Y/%m/%d")
+        amount = int(amount)
+        tags = cls._verify_tags(tags.split(" "))
+
+        return cls(date, amount, tags, note, id=id)
+
+    @staticmethod
+    def cents_to_dollars(cent_amount) -> str:
+        """Convert a cent amount to dollars for display."""
+        if cent_amount > 0:
+            return f"+${cent_amount/100:.2f}"
+        else:
+            return f"-${abs(cent_amount/100):.2f}"
+
+    @staticmethod
+    def dollars_to_cents(dollar_amount: str) -> int:
+        """Convert a string dollar ammount to cents for storage."""
+        return int(float(dollar_amount) * 100)
 
     @staticmethod
     def _verify_tags(tags: List):
@@ -165,22 +170,13 @@ class Entry:
                 raise BTError("Invalid tag.")
         return tags
 
-    @classmethod
-    def from_csv(cls, data: list):
-        """Contruct an entry from a csv line."""
-        id, date, amount, tags, note, hidden = data
-        id = int(id)
-        date = datetime.strptime(date, "%Y/%m/%d")
-        amount = Decimal(amount)
-        tags = cls._verify_tags(tags.split(" "))
-        hidden = to_bool(hidden)
-
-        return cls(date, amount, tags, note, hidden=hidden, id=id)
+    def in_dollars(self):
+        return Entry.cents_to_dollars(self.amount)
 
     def to_csv(self) -> List:
         """Convert entry into list for writing by the csv module."""
         date = self.date.strftime("%Y/%m/%d")
-        return [self.id, date, f"{self.amount}", " ".join(self.tags), self.note, self.hidden]
+        return [self.id, date, f"{self.amount}", " ".join(self.tags), self.note]
 
     def generate_id(self) -> int:
         """Generate a new unused ID for a new entry."""
@@ -192,11 +188,10 @@ class Entry:
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        note = self.note if self.note else "..."
         tags = ", ".join(self.tags)
         if len(tags) > 12:
             tags = tags[:9] + "..."
-        return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.dollars:{AMOUNTW}} {tags:{TAGSW}} {note}"
+        return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
 
 
 class MasterRecord(collections.UserDict):
@@ -238,7 +233,7 @@ class YearlyRecord(collections.UserList):
         for i, ln in enumerate(lines[1:]):
             try:
                 entry = Entry.from_csv(ln)
-            except (ValueError, InvalidOperation, BTError):
+            except (ValueError, BTError):
                 print(f"Error parsing line {i+2}. Your CSV file may be corrupted.")
                 quit()
             else:
@@ -385,16 +380,9 @@ def get_amount():
         if not amount.startswith("-") and not amount.startswith("+"):
             print("The amount must start with + or -")
             continue
-        try:
-            amount = Decimal(amount)
-        except InvalidOperation:
-            print("Invalid input.")
-        else:
-            if amount == 0:
-                print("Amount cannot be zero.")
-                continue
-            else:
-                return amount
+        amount = Entry.dollars_to_cents(amount)
+        print("Invalid input.")
+        return amount
 
 
 def _match_tag(query: str) -> str:
@@ -436,6 +424,8 @@ def get_note() -> str:
         note = input("Note: ")
         if note.lower() == "back":
             raise BTError("Command terminated.")
+        if not note:
+            return "..."
         return note
 
 
@@ -460,11 +450,10 @@ class ListCommand(parser.Command):
         entries = self.filter_entries(month, typ, tags)
 
         print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
-        total = sum([e.amount for e in entries])
+        total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
             print(entry)
-        sign = "-" if total < 0 else ""
-        print(f"\nTOTAL: {sign}${abs(total)}")
+        print(f"\nTOTAL: {total}")
     
     def filter_entries(self, month=None, typ=None, tags=()) -> list[Entry]:
         """
@@ -481,8 +470,6 @@ class ListCommand(parser.Command):
 
         filtered_entries = []
         for e in active_records[config.active_year]:
-            if e.hidden:
-                continue
             if month != "year" and e.date.month != month:
                 continue
             if typ and typ != e.type:
@@ -506,11 +493,10 @@ class SummarizeCommand(ListCommand):
         except BTError as e:
             print(e)
         else:
-            total = sum([e.amount for e in entries])
-            sign = "-" if total < 0 else ""
+            total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
             x = "Entry" if len(entries) < 2 else "Entries"
             print(f"{len(entries)} {x}")
-            print(f"TOTAL: {sign}${abs(total)}")
+            print(f"TOTAL: {total}")
 
 
 # def quick_add_entry(*args):
@@ -578,8 +564,9 @@ class RemoveEntryCommand(parser.Command):
             return
         ans = None
         date = self.entry.date.strftime("%b %d")
+        prompt = f"(Y/n) Are you sure you want to delete entry {self.entry.id}? ({date}: {self.entry.in_dollars()})\n"
         while ans not in ("yes", "no", "y", "n"):
-            ans = input(f"(Y/n) Are you sure you want to delete entry {self.entry.id}? ({date}: {self.entry.dollars})\n").lower()
+            ans = input(prompt).lower()
         if ans in ("yes", "y"):
             active_records[self.entry.date.year].remove(self.entry)
 
