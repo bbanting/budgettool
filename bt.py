@@ -11,6 +11,7 @@ import shlex
 import collections
 import logging
 import parser
+import copy
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from typing import List, Union
@@ -188,11 +189,6 @@ class Entry:
             return prev_id + 1
         else:
             return 1
-
-    def edit(self, attr, value):
-        """Set an attribute and overwrite the file."""
-        setattr(self, attr, value)
-        self.parent_record._overwrite()
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
@@ -231,7 +227,7 @@ class YearlyRecord(collections.UserList):
 
         self.year = year
         self._check_file()
-        
+
         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r", newline="") as fp:
             lines = list(csv.reader(fp))
         if lines[0] != list(HEADERS):
@@ -272,11 +268,17 @@ class YearlyRecord(collections.UserList):
         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
             csv.writer(fp).writerows(rows)
 
-    def append(self, item):
+    def replace(self, old: Entry, new: Entry) -> None:
+        """Replace old Entry with new Entry."""
+        index = self.index(old)
+        self[index] = new
+        self._overwrite()
+
+    def append(self, item: Entry) -> None:
         super().append(item)
         self._overwrite()
 
-    def remove(self, item):
+    def remove(self, item: Entry) -> None:
         super().remove(item)
         self._overwrite()
 
@@ -437,7 +439,7 @@ def get_note() -> str:
         return note
 
 
-def find_entry(year: YearlyRecord, id: int) -> Entry:
+def find_entry(year: YearlyRecord, id: int) -> Union[Entry, None]:
     """Find an entry by ID and return it."""
     for entry in reversed(year):
         if entry.id != id:
@@ -617,21 +619,25 @@ class EditEntryCommand(parser.Command):
     """Takes an ID and field and allows user to change the value."""
     names = ("edit",)
     params = {
-        "id": VBool(str.isdigit, req=True),
+        "id": VID(req=True),
         "field": VLit(Entry.editable_fields, lower=True, req=True),
     }
 
-    def execute(self):
-        id = int(self.data["id"])
-        field = self.data["field"]
-        for e in active_records[config.active_year]:
-            if e.id != id:
-                continue
-            new_value = globals()[e.editable_fields[field]]()
-            e.edit(field, new_value)
-            break
-        else:
+    def execute(self, id: int, field: str) -> None:
+        self.old_entry = find_entry(active_records[config.active_year], id)
+        if not self.old_entry:
             print("Entry not found.")
+            return
+        self.new_entry = copy.copy(self.old_entry)
+        new_value = globals()[self.new_entry.editable_fields[field]]()
+        setattr(self.new_entry, field, new_value)
+        active_records[config.active_year].replace(self.old_entry, self.new_entry)
+
+    def undo(self) -> None:
+        active_records[config.active_year].replace(self.new_entry, self.old_entry)
+    
+    def redo(self) -> None:
+        active_records[config.active_year].replace(self.old_entry, self.new_entry)
 
 
 class ShowBillsCommand(parser.Command):

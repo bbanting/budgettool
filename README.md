@@ -15,7 +15,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Preset expenses and bills (goals)
     - tags attached to goals 
         - any and all relationships
-- [ ] Show hidden entries, ability to permanently delete
 - [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
   - [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
@@ -31,8 +30,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] For ListCommand, also print out the criteria the entries are being filtered on
 - [ ] Make a less verbose alternative to CommandController.register()
-- [ ] Create all undo and redo methods on comamnds
+- [x] Create all undo and redo methods on comamnds
 - [ ] remove hidden field
+- [ ] Switch from using Decimal to int for amounts (faster and smaller)
 
 ## Notes
 

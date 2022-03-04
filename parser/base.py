@@ -73,6 +73,7 @@ class CommandController:
             print(e)
         else:
             self.execute(command)
+            # If undo is implemented on command
             if "undo" in command.__class__.__dict__:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
