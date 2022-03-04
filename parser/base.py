@@ -34,8 +34,10 @@ class CommandController:
     def get_command(self, args) -> Union[Command, None]:
         """Return the command function."""
         command = self.command_register.get(args.pop(0))
+        if not command:
+            return
         # Check for and process fork command
-        if isinstance(command, ForkCommand):
+        if issubclass(command, ForkCommand):
             if args and args[0] in command.forks:
                 return command.fork(args.pop(0))
             return command.fork(command.default)
@@ -71,12 +73,13 @@ class CommandController:
             print(e)
         else:
             self.execute(command)
-            if "undo" in type(command).__dict__:
+            if "undo" in command.__class__.__dict__:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
     
     def undo(self) -> None:
         if not self.undo_stack:
+            print("Nothing to undo")
             return
         command = self.undo_stack.pop()
         self.redo_stack.append(command)
@@ -84,6 +87,7 @@ class CommandController:
 
     def redo(self) -> None:
         if not self.redo_stack:
+            print("Nothing to redo")
             return
         command = self.redo_stack.pop()
         self.undo_stack.append(command)
@@ -94,11 +98,12 @@ class Command(metaclass=abc.ABCMeta):
     """Base class for a command."""
     names: tuple[str] = ()
     params: dict[str, Validator] = {}
-    data: dict[str, Any] = {}
+    data: dict[str, Any]
     controller: CommandController
     
     def __init__(self, args: List[str]) -> None:
         """Ensures passed data is valid."""
+        self.data = {}
         for key, validator in self.params.items():
             try:
                 result = validator(args)
@@ -129,10 +134,11 @@ class ForkCommand():
     forks: dict[str, Command] = {}
     default: Union[str, None] = None
 
-    def fork(self, chosen_fork) -> Command:
+    @classmethod
+    def fork(cls, chosen_fork) -> Command:
         if not chosen_fork:
             return None
-        return self.forks[chosen_fork]
+        return cls.forks[chosen_fork]
 
 
 class UndoCommand(Command):
@@ -140,8 +146,6 @@ class UndoCommand(Command):
     names = ("undo",)
 
     def execute(self) -> None:
-        if not self.controller.undo_stack:
-            print("Nothing to undo.")
         self.controller.undo()
 
 
@@ -150,6 +154,4 @@ class RedoCommand(Command):
     names = ("redo",)
 
     def execute(self) -> None:
-        if not self.controller.redo_stack:
-            print("Nothing to redo.")
         self.controller.redo()

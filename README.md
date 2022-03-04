@@ -32,6 +32,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] For ListCommand, also print out the criteria the entries are being filtered on
 - [ ] Make a less verbose alternative to CommandController.register()
 - [ ] Create all undo and redo methods on comamnds
+- [ ] remove hidden field
 
 ## Notes
 
