@@ -3,9 +3,9 @@
 from __future__ import annotations
 from typing import Union, Any, List
 import inspect
-from .validator import Validator, ValidatorError
 import abc
 import logging
+from .validator import Validator, ValidatorError, VLit
 
 logging.basicConfig(level=logging.INFO)
 
@@ -54,10 +54,10 @@ class CommandController:
             command.execute()
 
     def route_command(self, args:List[str]):
-        """Process user input, execute appropriate function."""
+        """Process user input, execute command."""
         # Ensure it's a list and first item isn't ''
-        args = list(args) 
         if not args or not args[0]:
+            print("Try 'help' if you're having trouble.")
             return
         
         # Get the function
@@ -101,6 +101,7 @@ class Command(metaclass=abc.ABCMeta):
     params: dict[str, Validator] = {}
     data: dict[str, Any]
     controller: CommandController
+    help_text: str = ""
     
     def __init__(self, args: List[str]) -> None:
         """Ensures passed data is valid."""
@@ -134,6 +135,8 @@ class ForkCommand():
     names: tuple[str] = ()
     forks: dict[str, Command] = {}
     default: Union[str, None] = None
+    controller: CommandController
+    help_text: str = ""
 
     @classmethod
     def fork(cls, chosen_fork) -> Command:
@@ -151,8 +154,41 @@ class UndoCommand(Command):
 
 
 class RedoCommand(Command):
-    """Redo the last command."""
+    """Redo the last undo."""
     names = ("redo",)
 
     def execute(self) -> None:
         self.controller.redo()
+
+
+class HelpCommand(Command):
+    """A command to give information on how to use other commands."""
+    names = ("help",)
+
+    def __init__(self, args: List[str]):
+        self.params = {"command": VLit(self.controller.command_register)}
+        super().__init__(args)
+        
+    def execute(self, command: Command):
+        command = self.controller.command_register.get(command)
+        if not command:
+            prev = None
+            for k, v in self.controller.command_register.items():
+                if v == prev:
+                    continue
+                print(f"{k:.<15}{v.__doc__}")
+                prev = self.controller.command_register[k]
+            return
+        param_format = []
+        for k, v in command.params.items():
+            req = "*" if v.required else ""
+            param_format.append(f"<{req}{k}>")
+        space = " " if len(param_format) > 0 else ""
+        name_suffix = "" if len(command.names)<=1 else "S"
+        print(f"\nCOMMAND NAME{name_suffix}: {', '.join(command.names)}")
+        if param_format:
+            print(f"FORMAT: \"{command.names[0]}{space}{' '.join(param_format)}\"")
+        print(f"\t{command.__doc__}")
+        if command.help_text:
+            print(f"\t{command.help_text}")
+        print("")

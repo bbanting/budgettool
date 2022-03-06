@@ -438,13 +438,14 @@ def find_entry(year: YearlyRecord, id: int) -> Union[Entry, None]:
 
 
 class ListCommand(parser.Command):
-    """Print out entries. Filtered by the user by type, month, and tags."""
+    """Display a list of entries filtered by type, month, and tags."""
     names = ("list",)
     params = {
-        "typ": VType(),
         "month": VMonth(),
+        "typ": VType(),
         "tags": VTag(),
         }
+    help_text = "If no year or month are specified it will default to the current year and month."
     
     def execute(self, month, typ, tags):
         entries = self.filter_entries(month, typ, tags)
@@ -484,7 +485,7 @@ class ListCommand(parser.Command):
         
 
 class SummarizeCommand(ListCommand):
-    """Print a summary of the entries. Filtered by the user by type, month, and tags."""
+    """Display a summary of entries filtered by type, month, and tags."""
     names = ("sum", "summarize")
 
     def execute(self, month, typ, tags):
@@ -543,6 +544,7 @@ class AddTagCommand(parser.Command):
 
 
 class AddCommand(parser.ForkCommand):
+    """Add an entry or tag."""    
     names = ("add",)
     forks = {
         "entry": AddEntryCommand,
@@ -594,6 +596,7 @@ class RemoveTagCommand(parser.Command):
 
 
 class RemoveCommand(parser.ForkCommand):
+    """Delete an entry or tag."""
     names = ("del", "delete", "remove")
     forks = {
         "entry": RemoveEntryCommand,
@@ -603,7 +606,7 @@ class RemoveCommand(parser.ForkCommand):
 
 
 class EditEntryCommand(parser.Command):
-    """Takes an ID and field and allows user to change the value."""
+    """Edit an entry; requires an ID and a field."""
     names = ("edit",)
     params = {
         "id": VID(req=True),
@@ -628,7 +631,7 @@ class EditEntryCommand(parser.Command):
 
 
 class ShowBillsCommand(parser.Command):
-    """Print the bills; placeholder command."""
+    """Display the bills; placeholder command."""
     names = ("bills",)
 
     def execute(self):
@@ -649,9 +652,10 @@ def manage_goals():
 #         return
 
 #     print("Invalid year input.")
-        
+
 
 class QuitCommand(parser.Command):
+    """Quits the program."""
     names = ("q", "quit")
 
     def execute(self):
@@ -677,19 +681,20 @@ def shell(controller):
 
 def main(sysargs: List[str]):
     controller = parser.CommandController()
-    controller.register(ListCommand)
     controller.register(parser.UndoCommand)
     controller.register(parser.RedoCommand)
+    controller.register(parser.HelpCommand)
+    controller.register(ListCommand)
+    controller.register(SummarizeCommand)
     controller.register(QuitCommand)
-    controller.register(AddCommand)
     controller.register(RemoveCommand)
     controller.register(RemoveEntryCommand)
     controller.register(RemoveTagCommand)
+    controller.register(AddCommand)
     controller.register(AddEntryCommand)
     controller.register(AddTagCommand)
     controller.register(EditEntryCommand)
     controller.register(ShowBillsCommand)
-    controller.register(SummarizeCommand)
 
     try:
         if not sysargs:
