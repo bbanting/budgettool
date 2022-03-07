@@ -55,12 +55,12 @@ class CommandController:
 
     def route_command(self, args:List[str]):
         """Process user input, execute command."""
-        # Ensure it's a list and first item isn't ''
+        # Ensure input isn't empty
         if not args or not args[0]:
             print("Try 'help' if you're having trouble.")
             return
         
-        # Get the function
+        # Get the command
         command_cls = self.get_command(args)
         if not command_cls:
             print("Command not found")
@@ -71,9 +71,9 @@ class CommandController:
             command = command_cls(args)
         except CommandError as e:
             print(e)
+            print("Try 'help' if you're having trouble.")
         else:
             self.execute(command)
-            # If undo is implemented on command
             if "undo" in command.__class__.__dict__:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
@@ -104,7 +104,7 @@ class Command(metaclass=abc.ABCMeta):
     help_text: str = ""
     
     def __init__(self, args: List[str]) -> None:
-        """Ensures passed data is valid."""
+        """Ensures passed data is valid and store in self.data."""
         self.data = {}
         for key, validator in self.params.items():
             try:
@@ -166,29 +166,66 @@ class HelpCommand(Command):
     names = ("help",)
 
     def __init__(self, args: List[str]):
-        self.params = {"command": VLit(self.controller.command_register)}
+        # Overriding __init__ is necessary because the validator for "command"
+        # in params depends on the prior instantiation of CommandController
+        HelpCommand.params = {"command": VLit(self.controller.command_register)}
         super().__init__(args)
         
-    def execute(self, command: Command):
+    def execute(self, command: str):
         command = self.controller.command_register.get(command)
         if not command:
-            prev = None
-            for k, v in self.controller.command_register.items():
-                if v == prev:
-                    continue
-                print(f"{k:.<15}{v.__doc__}")
-                prev = self.controller.command_register[k]
+            print(self.get_general_help())
             return
+
+        if issubclass(command, ForkCommand):
+            print(f"'{command.names[0]}' is a compound command:")
+            self.fork_execute(command)
+            return
+
+        print(self.get_names(command))
+        if self.get_format:
+            print(self.get_format(command))
+        print("\t" + command.__doc__)
+        if self.get_help_note(command):
+            print("\t" + self.get_help_note(command))
+
+    def fork_execute(self, command: Command) -> None:
+        print("\t" + command.__doc__)
+        print(f"\t{self.get_help_note(command)}")
+        for i, (k, v) in enumerate(command.forks.items()):
+            v.names = (f"{command.names[0]} {k}",)
+            number = f"{i+1}. "
+            print(f"{number:>8}{self.get_names(v)}")
+            if self.get_format(v):
+                print(f"\t{self.get_format(v)}")
+            print("\t" + v.__doc__)
+            if self.get_help_note(v):
+                print(f"\t{self.get_help_note(v)}")
+
+    def get_general_help(self) -> str:
+        message = "Enter \"help <command>\" for specific command details."
+        prev = None
+        for k, v in self.controller.command_register.items():
+            if v == prev:
+                continue
+            message += f"\n{k:.<15}{v.__doc__}"
+            prev = self.controller.command_register[k]
+        return message
+
+    def get_names(self, command: Command) -> str:
+        name_suffix = "" if len(command.names)<=1 else "S"
+        return f"COMMAND NAME{name_suffix}: {', '.join(command.names)}"
+    
+    def get_format(self, command: Command) -> str:
+        if not command.params:
+            return ""
         param_format = []
         for k, v in command.params.items():
             req = "*" if v.required else ""
             param_format.append(f"<{req}{k}>")
-        space = " " if len(param_format) > 0 else ""
-        name_suffix = "" if len(command.names)<=1 else "S"
-        print(f"\nCOMMAND NAME{name_suffix}: {', '.join(command.names)}")
-        if param_format:
-            print(f"FORMAT: \"{command.names[0]}{space}{' '.join(param_format)}\"")
-        print(f"\t{command.__doc__}")
+        return f"FORMAT: \"{command.names[0]} {' '.join(param_format)}\""
+
+    def get_help_note(self, command: Command) -> str:
         if command.help_text:
-            print(f"\t{command.help_text}")
-        print("")
+            return f"{command.help_text}"
+        return ""

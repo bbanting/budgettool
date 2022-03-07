@@ -30,8 +30,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] For ListCommand, also print out the criteria the entries are being filtered on
 - [ ] Make a less verbose alternative to CommandController.register()
 - [ ] Replace "year" and "all" with year number
-- [ ] Make help work with ForkCommand
-- [x] Help command
+- [x] Make help work with ForkCommand
 
 ## Notes
 
@@ -47,3 +46,4 @@ I made this because I like to code and want to improve. I can't see this being u
 - A master records class; when iterated over, checks most recent years first
   - All records from all years are available but this way there isn't one ginormous file
   - Maybe use UserDict with custom `__iter__` and `__getitem__` methods?
+- make command names case-insensitive?

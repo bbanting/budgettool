@@ -507,7 +507,7 @@ class SummarizeCommand(ListCommand):
 
 
 class AddEntryCommand(parser.Command):
-    """Get input sequentially from user and add an entry."""
+    """Add an entry, entering input through a series of prompts."""
     def execute(self):
         try:
             date = get_date()
@@ -528,7 +528,7 @@ class AddEntryCommand(parser.Command):
 
 
 class AddTagCommand(parser.Command):
-    """Take a name and add it to tags."""
+    """Add a name to the list of tags."""
     params = {
         "name": VNewTag(req=True),
     }
@@ -551,6 +551,7 @@ class AddCommand(parser.ForkCommand):
         "tag": AddTagCommand
     }
     default = "entry"
+    help_text = "If neither 'entry' or 'tag' are specified, it will default to 'entry.'"
 
 
 class RemoveEntryCommand(parser.Command):
