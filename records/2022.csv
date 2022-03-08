@@ -8,7 +8,7 @@ id,date,amount,tags,note
 7,2022/01/30,-4321,food,Got some popsicles
 8,2022/01/30,140034,workplace barb,Paycheck
 9,2022/01/20,-328,food,Got some chips
-10,2022/02/02,25000,workplace jim,...
-11,2022/02/03,-7200,jim other,Got physiotherapy
-12,2022/02/11,-1200,food,Bought some donuts
-13,2022/02/12,-1500,other,Went to the theatre
+10,2022/03/02,25000,workplace jim,...
+11,2022/03/03,-7200,jim other,Got physiotherapy
+12,2022/03/11,-1200,food,Bought some donuts
+13,2022/03/12,-1500,other,Went to the theatre

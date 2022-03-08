@@ -52,7 +52,6 @@ class Config:
         self._check_file()
         with open(filename, "r") as fp:
                 cfgdata = json.load(fp)
-        self.shell = False
         self.active_year = cfgdata["active_year"]
         self.tags = cfgdata["tags"]
         self.old_tags = cfgdata["old_tags"]
@@ -437,7 +436,7 @@ class ListCommand(parser.Command):
     """Display a list of entries filtered by type, month, and tags."""
     names = ("list",)
     params = {
-        "month": VMonth(),
+        "month": VMonth(default=TODAY.month),
         "typ": VType(),
         "tags": VTag(),
         }
@@ -445,19 +444,20 @@ class ListCommand(parser.Command):
     
     def execute(self, month, typ, tags):
         entries = self.filter_entries(month, typ, tags)
-
+        
         print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
             print(entry)
-        print(f"\nTOTAL: {total}")
+        print("-" * os.get_terminal_size()[0])
+        print(f"TOTAL: {total}")
         print(self.get_filter_summary(len(entries), month, typ, tags))
 
     def get_filter_summary(self, n, month, typ, tags) -> str:
-        month = list(MONTHS)[month]
-        tags = "with tags " + ', '.join(tags) if tags else ""
-        return f"{n} entries from {month} of {config.active_year} {tags}"
-
+        month = list(MONTHS)[month].title()
+        typ = f" of type {typ}" if typ else ""
+        tags = " with tags: " + ', '.join(tags) if tags else ""
+        return f"{n} entries{typ} from {month} of {config.active_year}{tags}."
     
     def filter_entries(self, month=None, typ=None, tags=()) -> list[Entry]:
         """
@@ -501,6 +501,7 @@ class SummarizeCommand(ListCommand):
             x = "Entry" if len(entries) < 2 else "Entries"
             print(f"{len(entries)} {x}")
             print(f"TOTAL: {total}")
+            print(self.get_filter_summary(len(entries), month, typ, tags))
 
 
 # def quick_add_entry(*args):
@@ -671,19 +672,7 @@ def btinput(context) -> str:
     pass
 
 
-def shell(controller):
-    config.shell = True
-    print("Budget Tool")
-    print(f"Records for {config.active_year} are active.")
-    while True:
-        user_input = shlex.split(input("> "))
-        try:
-            controller.route_command(user_input)
-        except BTError as e:
-            print(e)
-
-
-def main(sysargs: List[str]):
+def main():
     controller = parser.CommandController()
     controller.register(parser.UndoCommand)
     controller.register(parser.RedoCommand)
@@ -700,17 +689,18 @@ def main(sysargs: List[str]):
     controller.register(EditEntryCommand)
     controller.register(ShowBillsCommand)
 
-    try:
-        if not sysargs:
-            shell(controller)
-        else:
-            controller.route_command(sysargs)
-            # Catch BTError?
-    except KeyboardInterrupt:
-        print("")
+    controller.route_command(["list"])
+    while True:
+        user_input = shlex.split(input("> "))
+        try:
+            controller.route_command(user_input)
+        except BTError as e:
+            print(e)
+        except KeyboardInterrupt:
+            print("")
 
 
 if __name__=="__main__":
     config = Config("config.json")
     active_records = MasterRecord({TODAY.year: YearlyRecord(TODAY.year)})
-    main(sys.argv[1:])
+    main()

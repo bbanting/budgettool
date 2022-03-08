@@ -44,9 +44,9 @@ class Validator(metaclass=abc.ABCMeta):
             return self.default
         
         [args.remove(x) for x in to_remove]
-        if len(data) == 1:
-            data = data[0]
-        return data
+        if self.plural:
+            return data
+        return data[0]
     
     @abc.abstractmethod
     def validate(self, value: str) -> Union[Any, ValidatorError]:
