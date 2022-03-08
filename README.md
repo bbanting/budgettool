@@ -9,7 +9,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Incorporate graphing
     - bar graph categories for year and month
     - monthly income and expenses over year
-    - Prevent keywords from being used as users or categories
 - [ ] Warn when current year is not active year
 - [ ] Preset expenses and bills (goals)
     - tags attached to goals 
@@ -28,7 +27,6 @@ I made this because I like to code and want to improve. I can't see this being u
     - ! and + are reserved and cant be used in tag names
 - [ ] Watch dog or timeout for current year when changed from outside the shell
 - [ ] For ListCommand, also print out the criteria the entries are being filtered on
-- [ ] Make a less verbose alternative to CommandController.register()
 - [ ] Replace "year" and "all" with year number
 - [x] Make help work with ForkCommand
 

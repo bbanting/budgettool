@@ -25,7 +25,7 @@ TODAY = datetime.now()
 HEADERS = ("id","date","amount","tags","note")
 
 MONTHS = {
-    "january": 1, "february": 2, "march": 3, "april": 4,
+    "all": 0, "january": 1, "february": 2, "march": 3, "april": 4,
     "may": 5, "june": 6, "july": 7, "august": 8,
     "september": 9, "october": 10, "november": 11, "december": 12,
 }
@@ -280,17 +280,14 @@ class YearlyRecord(collections.UserList):
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
-    def validate(self, value) -> Union[int, str, ValidatorError]:
-        # if value.isdigit() and int(value) in range(1, 13):
-        #     return int(value)
-        
+    def validate(self, value) -> Union[int, ValidatorError]:
         name = value.lower()
         for month in MONTHS:
             if month.startswith(name): 
                 return MONTHS[month]
         
-        if not self.strict and name in ("all", "year"):
-            return "year"
+        # if not self.strict and name in ("all", "year"):
+        #     return "year"
         return ValidatorError("Month not found")
 
 
@@ -377,11 +374,10 @@ def get_amount():
         amount = input("Amount: ").strip()
         if amount.lower() == "back":
             raise BTError("Command terminated.")
-        if not amount.startswith("-") and not amount.startswith("+"):
+        if not amount.startswith(("-", "+")):
             print("The amount must start with + or -")
             continue
         amount = Entry.dollars_to_cents(amount)
-        print("Invalid input.")
         return amount
 
 
@@ -455,6 +451,13 @@ class ListCommand(parser.Command):
         for entry in entries:
             print(entry)
         print(f"\nTOTAL: {total}")
+        print(self.get_filter_summary(len(entries), month, typ, tags))
+
+    def get_filter_summary(self, n, month, typ, tags) -> str:
+        month = list(MONTHS)[month]
+        tags = "with tags " + ', '.join(tags) if tags else ""
+        return f"{n} entries from {month} of {config.active_year} {tags}"
+
     
     def filter_entries(self, month=None, typ=None, tags=()) -> list[Entry]:
         """
@@ -471,7 +474,7 @@ class ListCommand(parser.Command):
 
         filtered_entries = []
         for e in active_records[config.active_year]:
-            if month != "year" and e.date.month != month:
+            if month != 0 and e.date.month != month:
                 continue
             if typ and typ != e.type:
                 continue
