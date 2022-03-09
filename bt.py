@@ -56,6 +56,8 @@ class Config:
         self.tags = cfgdata["tags"]
         self.old_tags = cfgdata["old_tags"]
         self.bills = cfgdata["bills"]
+        
+        self.last_query = [TODAY.month, None, None]
 
     def _overwrite(self) -> None:
         """Overwrite file with current state."""
@@ -449,7 +451,7 @@ class ListCommand(parser.Command):
         total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
             print(entry)
-        print("-" * os.get_terminal_size()[0])
+        print("-" * (os.get_terminal_size()[0] - 1))
         print(f"TOTAL: {total}")
         print(self.get_filter_summary(len(entries), month, typ, tags))
 
@@ -485,7 +487,13 @@ class ListCommand(parser.Command):
         if not filtered_entries:
             raise BTError("No entries found.")
         return sorted(filtered_entries, key=lambda x: x.date)
-        
+
+
+class GetCommand(ListCommand):
+    names = ("get",)
+    def execute(self, month, typ, tags):
+        config.last_query = [month, typ, tags]
+    
 
 class SummarizeCommand(ListCommand):
     """Display a summary of entries filtered by type, month, and tags."""
@@ -672,6 +680,60 @@ def btinput(context) -> str:
     pass
 
 
+def filter_entries(month=None, typ=None, tags=()) -> list[Entry]:
+    """
+    Filter and return entries based on input.
+    Raise exception if none found
+    """
+    if month is None and config.active_year == TODAY.year:
+        month = TODAY.month
+    elif month is None and config.active_year != TODAY.year:
+        month = 12
+
+    if len(active_records[config.active_year]) == 0:
+        raise BTError("Record is empty.")
+
+    filtered_entries = []
+    for e in active_records[config.active_year]:
+        if month != 0 and e.date.month != month:
+            continue
+        if typ and typ != e.type:
+            continue
+        if tags and not any([True if t in e.tags else False for t in tags]):
+            continue
+        filtered_entries.append(e)
+
+    if not filtered_entries:
+        raise BTError("No entries found.")
+    return sorted(filtered_entries, key=lambda x: x.date)
+
+
+def display_entry_summary(n, month, typ, tags):
+    month = list(MONTHS)[month].title()
+    typ = f" of type {typ}" if typ else ""
+    tags = " with tags: " + ', '.join(tags) if tags else ""
+    print(f"Showing {n} entries{typ} from {month} of {config.active_year}{tags}.")
+
+
+def refresh_display():
+    print("\n" * os.get_terminal_size()[1])
+    error = None
+    entries = None
+    try:
+        entries = filter_entries(*config.last_query)
+    except BTError as e:
+        error = e
+    else:
+        for entry in entries:
+            print(entry)
+
+    print("-" * (os.get_terminal_size()[0] - 1))
+    if entries:
+        display_entry_summary(len(entries), *config.last_query)
+    if error:
+        print(error)
+
+
 def main():
     controller = parser.CommandController()
     controller.register(parser.UndoCommand)
@@ -688,12 +750,14 @@ def main():
     controller.register(AddTagCommand)
     controller.register(EditEntryCommand)
     controller.register(ShowBillsCommand)
+    controller.register(GetCommand)
 
-    controller.route_command(["list"])
+    controller.route_command(["get"])
     while True:
+        refresh_display()
         user_input = shlex.split(input("> "))
         try:
-            controller.route_command(user_input)
+            controller.route_command(user_input, default=GetCommand)
         except BTError as e:
             print(e)
         except KeyboardInterrupt:
