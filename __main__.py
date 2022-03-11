@@ -1,4 +1,4 @@
-import bt
+import main
 import sys
 
-bt.main(sys.argv[1:])
+main.main(sys.argv[1:])

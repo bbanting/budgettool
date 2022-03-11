@@ -1,7 +1,7 @@
 from typing import Union, Any, List
 import abc
 
-import parser.base
+import command.base
 
 
 class ValidatorError(Exception):
@@ -78,7 +78,7 @@ class VLit(Validator):
         found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
             if not all([True if type(x) is str else False for x in self.literal]):
-                raise parser.base.ParseError("Literal must be str or an iterable containing only str.")
+                raise command.base.ParseError("Literal must be str or an iterable containing only str.")
             for l in self.literal:
                 if self.compare(value, l):
                     found = True

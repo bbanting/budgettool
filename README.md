@@ -13,8 +13,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Preset expenses and bills (goals)
     - tags attached to goals 
         - any and all relationships
-- [ ] Wrap input function for shell, so users can get always help or quit; takes context param(s)
-  - [ ] Go back a step in adding an entry (or editing)
+- [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
 - [ ] List old months when no entries in latest month
 - [ ] Make summarize more insightful
@@ -25,7 +24,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Watch dog or timeout for current year when changed from outside the shell
-- [ ] Make Config its own module
+- [x] Make Config its own module
 
 ## Notes
 

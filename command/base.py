@@ -32,12 +32,10 @@ class CommandController:
                 raise ParseError("Invalid command name format.")
             self.command_register.update({n: command})
 
-    def get_command(self, args, default) -> Union[Command, None]:
+    def get_command(self, args) -> Union[Command, None]:
         """Return the command function."""
         command = self.command_register.get(args.pop(0))
-        if not command and default:
-            command = default
-        elif not command:
+        if not command:
             return
         # Check for and process fork command
         if issubclass(command, ForkCommand):
@@ -56,7 +54,7 @@ class CommandController:
         else:
             command.execute()
 
-    def route_command(self, args:List[str], default=None):
+    def route_command(self, args:List[str]):
         """Process user input, execute command."""
         # Ensure input isn't empty
         if not args or not args[0]:
@@ -64,7 +62,7 @@ class CommandController:
             return
         
         # Get the command
-        command_cls = self.get_command(args, default)
+        command_cls = self.get_command(args)
         if not command_cls:
             print("Command not found")
             return
