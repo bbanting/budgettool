@@ -11,12 +11,12 @@ import logging
 from datetime import datetime
 from typing import List
 
-import parser
 import config
 import command
+import display
 import commands
 from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS
-from displayer import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
+from display import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,7 +52,7 @@ class Entry:
             return "expense"
 
     @property
-    def parent_record(self) -> YearlyRecord:
+    def parent_record(self) -> Record:
         return config.records[self.date.year]
 
     @classmethod
@@ -114,7 +114,7 @@ class Entry:
         return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
 
 
-class MasterRecord(collections.UserDict):
+class RecordHandler(collections.UserDict):
     """A class to hold all YearlyRecords."""
     def __iter__(self):
         return super().__iter__()
@@ -124,11 +124,11 @@ class MasterRecord(collections.UserDict):
         try:
             super().__getitem__(key)
         except KeyError:
-            self.update({key: YearlyRecord(key)})
+            self.update({key: Record(key)})
         return super().__getitem__(key)
 
 
-class YearlyRecord(collections.UserList):
+class Record(collections.UserList):
     """
     A list to group entry sets together by year and 
     handle saving them to disk.
@@ -223,33 +223,7 @@ def filter_entries(month=None, category=None, tags=()) -> List[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-def display_entry_summary(n, month, category, tags):
-    month = list(MONTHS)[month].title()
-    category = f" of type {category}" if category else ""
-    tags = " with tags: " + ', '.join(tags) if tags else ""
-    print(f"Showing {n} entries{category} from {month} of {config.active_year}{tags}.")
-
-
-def refresh_display():
-    print("\n" * os.get_terminal_size()[1])
-    error = None
-    entries = None
-    try:
-        entries = filter_entries(*config.last_query)
-    except BTError as e:
-        error = e
-    else:
-        for entry in entries:
-            print(entry)
-
-    print("-" * (os.get_terminal_size()[0] - 1))
-    if entries:
-        display_entry_summary(len(entries), *config.last_query)
-    if error:
-        print(error)
-
-
-def register_commands(controller: parser.CommandController):
+def register_commands(controller: command.CommandController):
     controller.register(command.UndoCommand)
     controller.register(command.RedoCommand)
     controller.register(command.HelpCommand)
@@ -273,7 +247,7 @@ def main():
 
     controller.route_command(["get"])
     while True:
-        refresh_display()
+        display.refresh()
         user_input = shlex.split(input("> "))
         try:
             controller.route_command(user_input)
@@ -284,5 +258,5 @@ def main():
 
 
 if __name__=="__main__":
-    config.records = MasterRecord({TODAY.year: YearlyRecord(TODAY.year)})
+    config.records = RecordHandler({TODAY.year: Record(TODAY.year)})
     main()

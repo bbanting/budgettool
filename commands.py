@@ -7,10 +7,10 @@ import command
 import config
 
 from config import TODAY, MONTHS
-from main import BTError, Entry, YearlyRecord
+from main import BTError, Entry, Record
 from command.validator import VLit
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
-from displayer import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
+from display import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
 
 
 def get_date():
@@ -87,7 +87,7 @@ def get_note() -> str:
         return note
 
 
-def find_entry(year: YearlyRecord, id: int) -> Union[Entry, None]:
+def find_entry(year: Record, id: int) -> Union[Entry, None]:
     """Find an entry by ID and return it."""
     for entry in reversed(year):
         if entry.id != id:

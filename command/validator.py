@@ -8,7 +8,7 @@ class ValidatorError(Exception):
     pass
 
 
-class Validator(metaclass=abc.ABCMeta):
+class Validator(abc.ABC):
     """
     Base class from which validators are derived.
     A validator is passed a list of arguments and calls validate on each until

@@ -23,14 +23,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] Watch dog or timeout for current year when changed from outside the shell
-- [x] Make Config its own module
+- [ ] Pagination for displaying entries
 
 ## Notes
 
 - Seems pretty tightly coupled as it is now.
   - Entry is tied to EntryList through global variable
-  - EntryList is tied to Config through global variable
   - Can I make this better?
 - An option would be to use sqlite and have the option to export to csv instead
 - Possible to have no tags on entry?
