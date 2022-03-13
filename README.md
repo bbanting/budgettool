@@ -23,7 +23,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] Pagination for displaying entries
+- [x] Pagination for displaying entries
 
 ## Notes
 
@@ -39,3 +39,4 @@ I made this because I like to code and want to improve. I can't see this being u
   - All records from all years are available but this way there isn't one ginormous file
   - Maybe use UserDict with custom `__iter__` and `__getitem__` methods?
 - make command names case-insensitive?
+- LineBuffer.true_height needs to account for numbering too
