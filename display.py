@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Any
+from typing import List, Any, Iterable
 
 import config
 
@@ -13,25 +13,24 @@ AMOUNTW = 10
 TAGSW = 12
 NOTEW = None
 
-terminal_size = os.get_terminal_size()
-
 
 class DisplayError(Exception):
     pass
 
 
 class LineBuffer:
-    def __init__(self, numbered:bool=False, truncate:bool=False, offset:int=0) -> None:
-        self.lines = []
-        self.previous_lines = None
-        self.numbered = numbered
-        self.truncate = truncate
-        self.offset = abs(offset)
-        self._page = 1
+    """"""
+    def __init__(self, numbered:bool=False, truncate:bool=False, offset:int=0, divider: str="") -> None:
+        self.lines: Iterable = []
+        self.numbered: int = numbered
+        self.truncate: bool = truncate
+        self.offset: int = abs(offset)
+        self._page: int = 1
+        self.divider = divider
     
     @property
     def page_height(self) -> int:
-        return os.get_terminal_size()[1] - self.offset
+        return t_height() - self.offset
 
     @property
     def pages(self) -> int:
@@ -45,10 +44,27 @@ class LineBuffer:
 
     def change_page(self, page: int) -> None:
         if 0 < page <= self.pages:
-            self._page - page   
+            self._page = page
+        if page > self.pages:
+            self._page = self.pages
+
+    def is_last_page(self) -> bool:
+        if self._page == self.pages:
+            return True
+        return False
     
     def push(self, item: Any) -> None:
         self.lines.append(item)
+
+    def replace_lines(self, new_lines: List, reset_page=True) -> None:
+        if not hasattr(new_lines, "__iter__"):
+            raise DisplayError("new_lines must be an iterable.")
+        self.lines = new_lines
+        if reset_page:
+            self._page = 1
+
+    def clear(self, container_type=list):
+        self.lines = container_type()
 
     def _true_lines(self) -> int:
         """The number of effective lines, ignoring pagination."""
@@ -68,39 +84,51 @@ class LineBuffer:
         empty_space = self.page_height - filled_lines
         print("\n" * empty_space, end="")
 
-
     def _print(self, min_lines=0) -> None:
-        if terminal_size_changed(terminal_size):
-            self._page = 1
+        """Print the contents of the buffer to the """
+        self._print_filler()
+
         start = (self._page-1) * self.page_height
         end = self._page * self.page_height
 
-        if not self.numbered:
-            print("\n".join(reversed(self.lines[start:end])))
-        else:
-            count = self._page * self.page_height
-            if self._page == self.pages: # Last page
-                count = self._true_lines()
-            for line in reversed(self.lines[start:end]):
-                print(f"{count:<2} {line}")
+        count = self._page * self.page_height
+        if self.is_last_page():
+            count = len(self.lines)
+        for line in reversed(self.lines[start:end]):
+            to_print = str(line)
+            if self.numbered:
+                to_print = f"{count:<2} {to_print}"
                 count -= 1
-       
-        # self.previous_contents = self
-        self.lines.clear()
+            if self.truncate:
+                to_print = to_print[:t_width()]
+            print(to_print)
+        
+        self._print_page_numbers()
+        if self.divider:
+             _print_divider(self.divider)
+    
+    def _print_page_numbers(self):
+        pos = (t_width() // 2) - (self.pages // 2)
+        nums = " ".join([str(n) for n in range(1, self.pages+1)])
+        indicator = [" " for _ in range(self.pages)]
+        indicator[self._page-1] = "^"
+        indicator = " ".join(indicator)
+        print(" "*pos, nums)
+        print(" "*pos, indicator)
 
     def select(self, id: int) -> Any:
         return self.lines[::-1][id]
 
 
-def clear_screen() -> None:
+def clear_terminal() -> None:
     if os.name == "nt":
         os.system("cls")
     else:
         os.system("clear")
 
 
-def print_divider(char: str="-") -> None:
-    print(char * (os.get_terminal_size()[0] - 1))
+def _print_divider(char: str="-") -> None:
+    print(char * (t_width()), end="\n")
 
 
 def terminal_size_changed(old_size) -> bool:
@@ -110,18 +138,35 @@ def terminal_size_changed(old_size) -> bool:
     return False
 
 
+def t_width():
+    return os.get_terminal_size()[0]
+
+
+def t_height():
+    return os.get_terminal_size()[1]
+
+
+def make_screen(numbered:bool=False, truncate:bool=False, offset:int=0, divider: str=""):
+    """Public function for creating and initializing the screen."""
+    global _screen
+    _screen = LineBuffer(numbered=numbered, truncate=truncate, offset=offset, divider=divider)
+
+
 def refresh() -> None:
-    width, height = terminal_size
+    """Clear the terminal and print the current state of the screen."""
+    if _screen is None:
+        raise DisplayError("Screen not initialized.")
+    clear_terminal()
+    _screen._print()
+    # screen.clear()
 
-    clear_screen()
-    screen._print_filler()
-    screen._print()
-    print_divider()
 
+_screen = None
 
-screen = LineBuffer(numbered=True, offset=2)
-
+make_screen(numbered=True, truncate=True, offset=4, divider="-")
 for n in range(30):
-    screen.push(f"Old MacDonald had a farm {n}")
+    _screen.push(f"Old MacDonald had a farm {n}")
+_screen.change_page(5)
 refresh()
+
 print("> ")
