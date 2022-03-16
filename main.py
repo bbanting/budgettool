@@ -244,7 +244,7 @@ def register_commands(controller: command.CommandController):
 def main():
     controller = command.CommandController()
     register_commands(controller)
-    display.init_screen(numbered=True, truncate=True, offset=4, divider="-")
+    display.configure_screen(numbered=True, truncate=True, offset=4)
 
     while True:
         display.refresh()

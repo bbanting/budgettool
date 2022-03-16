@@ -109,12 +109,13 @@ class ListCommand(command.Command):
     def execute(self, month, category, tags):
         entries = self.filter_entries(month, category, tags)
         
-        display.screen.push(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+        display.screen.add_header(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
-            display.screen.push(entry)
-        display.screen.push(f"TOTAL: {total}")
-        display.screen.push(self.get_filter_summary(len(entries), month, category, tags))
+            display.screen.add_line(entry)
+        display.screen.add_footer("")
+        display.screen.add_footer(f"TOTAL: {total}")
+        display.screen.add_footer(self.get_filter_summary(len(entries), month, category, tags))
 
     def get_filter_summary(self, n, month, category, tags) -> str:
         month = list(MONTHS)[month].title()
