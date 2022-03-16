@@ -4,7 +4,7 @@ from typing import List, Any, Iterable
 
 import config
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, filename="log.txt", filemode="w", encoding="utf-8")
 
 # Widths for display columns
 IDW = 8
@@ -78,22 +78,35 @@ class LineBuffer:
         return count
 
     def _print_filler(self):
-        if not self._page == self.pages:
-            return
+        # print("hi")
+        # if not self._page == self.pages:
+        #     return
         filled_lines = self._true_lines() - (self.page_height * (self._page - 1))
         empty_space = self.page_height - filled_lines
         print("\n" * empty_space, end="")
+    
+    def _print_page_numbers(self):
+        if not self.lines:
+            print("\n")
+            return
+        pos = (t_width() // 2) - (self.pages // 2)
+        nums = " ".join([str(n) for n in range(1, self.pages+1)])
+        indicator = [" " for _ in range(self.pages)]
+        indicator[self._page-1] = "^"
+        indicator = " ".join(indicator)
+        print(" "*pos, nums)
+        print(" "*pos, indicator)
 
     def _print(self, min_lines=0) -> None:
         """Print the contents of the buffer to the """
         self._print_filler()
-
+        self.lines = self.lines[::-1]
         start = (self._page-1) * self.page_height
         end = self._page * self.page_height
 
-        count = self._page * self.page_height
+        count = self.page_height
         if self.is_last_page():
-            count = len(self.lines)
+            count = len(self.lines) - ((self.pages-1) * self.page_height)
         for line in reversed(self.lines[start:end]):
             to_print = str(line)
             if self.numbered:
@@ -106,18 +119,11 @@ class LineBuffer:
         self._print_page_numbers()
         if self.divider:
              _print_divider(self.divider)
-    
-    def _print_page_numbers(self):
-        pos = (t_width() // 2) - (self.pages // 2)
-        nums = " ".join([str(n) for n in range(1, self.pages+1)])
-        indicator = [" " for _ in range(self.pages)]
-        indicator[self._page-1] = "^"
-        indicator = " ".join(indicator)
-        print(" "*pos, nums)
-        print(" "*pos, indicator)
 
-    def select(self, id: int) -> Any:
-        return self.lines[::-1][id]
+    def select(self, index: int) -> Any:
+        if index < 1:
+            return
+        return self.lines[::-1][index-1]
 
 
 def clear_terminal() -> None:
@@ -146,27 +152,28 @@ def t_height():
     return os.get_terminal_size()[1]
 
 
-def make_screen(numbered:bool=False, truncate:bool=False, offset:int=0, divider: str=""):
+def init_screen(numbered:bool=False, truncate:bool=False, offset:int=0, divider: str=""):
     """Public function for creating and initializing the screen."""
-    global _screen
-    _screen = LineBuffer(numbered=numbered, truncate=truncate, offset=offset, divider=divider)
+    global screen
+    screen.__init__(numbered=numbered, truncate=truncate, offset=offset, divider=divider)
 
 
 def refresh() -> None:
     """Clear the terminal and print the current state of the screen."""
-    if _screen is None:
+    if screen is None:
         raise DisplayError("Screen not initialized.")
     clear_terminal()
-    _screen._print()
+    screen._print()
     # screen.clear()
 
 
-_screen = None
+screen = LineBuffer()
+# init_screen(numbered=True, truncate=True, offset=4, divider="-")
 
-make_screen(numbered=True, truncate=True, offset=4, divider="-")
-for n in range(30):
-    _screen.push(f"Old MacDonald had a farm {n}")
-_screen.change_page(5)
-refresh()
+# for n in range(30):
+#     screen.push(f"Old MacDonald had a farm {n+1}")
+# screen.change_page(4)
+# refresh()
+# print(screen.select(3))
 
-print("> ")
+# print("> ")

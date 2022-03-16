@@ -5,6 +5,7 @@ from datetime import datetime
 
 import command
 import config
+import display
 
 from config import TODAY, MONTHS
 from main import BTError, Entry, Record
@@ -108,13 +109,12 @@ class ListCommand(command.Command):
     def execute(self, month, category, tags):
         entries = self.filter_entries(month, category, tags)
         
-        print(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+        display.screen.push(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
         total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
-            print(entry)
-        print("-" * (os.get_terminal_size()[0] - 1))
-        print(f"TOTAL: {total}")
-        print(self.get_filter_summary(len(entries), month, category, tags))
+            display.screen.push(entry)
+        display.screen.push(f"TOTAL: {total}")
+        display.screen.push(self.get_filter_summary(len(entries), month, category, tags))
 
     def get_filter_summary(self, n, month, category, tags) -> str:
         month = list(MONTHS)[month].title()

@@ -244,8 +244,8 @@ def register_commands(controller: command.CommandController):
 def main():
     controller = command.CommandController()
     register_commands(controller)
+    display.init_screen(numbered=True, truncate=True, offset=4, divider="-")
 
-    controller.route_command(["get"])
     while True:
         display.refresh()
         user_input = shlex.split(input("> "))
