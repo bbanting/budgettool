@@ -4,7 +4,7 @@ from typing import List, Any, Iterable
 
 import config
 
-logging.basicConfig(level=logging.DEBUG, filename="log.txt", filemode="w", encoding="utf-8")
+logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
 # Widths for display columns
 IDW = 8
@@ -28,47 +28,52 @@ class LineBuffer:
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
         self._page: int = 1
+        self.used = False
     
     @property
     def page_height(self) -> int:
-        return t_height() - self.offset - len(self.header) - len(self.footer)
+        page_nums = 2
+        header_footer = len(self.header) + len(self.footer)
+        return t_height() - self.offset - page_nums - header_footer
 
     @property
-    def pages(self) -> int:
-        lines = self._true_lines() - 1
+    def n_pages(self) -> int:
+        lines = self._true_lines()
         pages = lines / self.page_height
         if pages.is_integer():
             pages = int(pages)
         else:
             pages = int(pages + 1)
-        return pages
+        return pages if pages else 1
 
     def change_page(self, page: int) -> None:
-        if 0 < page <= self.pages:
+        if 0 < page <= self.n_pages:
             self._page = page
-        if page > self.pages:
-            self._page = self.pages
+        if page > self.n_pages:
+            self._page = self.n_pages
 
     def is_last_page(self) -> bool:
-        if self._page == self.pages:
+        if self._page == self.n_pages:
             return True
         return False
     
     def add_line(self, item: Any) -> None:
+        if self.used:
+            self.used = False
+            self.clear()
         self.body.append(item)
 
     def add_header(self, item: Any) -> None:
+        if self.used:
+            self.used = False
+            self.clear()
         self.header.append(item)
 
     def add_footer(self, item: Any) -> None:
+        if self.used:
+            self.used = False
+            self.clear()
         self.footer.append(item)
-
-    def replace_lines(self, new_lines: List, reset_page=True) -> None:
-        if not hasattr(new_lines, "__iter__"):
-            raise DisplayError("new_lines must be an iterable.")
-        self.body = new_lines
-        if reset_page:
-            self._page = 1
 
     def clear(self):
         self.body.clear()
@@ -87,34 +92,28 @@ class LineBuffer:
         return count
 
     def _print_filler(self):
-        # print("hi")
         # if not self._page == self.pages:
         #     return
         filled_lines = self._true_lines() - (self.page_height * (self._page - 1))
         empty_space = self.page_height - filled_lines
-        # if self.header:
-        #     empty_space -= len(self.header)
         print("\n" * empty_space, end="")
 
     def _print_header(self):
         for line in self.header:
-            print(line)
+            print(line[:t_width()])
 
     def _print_footer(self):
         for line in self.footer:
-            print(line)
+            print(line[:t_width()])
     
     def _print_page_numbers(self, div_char: str="-"):
-        if not self.body:
-            print("\n")
-            return
-        leading = (t_width() // 2) - (self.pages // 2)
-        nums = " ".join([str(n) for n in range(1, self.pages+1)])
-        indicator = [" " for _ in range(self.pages)]
+        leading = (t_width() // 2) - (self.n_pages // 2)
+        nums = " ".join([str(n) for n in range(1, self.n_pages+1)])
+        indicator = [" " for _ in range(self.n_pages)] or [" "]
         indicator[self._page-1] = "^"
         indicator = " ".join(indicator)
         trailing = t_width()-(leading+len(nums))
-        print(f"{div_char*(leading-3)}// {nums} //{div_char*(trailing-3)}")
+        print(f"{div_char*(leading-3)}// {nums} \\\\{div_char*(trailing-3)}")
         print(" "*leading, indicator, sep="")
 
     def print(self, min_items=4) -> None:
@@ -127,7 +126,7 @@ class LineBuffer:
 
         count = self.page_height
         if self.is_last_page():
-            count = len(self.body) - ((self.pages-1) * self.page_height)
+            count = len(self.body) - ((self.n_pages-1) * self.page_height)
         for line in reversed(self.body[start:end]):
             to_print = str(line)
             if self.numbered:
@@ -139,6 +138,7 @@ class LineBuffer:
         
         self._print_footer()
         self._print_page_numbers()
+        self.used = True
 
     def select(self, index: int) -> Any:
         if index < 1:
@@ -175,13 +175,11 @@ def configure_screen(numbered:bool=False, truncate:bool=False, offset:int=0):
 
 def refresh() -> None:
     """Clear the terminal and print the current state of the screen."""
-    # screen.clear()
     clear_terminal()
     screen.print()
 
 
 screen = LineBuffer()
-
 # configure_screen(numbered=True, truncate=True, offset=4)
 # for n in range(30):
 #     screen.add_line(f"Old MacDonald had a farm {n+1}")
