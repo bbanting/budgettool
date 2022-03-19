@@ -25,9 +25,10 @@ I made this because I like to code and want to improve. I can't see this being u
     - ! and + are reserved and cant be used in tag names
 - [ ] Make a consistent API for display module
 - [x] Truncate header and footer or give true line height
-- [ ] Allow for very large amount of page numbers
+- [x] Allow for very large amount of page numbers
 - [x] Solve problem of when to clear buffer
 - [ ] Make min and max page height
+- [ ] Make display select function
 
 ## Notes
 

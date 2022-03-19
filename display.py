@@ -106,27 +106,40 @@ class LineBuffer:
         for line in self.footer:
             print(line[:t_width()])
     
-    def get_page_range(self) -> range:
-        max_pages_displayed = t_width() // 4
+    def _get_page_range(self) -> tuple[range, str]:
+        max_pages_displayed = t_width() // 8
+        prefix, suffix = "", ""
+
         if self.n_pages <= max_pages_displayed:
-            return range(1, self.n_pages+1)
-        return range(1, self.n_pages+1)
+            return range(1, self.n_pages+1), prefix, suffix
+
+        page_sets = self.n_pages / max_pages_displayed
+        if page_sets.is_integer():
+            page_sets = int(page_sets)
+        else:
+            page_sets = int(page_sets + 1)
+        
+        for x in range(1, page_sets+1):
+            rng = range(max_pages_displayed*(x-1)+1, max_pages_displayed*x+1)
+            if self._page not in rng:
+                continue
+            if x < page_sets: suffix = " ..."
+            if x > 1: prefix = "... " 
+
+            return rng, prefix, suffix
+        
 
     def _print_page_numbers(self, div_char:str="-",):
-        # page_sets = self.n_pages / max_pages_displayed
-        # if page_sets.is_integer():
-        #     page_sets = int(page_sets)
-        # else:
-        #     page_sets = int(page_sets + 1)
-        page_range = self.get_page_range()
-        
-        leading = (t_width() // 2) - (self.n_pages // 2)
+        page_range, prefix, suffix = self._get_page_range()
+
+        leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = " ".join([str(n) for n in page_range])
+        nums = f"{prefix}{nums}{suffix}"
         indicator = [" " for _ in range(len(nums))] or [" "]
         indicator[nums.find(str(self._page))] = "^"
         indicator = "".join(indicator)
         trailing = t_width()-(leading+len(nums))
-        print(f"{div_char*(leading-3)}// {nums} \\\\{div_char*(trailing-3)}")
+        print(f"{div_char*(leading-3)}|| {nums} ||{div_char*(trailing-3)}")
         print(" "*(leading), indicator, sep="")
 
     def print(self, min_items=4) -> None:
