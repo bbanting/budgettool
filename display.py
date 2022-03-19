@@ -106,15 +106,28 @@ class LineBuffer:
         for line in self.footer:
             print(line[:t_width()])
     
-    def _print_page_numbers(self, div_char: str="-"):
+    def get_page_range(self) -> range:
+        max_pages_displayed = t_width() // 4
+        if self.n_pages <= max_pages_displayed:
+            return range(1, self.n_pages+1)
+        return range(1, self.n_pages+1)
+
+    def _print_page_numbers(self, div_char:str="-",):
+        # page_sets = self.n_pages / max_pages_displayed
+        # if page_sets.is_integer():
+        #     page_sets = int(page_sets)
+        # else:
+        #     page_sets = int(page_sets + 1)
+        page_range = self.get_page_range()
+        
         leading = (t_width() // 2) - (self.n_pages // 2)
-        nums = " ".join([str(n) for n in range(1, self.n_pages+1)])
-        indicator = [" " for _ in range(self.n_pages)] or [" "]
-        indicator[self._page-1] = "^"
-        indicator = " ".join(indicator)
+        nums = " ".join([str(n) for n in page_range])
+        indicator = [" " for _ in range(len(nums))] or [" "]
+        indicator[nums.find(str(self._page))] = "^"
+        indicator = "".join(indicator)
         trailing = t_width()-(leading+len(nums))
         print(f"{div_char*(leading-3)}// {nums} \\\\{div_char*(trailing-3)}")
-        print(" "*leading, indicator, sep="")
+        print(" "*(leading), indicator, sep="")
 
     def print(self, min_items=4) -> None:
         """Print the contents of the buffer to the """
@@ -180,10 +193,12 @@ def refresh() -> None:
 
 
 screen = LineBuffer()
-# configure_screen(numbered=True, truncate=True, offset=4)
-# for n in range(30):
-#     screen.add_line(f"Old MacDonald had a farm {n+1}")
-# screen.change_page(3)
-# refresh()
-# print(screen.select(3))
-# print("> ")
+
+if __name__ == "__main__":
+    configure_screen(numbered=True, truncate=True, offset=4)
+    for n in range(80):
+        screen.add_line(f"Old MacDonald had a farm {n+1}")
+    screen.change_page(3)
+    refresh()
+    print(screen.select(3))
+    print("> ")
