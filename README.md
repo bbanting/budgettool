@@ -27,8 +27,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [x] Truncate header and footer or give true line height
 - [x] Allow for very large amount of page numbers
 - [x] Solve problem of when to clear buffer
-- [ ] Make min and max page height
-- [ ] Make display select function
+- [x] Make min page height
+- [x] Make display select function
 
 ## Notes
 
@@ -45,3 +45,4 @@ I made this because I like to code and want to improve. I can't see this being u
   - Maybe use UserDict with custom `__iter__` and `__getitem__` methods?
 - make command names case-insensitive?
 - LineBuffer.true_height needs to account for numbering too
+- Currently, if page numbers get too many digits long, they will overflow

@@ -31,15 +31,18 @@ class LineBuffer:
         self.used = False
     
     @property
-    def page_height(self) -> int:
+    def body_height(self) -> int:
         page_nums = 2
         header_footer = len(self.header) + len(self.footer)
-        return t_height() - self.offset - page_nums - header_footer
+        height = t_height() - self.offset - page_nums - header_footer
+        if height < 1: 
+            raise DisplayError("Terminal window is too short.")
+        return height
 
     @property
     def n_pages(self) -> int:
         lines = self._true_lines()
-        pages = lines / self.page_height
+        pages = lines / self.body_height
         if pages.is_integer():
             pages = int(pages)
         else:
@@ -94,8 +97,8 @@ class LineBuffer:
     def _print_filler(self):
         # if not self._page == self.pages:
         #     return
-        filled_lines = self._true_lines() - (self.page_height * (self._page - 1))
-        empty_space = self.page_height - filled_lines
+        filled_lines = self._true_lines() - (self.body_height * (self._page - 1))
+        empty_space = self.body_height - filled_lines
         print("\n" * empty_space, end="")
 
     def _print_header(self):
@@ -108,7 +111,7 @@ class LineBuffer:
     
     def _get_page_range(self) -> tuple[range, str]:
         max_pages_displayed = t_width() // 8
-        prefix, suffix = "", ""
+        prefix, suffix = "|||", "|||"
 
         if self.n_pages <= max_pages_displayed:
             return range(1, self.n_pages+1), prefix, suffix
@@ -123,8 +126,8 @@ class LineBuffer:
             rng = range(max_pages_displayed*(x-1)+1, max_pages_displayed*x+1)
             if self._page not in rng:
                 continue
-            if x < page_sets: suffix = " ..."
-            if x > 1: prefix = "... " 
+            if x < page_sets: suffix = ">>|"
+            if x > 1: prefix = "|<<"
 
             return rng, prefix, suffix
         
@@ -134,12 +137,11 @@ class LineBuffer:
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = " ".join([str(n) for n in page_range])
-        nums = f"{prefix}{nums}{suffix}"
         indicator = [" " for _ in range(len(nums))] or [" "]
         indicator[nums.find(str(self._page))] = "^"
         indicator = "".join(indicator)
         trailing = t_width()-(leading+len(nums))
-        print(f"{div_char*(leading-3)}|| {nums} ||{div_char*(trailing-3)}")
+        print(f"{div_char*(leading-4)}{prefix} {nums} {suffix}{div_char*(trailing-4)}")
         print(" "*(leading), indicator, sep="")
 
     def print(self, min_items=4) -> None:
@@ -147,12 +149,12 @@ class LineBuffer:
         self._print_filler()
         self._print_header()
         self.body = self.body[::-1]
-        start = (self._page-1) * self.page_height
-        end = self._page * self.page_height
+        start = (self._page-1) * self.body_height
+        end = self._page * self.body_height
 
-        count = self.page_height
+        count = self.body_height
         if self.is_last_page():
-            count = len(self.body) - ((self.n_pages-1) * self.page_height)
+            count = len(self.body) - ((self.n_pages-1) * self.body_height)
         for line in reversed(self.body[start:end]):
             to_print = str(line)
             if self.numbered:
@@ -167,9 +169,12 @@ class LineBuffer:
         self.used = True
 
     def select(self, index: int) -> Any:
-        if index < 1:
-            return
-        return self.body[::-1][index-1]
+        start = (self._page-1) * self.body_height
+        end = self._page * self.body_height
+        items = self.body[start:end]
+        if index > len(items) or index < 1:
+            raise IndexError("Invalid selection.")
+        return items[index-1]
 
 
 def clear_terminal() -> None:
@@ -208,10 +213,10 @@ def refresh() -> None:
 screen = LineBuffer()
 
 if __name__ == "__main__":
-    configure_screen(numbered=True, truncate=True, offset=4)
+    configure_screen(numbered=True, truncate=True, offset=1)
     for n in range(80):
         screen.add_line(f"Old MacDonald had a farm {n+1}")
-    screen.change_page(3)
+    screen.change_page(38)
     refresh()
-    print(screen.select(3))
+    print(screen.select(1))
     print("> ")
