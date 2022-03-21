@@ -84,8 +84,8 @@ class UserData:
         self.overwrite()
 
 
-# Other variables
+# Other globals
 udata = UserData(FILENAME)
 active_year = TODAY.year
-last_query = [TODAY.month, None, None]
+last_query = (TODAY.month, None, None)
 records = None

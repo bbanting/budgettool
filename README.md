@@ -16,14 +16,13 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
 - [ ] List old months when no entries in latest month
-- [ ] Make summarize more insightful
 - [ ] Search descriptions
 - [ ] Calendar view
 - [ ] Fix formatting in light of tags (remove tags from output?)
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [x] Make a consistent API for display module
+- [ ] Make page numbers full height regardless of body size
 
 ## Notes
 

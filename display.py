@@ -12,7 +12,7 @@ class DisplayError(Exception):
 
 class LineBuffer:
     """"""
-    def __init__(self, numbered:bool=True, truncate:bool=True, offset:int=0) -> None:
+    def __init__(self, numbered, truncate, offset) -> None:
         self.body: Iterable = []
         self.header = []
         self.footer = []
@@ -20,7 +20,8 @@ class LineBuffer:
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
         self.page: int = 1
-        self.printed = False
+        self.error: str = None
+        self.printed: bool = False
     
     @property
     def body_space(self) -> int:
@@ -133,6 +134,9 @@ class LineBuffer:
         
     def _print_page_numbers(self, div_char:str="-",) -> None:
         """Print the divider bar with page numbers."""
+        if self.n_pages < 2:
+            print(div_char * t_width(), end="\n\n")
+            return
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
@@ -162,9 +166,20 @@ class LineBuffer:
             print(to_print)
             if count == 0:
                 break
+    
+    def _print_error(self):
+        self.clear()
+        self.push(self.error[:t_width()])
+        self._print_filler()
+        self._print_body()
+        self._print_page_numbers()
+        self.error = None
 
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
+        if self.error:
+            self._print_error()
+            return
         self._print_filler()
         self._print_header()
         self._print_body()
@@ -190,11 +205,23 @@ def t_height() -> int:
     return os.get_terminal_size()[1]
 
 
-def push(item:Any, target:str="body") -> None:
-    """Push an item to 'body', 'header', or 'footer'."""
-    if target not in ("body", "header", "footer"):
-        raise DisplayError("Invalid push target.")
-    buffer.push(item, target=target)
+def push(*items:Any) -> None:
+    """Push an item to body."""
+    for item in items:
+        buffer.push(item)
+
+def push_h(*items:Any) -> None:
+    """Push an item to header."""
+    for item in items:
+        buffer.push(item, target="header")
+
+def push_f(*items:Any) -> None:
+    """Push an item to footer."""
+    for item in items:
+        buffer.push(item, target="footer")
+
+def error(error:str):
+    buffer.error = error
 
 
 def select(index) -> Any:
@@ -202,7 +229,7 @@ def select(index) -> Any:
     return buffer.select(index)
 
 
-def configure(numbered:bool=False, truncate:bool=False, offset:int=0):
+def configure(numbered:bool=True, truncate:bool=True, offset:int=0):
     """Public function for modifying current buffer."""
     buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
 
@@ -213,10 +240,10 @@ def refresh() -> None:
     buffer.print()
 
 
-buffer = LineBuffer()
+buffer = LineBuffer(True, True, 0)
 
 if __name__ == "__main__":
-    configure(numbered=True, truncate=True, offset=1)
+    configure(offset=1)
     for n in range(80):
         buffer.push(f"Old MacDonald had a farm {n+1}")
     buffer.change_page(1)

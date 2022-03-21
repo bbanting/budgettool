@@ -4,8 +4,9 @@ from __future__ import annotations
 from typing import Union, Any, List
 import inspect
 import abc
-import os
 import logging
+
+import display
 from .validator import Validator, ValidatorError, VLit
 
 logging.basicConfig(level=logging.INFO)
@@ -64,7 +65,7 @@ class CommandController:
         # Get the command
         command_cls = self.get_command(args)
         if not command_cls:
-            print("Command not found")
+            display.push_e("Command not found")
             return
 
         # Execute the command

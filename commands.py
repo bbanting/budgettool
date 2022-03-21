@@ -106,71 +106,7 @@ class ListCommand(command.Command):
     help_text = "If no year or month are specified it will default to the current year and month."
     
     def execute(self, month, category, tags):
-        entries = self.filter_entries(month, category, tags)
-        
-        display.push(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}", "header")
-        total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
-        for entry in entries:
-            display.push(entry)
-        display.push("", "footer")
-        display.push(f"TOTAL: {total}", "footer")
-        display.push(self.get_filter_summary(len(entries), month, category, tags), "footer")
-
-    def get_filter_summary(self, n, month, category, tags) -> str:
-        month = list(MONTHS)[month].title()
-        category = f" of type {category}" if category else ""
-        tags = " with tags: " + ', '.join(tags) if tags else ""
-        return f"{n} entries{category} from {month} of {config.active_year}{tags}."
-    
-    def filter_entries(self, month=None, category=None, tags=()) -> list[Entry]:
-        """
-        Filter and return entries based on input.
-        Raise exception if none found
-        """
-        if month is None and config.active_year == TODAY.year:
-            month = TODAY.month
-        elif month is None and config.active_year != TODAY.year:
-            month = 12
-
-        if len(config.records[config.active_year]) == 0:
-            raise BTError("Record is empty.")
-
-        filtered_entries = []
-        for e in config.records[config.active_year]:
-            if month != 0 and e.date.month != month:
-                continue
-            if category and category != e.category:
-                continue
-            if tags and not any([True if t in e.tags else False for t in tags]):
-                continue
-            filtered_entries.append(e)
-
-        if not filtered_entries:
-            raise BTError("No entries found.")
-        return sorted(filtered_entries, key=lambda x: x.date)
-
-
-class GetCommand(ListCommand):
-    names = ("get",)
-    def execute(self, month, category, tags):
         config.last_query = [month, category, tags]
-    
-
-class SummarizeCommand(ListCommand):
-    """Display a summary of entries filtered by type, month, and tags."""
-    names = ("sum", "summarize")
-
-    def execute(self, month, category, tags):
-        try:
-            entries = self.filter_entries(month, category, tags)
-        except BTError as e:
-            print(e)
-        else:
-            total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
-            x = "Entry" if len(entries) < 2 else "Entries"
-            print(f"{len(entries)} {x}")
-            print(f"TOTAL: {total}")
-            print(self.get_filter_summary(len(entries), month, category, tags))
 
 
 class AddEntryCommand(command.Command):

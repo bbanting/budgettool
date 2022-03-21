@@ -15,9 +15,9 @@ import config
 import command
 import display
 import commands
-from config import TODAY, ENTRY_FOLDER, HEADERS, IDW, DATEW, AMOUNTW, TAGSW
+from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS, IDW, DATEW, AMOUNTW, TAGSW
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
 
 class BTError(Exception):
@@ -194,14 +194,30 @@ class Record(collections.UserList):
         self._overwrite()
 
 
-def filter_entries(month=None, category=None, tags=()) -> List[Entry]:
-    """
-    Filter and return entries based on input.
+def show_entries(month, category, tags):
+    entries = _filter_entries(month, category, tags)
+    total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
+    summary = _get_filter_summary(len(entries), month, category, tags)
+
+    display.push_h(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+    for entry in entries: display.push(entry)
+    display.push_f("", f"TOTAL: {total}", summary)
+
+
+def _get_filter_summary(n, month, category, tags) -> str:
+    month = list(MONTHS)[month].title()
+    category = f" of type {category}" if category else ""
+    tags = " with tags: " + ', '.join(tags) if tags else ""
+    return f"{n} entries{category} from {month} of {config.active_year}{tags}."
+
+
+def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
+    """Filter and return entries based on input.
     Raise exception if none found
     """
-    if month is None and config.udata.active_year == TODAY.year:
+    if month is None and config.active_year == TODAY.year:
         month = TODAY.month
-    elif month is None and config.udata.active_year != TODAY.year:
+    elif month is None and config.active_year != TODAY.year:
         month = 12
 
     if len(config.records[config.active_year]) == 0:
@@ -227,7 +243,6 @@ def register_commands(controller: command.CommandController):
     controller.register(command.RedoCommand)
     controller.register(command.HelpCommand)
     controller.register(commands.ListCommand)
-    controller.register(commands.SummarizeCommand)
     controller.register(commands.QuitCommand)
     controller.register(commands.RemoveCommand)
     controller.register(commands.RemoveEntryCommand)
@@ -237,7 +252,6 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddTagCommand)
     controller.register(commands.EditEntryCommand)
     controller.register(commands.ShowBillsCommand)
-    controller.register(commands.GetCommand)
 
 
 def main():
@@ -245,8 +259,7 @@ def main():
     register_commands(controller)
     display.configure(offset=1)
 
-    controller.route_command(["list"])
-
+    show_entries(*config.last_query)
     while True:
         display.refresh()
         user_input = shlex.split(input("> "))
@@ -256,7 +269,9 @@ def main():
             print(e)
         except KeyboardInterrupt:
             print("")
-
+        else:
+            show_entries(*config.last_query)
+       
 
 if __name__=="__main__":
     config.records = RecordHandler({TODAY.year: Record(TODAY.year)})
