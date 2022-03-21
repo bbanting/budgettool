@@ -15,8 +15,7 @@ import config
 import command
 import display
 import commands
-from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS
-from display import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
+from config import TODAY, ENTRY_FOLDER, HEADERS, IDW, DATEW, AMOUNTW, TAGSW
 
 logging.basicConfig(level=logging.INFO)
 
@@ -244,7 +243,9 @@ def register_commands(controller: command.CommandController):
 def main():
     controller = command.CommandController()
     register_commands(controller)
-    display.configure_screen(numbered=True, truncate=True, offset=1)
+    display.configure(offset=1)
+
+    controller.route_command(["list"])
 
     while True:
         display.refresh()

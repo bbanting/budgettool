@@ -2,16 +2,8 @@ import os
 import logging
 from typing import List, Any, Iterable
 
-import config
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
-
-# Widths for display columns
-IDW = 8
-DATEW = 8
-AMOUNTW = 10
-TAGSW = 12
-NOTEW = None
 
 
 class DisplayError(Exception):
@@ -20,18 +12,19 @@ class DisplayError(Exception):
 
 class LineBuffer:
     """"""
-    def __init__(self, numbered:bool=False, truncate:bool=False, offset:int=0) -> None:
+    def __init__(self, numbered:bool=True, truncate:bool=True, offset:int=0) -> None:
         self.body: Iterable = []
         self.header = []
         self.footer = []
         self.numbered: int = numbered
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
-        self._page: int = 1
-        self.used = False
+        self.page: int = 1
+        self.printed = False
     
     @property
-    def body_height(self) -> int:
+    def body_space(self) -> int:
+        """Return the height in lines of the available space for the body."""
         page_nums = 2
         header_footer = len(self.header) + len(self.footer)
         height = t_height() - self.offset - page_nums - header_footer
@@ -41,8 +34,9 @@ class LineBuffer:
 
     @property
     def n_pages(self) -> int:
-        lines = self._true_lines()
-        pages = lines / self.body_height
+        """Return the total number of pages."""
+        lines = self.true_lines()
+        pages = lines / self.body_space
         if pages.is_integer():
             pages = int(pages)
         else:
@@ -50,42 +44,43 @@ class LineBuffer:
         return pages if pages else 1
 
     def change_page(self, page: int) -> None:
+        """Change which page to display."""
         if 0 < page <= self.n_pages:
-            self._page = page
+            self.page = page
         if page > self.n_pages:
-            self._page = self.n_pages
-
-    def is_last_page(self) -> bool:
-        if self._page == self.n_pages:
-            return True
-        return False
+            self.page = self.n_pages
     
-    def add_line(self, item: Any) -> None:
-        if self.used:
-            self.used = False
+    def push(self, item:Any, target:str="body") -> None:
+        """Append an item to one of the sub-buffers."""
+        if self.printed:
+            self.printed = False
             self.clear()
-        self.body.append(item)
-
-    def add_header(self, item: Any) -> None:
-        if self.used:
-            self.used = False
-            self.clear()
-        self.header.append(item)
-
-    def add_footer(self, item: Any) -> None:
-        if self.used:
-            self.used = False
-            self.clear()
-        self.footer.append(item)
+        getattr(self, target).append(item)
 
     def clear(self):
+        """Clear all sub-buffers."""
         self.body.clear()
         self.header.clear()
         self.footer.clear()
+        self.page = 1
 
-    def _true_lines(self) -> int:
-        """The number of effective lines, ignoring pagination."""
-        width, height = os.get_terminal_size()
+    def select(self, index: int) -> Any:
+        """Return an item by line number from the current page."""
+        start = -(self.page * self.body_space)
+        end = start + self.body_space
+        if end > -1: end = None
+        items = self.body[start:end][::-1]
+        if index > len(items) or index < 1:
+            raise IndexError("Invalid selection.")
+        return items[index-1]
+
+    def true_lines(self) -> int:
+        """The number of total effective lines in the body.
+        This function is not useful right now but may be in the future.
+        """
+        if self.truncate:
+            return len(self.body)
+        width = t_width()
         count = 0
         for line in self.body:
             result = len(str(line)) / width
@@ -95,21 +90,26 @@ class LineBuffer:
         return count
 
     def _print_filler(self):
-        # if not self._page == self.pages:
-        #     return
-        filled_lines = self._true_lines() - (self.body_height * (self._page - 1))
-        empty_space = self.body_height - filled_lines
+        """Print the space between the last body line and the header."""
+        if not self.page == self.n_pages:
+            return
+        filled_lines = self.true_lines() - (self.body_space * (self.page - 1))
+        empty_space = self.body_space - filled_lines
         print("\n" * empty_space, end="")
 
     def _print_header(self):
+        """Print the header."""
         for line in self.header:
             print(line[:t_width()])
 
     def _print_footer(self):
+        """Print the footer."""
         for line in self.footer:
             print(line[:t_width()])
     
     def _get_page_range(self) -> tuple[range, str]:
+        """Return the range of pages to be displayed and the markings
+        on both ends that denote pages preceding or following."""
         max_pages_displayed = t_width() // 8
         prefix, suffix = "|||", "|||"
 
@@ -124,57 +124,53 @@ class LineBuffer:
         
         for x in range(1, page_sets+1):
             rng = range(max_pages_displayed*(x-1)+1, max_pages_displayed*x+1)
-            if self._page not in rng:
+            if self.page not in rng:
                 continue
             if x < page_sets: suffix = ">>|"
             if x > 1: prefix = "|<<"
 
             return rng, prefix, suffix
         
-
-    def _print_page_numbers(self, div_char:str="-",):
+    def _print_page_numbers(self, div_char:str="-",) -> None:
+        """Print the divider bar with page numbers."""
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = " ".join([str(n) for n in page_range])
         indicator = [" " for _ in range(len(nums))] or [" "]
-        indicator[nums.find(str(self._page))] = "^"
+        indicator[nums.find(str(self.page))] = "^"
         indicator = "".join(indicator)
         trailing = t_width()-(leading+len(nums))
         print(f"{div_char*(leading-4)}{prefix} {nums} {suffix}{div_char*(trailing-4)}")
         print(" "*(leading), indicator, sep="")
 
-    def print(self, min_items=4) -> None:
-        """Print the contents of the buffer to the """
-        self._print_filler()
-        self._print_header()
-        self.body = self.body[::-1]
-        start = (self._page-1) * self.body_height
-        end = self._page * self.body_height
+    def _print_body(self) -> None:
+        """Print the body."""
+        index = self.page * self.body_space
 
-        count = self.body_height
-        if self.is_last_page():
-            count = len(self.body) - ((self.n_pages-1) * self.body_height)
-        for line in reversed(self.body[start:end]):
+        count = self.body_space
+        if self.page == self.n_pages:
+            count = len(self.body) - ((self.n_pages-1) * self.body_space)
+        for line in self.body[-index:]:
             to_print = str(line)
             if self.numbered:
                 to_print = f"{count:<2} {to_print}"
                 count -= 1
             if self.truncate:
                 to_print = to_print[:t_width()]
+
             print(to_print)
-        
+            if count == 0:
+                break
+
+    def print(self) -> None:
+        """Print the contents of the buffer to the terminal."""
+        self._print_filler()
+        self._print_header()
+        self._print_body()
         self._print_footer()
         self._print_page_numbers()
-        self.used = True
-
-    def select(self, index: int) -> Any:
-        start = (self._page-1) * self.body_height
-        end = self._page * self.body_height
-        items = self.body[start:end]
-        if index > len(items) or index < 1:
-            raise IndexError("Invalid selection.")
-        return items[index-1]
+        self.printed = True
 
 
 def clear_terminal() -> None:
@@ -184,39 +180,46 @@ def clear_terminal() -> None:
         os.system("clear")
 
 
-def terminal_size_changed(old_size) -> bool:
-    if old_size != (new_size := os.get_terminal_size()):
-        old_size = new_size
-        return True
-    return False
-
-
-def t_width():
+def t_width() -> int:
+    """Return current terminal width in lines."""
     return os.get_terminal_size()[0]
 
 
-def t_height():
+def t_height() -> int:
+    """Return current terminal height in lines."""
     return os.get_terminal_size()[1]
 
 
-def configure_screen(numbered:bool=False, truncate:bool=False, offset:int=0):
-    """Public function for creating and initializing the screen."""
-    screen.__init__(numbered=numbered, truncate=truncate, offset=offset)
+def push(item:Any, target:str="body") -> None:
+    """Push an item to 'body', 'header', or 'footer'."""
+    if target not in ("body", "header", "footer"):
+        raise DisplayError("Invalid push target.")
+    buffer.push(item, target=target)
+
+
+def select(index) -> Any:
+    """Return an item by line number from the current view in screen."""
+    return buffer.select(index)
+
+
+def configure(numbered:bool=False, truncate:bool=False, offset:int=0):
+    """Public function for modifying current buffer."""
+    buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
 
 
 def refresh() -> None:
     """Clear the terminal and print the current state of the screen."""
     clear_terminal()
-    screen.print()
+    buffer.print()
 
 
-screen = LineBuffer()
+buffer = LineBuffer()
 
 if __name__ == "__main__":
-    configure_screen(numbered=True, truncate=True, offset=1)
+    configure(numbered=True, truncate=True, offset=1)
     for n in range(80):
-        screen.add_line(f"Old MacDonald had a farm {n+1}")
-    screen.change_page(38)
+        buffer.push(f"Old MacDonald had a farm {n+1}")
+    buffer.change_page(1)
     refresh()
-    print(screen.select(1))
+    print(buffer.select(3))
     print("> ")

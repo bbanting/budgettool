@@ -7,11 +7,10 @@ import command
 import config
 import display
 
-from config import TODAY, MONTHS
+from config import TODAY, MONTHS, IDW, DATEW, AMOUNTW, TAGSW
 from main import BTError, Entry, Record
 from command.validator import VLit
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
-from display import IDW, DATEW, AMOUNTW, TAGSW, NOTEW
 
 
 def get_date():
@@ -109,13 +108,13 @@ class ListCommand(command.Command):
     def execute(self, month, category, tags):
         entries = self.filter_entries(month, category, tags)
         
-        display.screen.add_header(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+        display.push(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}", "header")
         total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
         for entry in entries:
-            display.screen.add_line(entry)
-        display.screen.add_footer("")
-        display.screen.add_footer(f"TOTAL: {total}")
-        display.screen.add_footer(self.get_filter_summary(len(entries), month, category, tags))
+            display.push(entry)
+        display.push("", "footer")
+        display.push(f"TOTAL: {total}", "footer")
+        display.push(self.get_filter_summary(len(entries), month, category, tags), "footer")
 
     def get_filter_summary(self, n, month, category, tags) -> str:
         month = list(MONTHS)[month].title()

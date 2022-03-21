@@ -16,6 +16,12 @@ MONTHS = {
 }
 KEYWORDS = ("income", "expense", "all", "tag") + tuple(MONTHS)
 
+# Widths for display columns
+IDW = 8
+DATEW = 8
+AMOUNTW = 10
+TAGSW = 12
+
 
 class ConfigError(Exception):
     pass
