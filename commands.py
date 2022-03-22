@@ -7,9 +7,9 @@ import command
 import config
 import display
 
-from config import TODAY, MONTHS, IDW, DATEW, AMOUNTW, TAGSW
+from config import TODAY
 from main import BTError, Entry, Record
-from command.validator import VLit
+from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
 
 
@@ -107,6 +107,7 @@ class ListCommand(command.Command):
     
     def execute(self, month, category, tags):
         config.last_query = [month, category, tags]
+        display.change_page(1)
 
 
 class AddEntryCommand(command.Command):
@@ -232,6 +233,18 @@ class EditEntryCommand(command.Command):
     
     def redo(self) -> None:
         config.records[config.active_year].replace(self.old_entry, self.new_entry)
+
+
+class ChangePageCommand(command.Command):
+    """Change to another page of the current entry list."""
+    names = ("page",)
+    params = {
+        "number": VBool(str.isdigit, req=True)
+    }
+
+    def execute(self, number: str) -> None:
+        number = int(number)
+        display.change_page(number)
 
 
 class QuitCommand(command.Command):

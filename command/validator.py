@@ -43,7 +43,7 @@ class Validator(abc.ABC):
                 raise ValidatorError("Missing required input")
             return self.default
         
-        [args.remove(x) for x in to_remove]
+        for x in to_remove: args.remove(x)
         if self.plural:
             return data
         return data[0]

@@ -2,9 +2,14 @@ import os
 import logging
 from typing import List, Any, Iterable
 
+import colorama
+from colorama import Fore, Back, Style
+
+
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
+colorama.init(autoreset=True)
 
 class DisplayError(Exception):
     pass
@@ -19,7 +24,7 @@ class LineBuffer:
         self.numbered: int = numbered
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
-        self.page: int = 1
+        self._page: int = 1
         self.error: str = None
         self.printed: bool = False
     
@@ -34,6 +39,13 @@ class LineBuffer:
         return height
 
     @property
+    def page(self) -> int:
+        if 0 < self._page <= self.n_pages:
+           return self._page
+        elif self._page > self.n_pages:
+            return self.n_pages
+
+    @property
     def n_pages(self) -> int:
         """Return the total number of pages."""
         lines = self.true_lines()
@@ -46,10 +58,7 @@ class LineBuffer:
 
     def change_page(self, page: int) -> None:
         """Change which page to display."""
-        if 0 < page <= self.n_pages:
-            self.page = page
-        if page > self.n_pages:
-            self.page = self.n_pages
+        self._page = page
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
@@ -63,7 +72,6 @@ class LineBuffer:
         self.body.clear()
         self.header.clear()
         self.footer.clear()
-        self.page = 1
 
     def select(self, index: int) -> Any:
         """Return an item by line number from the current page."""
@@ -90,20 +98,28 @@ class LineBuffer:
             count += int(result + 1)
         return count
 
-    def _print_filler(self):
+    def _print_filler(self) -> None:
         """Print the space between the last body line and the header."""
         if not self.page == self.n_pages:
             return
         filled_lines = self.true_lines() - (self.body_space * (self.page - 1))
         empty_space = self.body_space - filled_lines
-        print("\n" * empty_space, end="")
+        count = self.body_space
+        for _ in range(empty_space):
+            num = str(count).zfill(2)
+            print(Style.DIM + num)
+            count -= 1
 
-    def _print_header(self):
+    def _print_header(self) -> None:
         """Print the header."""
         for line in self.header:
-            print(line[:t_width()])
+            style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
+            lpadding = " " * 3
+            line = line[:(t_width()-len(lpadding))]
+            rpadding = " " * (t_width() - len(lpadding + line))
+            print(f"{style}{lpadding}{line}{rpadding}")
 
-    def _print_footer(self):
+    def _print_footer(self) -> None:
         """Print the footer."""
         for line in self.footer:
             print(line[:t_width()])
@@ -112,7 +128,7 @@ class LineBuffer:
         """Return the range of pages to be displayed and the markings
         on both ends that denote pages preceding or following."""
         max_pages_displayed = t_width() // 8
-        prefix, suffix = "|||", "|||"
+        prefix, suffix = "   ", "   "
 
         if self.n_pages <= max_pages_displayed:
             return range(1, self.n_pages+1), prefix, suffix
@@ -134,8 +150,10 @@ class LineBuffer:
         
     def _print_page_numbers(self, div_char:str="-",) -> None:
         """Print the divider bar with page numbers."""
+        style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
+        div_char = " "
         if self.n_pages < 2:
-            print(div_char * t_width(), end="\n\n")
+            print(f"{style}{div_char*t_width()}", end="\n\n")
             return
         page_range, prefix, suffix = self._get_page_range()
 
@@ -145,7 +163,7 @@ class LineBuffer:
         indicator[nums.find(str(self.page))] = "^"
         indicator = "".join(indicator)
         trailing = t_width()-(leading+len(nums))
-        print(f"{div_char*(leading-4)}{prefix} {nums} {suffix}{div_char*(trailing-4)}")
+        print(f"{style}{div_char*(leading-4)}{prefix} {nums} {suffix}{div_char*(trailing-4)}")
         print(" "*(leading), indicator, sep="")
 
     def _print_body(self) -> None:
@@ -158,7 +176,8 @@ class LineBuffer:
         for line in self.body[-index:]:
             to_print = str(line)
             if self.numbered:
-                to_print = f"{count:<2} {to_print}"
+                num = str(count).zfill(2)
+                to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
                 count -= 1
             if self.truncate:
                 to_print = to_print[:t_width()]
@@ -180,8 +199,8 @@ class LineBuffer:
         if self.error:
             self._print_error()
             return
-        self._print_filler()
         self._print_header()
+        self._print_filler()
         self._print_body()
         self._print_footer()
         self._print_page_numbers()
@@ -229,6 +248,10 @@ def select(index) -> Any:
     return buffer.select(index)
 
 
+def change_page(number:int) -> None:
+    buffer.change_page(number)
+
+
 def configure(numbered:bool=True, truncate:bool=True, offset:int=0):
     """Public function for modifying current buffer."""
     buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
@@ -246,7 +269,7 @@ if __name__ == "__main__":
     configure(offset=1)
     for n in range(80):
         buffer.push(f"Old MacDonald had a farm {n+1}")
-    buffer.change_page(1)
+    buffer.change_page(9)
     refresh()
     print(buffer.select(3))
     print("> ")

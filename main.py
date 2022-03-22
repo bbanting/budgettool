@@ -15,7 +15,7 @@ import config
 import command
 import display
 import commands
-from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS, IDW, DATEW, AMOUNTW, TAGSW
+from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
@@ -110,7 +110,7 @@ class Entry:
         tags = ", ".join(self.tags)
         if len(tags) > 12:
             tags = tags[:9] + "..."
-        return f"{str(self.id).zfill(4):{IDW}}{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
+        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
 
 
 class RecordHandler(collections.UserDict):
@@ -195,11 +195,15 @@ class Record(collections.UserList):
 
 
 def show_entries(month, category, tags):
-    entries = _filter_entries(month, category, tags)
+    try:
+        entries = _filter_entries(month, category, tags)
+    except BTError as e:
+        display.error(str(e))
+        return
     total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
     summary = _get_filter_summary(len(entries), month, category, tags)
 
-    display.push_h(f"{'':{IDW}}{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
     for entry in entries: display.push(entry)
     display.push_f("", f"TOTAL: {total}", summary)
 
@@ -252,6 +256,7 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddTagCommand)
     controller.register(commands.EditEntryCommand)
     controller.register(commands.ShowBillsCommand)
+    controller.register(commands.ChangePageCommand)
 
 
 def main():
@@ -271,7 +276,7 @@ def main():
             print("")
         else:
             show_entries(*config.last_query)
-       
+
 
 if __name__=="__main__":
     config.records = RecordHandler({TODAY.year: Record(TODAY.year)})

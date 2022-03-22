@@ -22,7 +22,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] Make page numbers full height regardless of body size
+- [x] Make page numbers full height regardless of body size
+- [ ] display.select function
 
 ## Notes
 

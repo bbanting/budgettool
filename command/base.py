@@ -65,7 +65,7 @@ class CommandController:
         # Get the command
         command_cls = self.get_command(args)
         if not command_cls:
-            display.push_e("Command not found")
+            display.error("Command not found")
             return
 
         # Execute the command
