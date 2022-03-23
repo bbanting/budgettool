@@ -23,7 +23,6 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [x] Make page numbers full height regardless of body size
-- [ ] display.select function
 
 ## Notes
 

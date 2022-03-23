@@ -40,7 +40,7 @@ class VTag(Validator):
         super().__init__(plural=True, *args, **kwargs)
 
     def validate(self, value) -> Union[str, ValidatorError]:
-        if value.lower() in config.tags:
+        if value.lower() in config.udata.tags:
             return value.lower()
         else:
             return ValidatorError("Tag not found.")

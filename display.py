@@ -25,8 +25,9 @@ class LineBuffer:
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
         self._page: int = 1
-        self.error: str = None
         self.printed: bool = False
+        self.highlight: int = 0
+        self.message: str = ""
     
     @property
     def body_space(self) -> int:
@@ -58,6 +59,8 @@ class LineBuffer:
 
     def change_page(self, page: int) -> None:
         """Change which page to display."""
+        if page != self.page:
+            self.highlight = 0
         self._page = page
     
     def push(self, item:Any, target:str="body") -> None:
@@ -81,6 +84,8 @@ class LineBuffer:
         items = self.body[start:end][::-1]
         if index > len(items) or index < 1:
             raise IndexError("Invalid selection.")
+
+        self.highlight = index
         return items[index-1]
 
     def true_lines(self) -> int:
@@ -153,18 +158,16 @@ class LineBuffer:
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
         div_char = " "
         if self.n_pages < 2:
-            print(f"{style}{div_char*t_width()}", end="\n\n")
+            print(f"{style}{div_char*t_width()}", end="\n")
             return
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = " ".join([str(n) for n in page_range])
-        indicator = [" " for _ in range(len(nums))] or [" "]
-        indicator[nums.find(str(self.page))] = "^"
-        indicator = "".join(indicator)
-        trailing = t_width()-(leading+len(nums))
-        print(f"{style}{div_char*(leading-4)}{prefix} {nums} {suffix}{div_char*(trailing-4)}")
-        print(" "*(leading), indicator, sep="")
+        pindex = nums.find(str(self.page))
+        nums = nums[:pindex-1] + f"{Back.CYAN} {self.page} {Back.WHITE}" + nums[pindex+1:]
+        trailing = t_width()-(leading+len(nums)-2)
+        print(f"{style}{div_char*(leading)}{prefix} {nums} {suffix}{div_char*(trailing)}")
 
     def _print_body(self) -> None:
         """Print the body."""
@@ -181,29 +184,25 @@ class LineBuffer:
                 count -= 1
             if self.truncate:
                 to_print = to_print[:t_width()]
-
+            if count == self.highlight:
+                to_print = Fore.CYAN + to_print
+            
             print(to_print)
             if count == 0:
                 break
-    
-    def _print_error(self):
-        self.clear()
-        self.push(self.error[:t_width()])
-        self._print_filler()
-        self._print_body()
-        self._print_page_numbers()
-        self.error = None
+
+    def _print_message_bar(self):
+        print(self.message)
+        self.message = ""
 
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
-        if self.error:
-            self._print_error()
-            return
         self._print_header()
         self._print_filler()
         self._print_body()
         self._print_footer()
         self._print_page_numbers()
+        self._print_message_bar()
         self.printed = True
 
 
@@ -239,8 +238,14 @@ def push_f(*items:Any) -> None:
     for item in items:
         buffer.push(item, target="footer")
 
-def error(error:str):
-    buffer.error = error
+
+def error(error):
+    buffer.clear()
+    message(str(error))
+
+
+def message(text:str):
+    buffer.message = text
 
 
 def select(index) -> Any:
@@ -269,7 +274,7 @@ if __name__ == "__main__":
     configure(offset=1)
     for n in range(80):
         buffer.push(f"Old MacDonald had a farm {n+1}")
-    buffer.change_page(9)
+    buffer.change_page(4)
+    select(3)
     refresh()
-    print(buffer.select(3))
     print("> ")

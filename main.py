@@ -271,7 +271,7 @@ def main():
         try:
             controller.route_command(user_input)
         except BTError as e:
-            print(e)
+            display.error(e)
         except KeyboardInterrupt:
             print("")
         else:
