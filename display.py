@@ -165,9 +165,9 @@ class LineBuffer:
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = " ".join([str(n) for n in page_range])
         pindex = nums.find(str(self.page))
-        nums = nums[:pindex-1] + f"{Back.CYAN} {self.page} {Back.WHITE}" + nums[pindex+1:]
-        trailing = t_width()-(leading+len(nums)-2)
-        print(f"{style}{div_char*(leading)}{prefix} {nums} {suffix}{div_char*(trailing)}")
+        nums = f"{nums[:pindex-1]}|{self.page}|{nums[pindex+2:]}"
+        trailing = t_width()-(leading+len(nums))
+        print(f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}")
 
     def _print_body(self) -> None:
         """Print the body."""
@@ -184,7 +184,7 @@ class LineBuffer:
                 count -= 1
             if self.truncate:
                 to_print = to_print[:t_width()]
-            if count == self.highlight:
+            if count+1 == self.highlight:
                 to_print = Fore.CYAN + to_print
             
             print(to_print)
@@ -239,11 +239,6 @@ def push_f(*items:Any) -> None:
         buffer.push(item, target="footer")
 
 
-def error(error):
-    buffer.clear()
-    message(str(error))
-
-
 def message(text:str):
     buffer.message = text
 
@@ -260,6 +255,14 @@ def change_page(number:int) -> None:
 def configure(numbered:bool=True, truncate:bool=True, offset:int=0):
     """Public function for modifying current buffer."""
     buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
+
+
+def error(error):
+    clear_terminal()
+    buffer.clear()
+
+    message(str(error))
+    buffer.print()
 
 
 def refresh() -> None:

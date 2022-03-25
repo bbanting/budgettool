@@ -1,5 +1,4 @@
 import copy
-import os
 from typing import List, Union
 from datetime import datetime
 
@@ -167,8 +166,7 @@ class RemoveEntryCommand(command.Command):
     def execute(self, id):
         self.entry = find_entry(config.records[config.active_year], id)
         if not self.entry:
-            print("Entry not found.")
-            return
+            raise command.CommandError("Entry not found.")
         ans = None
         date = self.entry.date.strftime("%b %d")
         prompt = f"(Y/n) Are you sure you want to delete entry {self.entry.id}? ({date}: {self.entry.in_dollars()})\n"

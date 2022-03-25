@@ -10,6 +10,7 @@ import collections
 import logging
 from datetime import datetime
 from typing import List
+from command.base import CommandError
 
 import config
 import command
@@ -265,17 +266,21 @@ def main():
     display.configure(offset=1)
 
     show_entries(*config.last_query)
+    display.refresh()
     while True:
-        display.refresh()
-        user_input = shlex.split(input("> "))
         try:
-            controller.route_command(user_input)
-        except BTError as e:
-            display.error(e)
+            user_input = shlex.split(input("> "))
         except KeyboardInterrupt:
             print("")
+            return
+
+        try:
+            controller.route_command(user_input)
+        except (BTError, CommandError) as e:
+            display.error(e)
         else:
             show_entries(*config.last_query)
+            display.refresh()
 
 
 if __name__=="__main__":

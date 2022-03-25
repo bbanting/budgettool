@@ -65,15 +65,13 @@ class CommandController:
         # Get the command
         command_cls = self.get_command(args)
         if not command_cls:
-            display.error("Command not found")
-            return
+            raise CommandError("Command not found.")
 
         # Execute the command
         try:
             command = command_cls(args)
         except CommandError as e:
-            print(e)
-            print("Try 'help' if you're having trouble.")
+            raise CommandError(str(e) + "; Try 'help' if you're having trouble.")
         else:
             self.execute(command)
             if "undo" in command.__class__.__dict__:
