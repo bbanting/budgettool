@@ -13,16 +13,13 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Preset expenses and bills (goals)
     - tags attached to goals 
         - any and all relationships
-- [ ] Go back a step in adding an entry (or editing)
 - [ ] Write tests
-- [ ] List old months when no entries in latest month
 - [ ] Search descriptions
 - [ ] Calendar view
 - [ ] Fix formatting in light of tags (remove tags from output?)
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [x] Figure out when to clear highlight
 
 ## Notes
 
@@ -30,11 +27,9 @@ I made this because I like to code and want to improve. I can't see this being u
   - Entry is tied to EntryList through global variable
   - Can I make this better?
 - An option would be to use sqlite and have the option to export to csv instead
-- Possible to have no tags on entry?
 - Is changing year necessary if an entry can easily be made with a different year?
 - A master records class; when iterated over, checks most recent years first
   - All records from all years are available but this way there isn't one ginormous file
   - Maybe use UserDict with custom `__iter__` and `__getitem__` methods?
-- make command names case-insensitive?
 - LineBuffer.true_height needs to account for numbering too
 - Currently, if page numbers get too many digits long, they will overflow

@@ -7,36 +7,47 @@ import config
 import display
 
 from config import TODAY
-from main import BTError, Entry, Record
+from main import BTError, Entry
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
+
+
+def input_preprocessing(input:str) -> None:
+    """"""
 
 
 def get_date():
     """Retrieve the date input from the user."""
     while True:
         display.refresh()
-        user_input = input("Date: ").split()
-        if not user_input and TODAY.year != config.active_year:
+        date = input("Date: ")
+
+        if date.lower() in ("q", "quit"):
+            raise BTError("Input aborted by user.")
+
+        date = date.split()   
+        if not date and TODAY.year != config.active_year:
             display.message("Can't infer date when current year not active.")
-        elif not user_input:
+        elif not date:
             return TODAY
-        elif len(user_input) >= 2 <= 3:
-            month = VMonth(strict=True)(user_input)
-            day = VDay()(user_input)
-            year = VYear(default=config.active_year)(user_input)
+        elif len(date) >= 2 <= 3:
+            month = VMonth(strict=True)(date)
+            day = VDay()(date)
+            year = VYear(default=config.active_year)(date)
             return datetime(year, month, day)
         else:
             display.message("Invalid input.")
 
 
-def get_amount():
+def get_amount() -> int:
     """Retrieve the amount input from the user."""
     while True:
         display.refresh()
         amount = input("Amount: ").strip()
-        if amount.lower() == "back":
-            raise BTError("Command terminated.")
+
+        if amount.lower() in ("q", "quit"):
+            raise BTError("Input aborted by user.")
+
         if not amount.startswith(("-", "+")):
             display.message("The amount must start with + or -")
             continue
@@ -44,36 +55,33 @@ def get_amount():
         return amount
 
 
-def _match_tag(query: str) -> str:
+def _match_tag(query: str) -> Union[str, None]:
     """Check if string matches a tag. If so, return the tag."""
-    query = query.strip().lower()
-    results = []
-
+    result = None
     for t in config.udata.tags:
         if t.lower().startswith(query):
-            results.append(t)
-    
-    if len(results) != 1:
-        return None
-    else:
-        return results[0]
+            result = t
+            break
+
+    return result
 
 
 def get_tags() -> List:
     """Get tag(s) input from user."""
+    display.message(f"({', '.join(config.udata.tags)})")
     while True:
         display.refresh()
-        tags = input("Tags: ")
-        if tags.lower().strip() == "back":
-            raise BTError("Command terminated.")
-        if tags == "":
-            display.message(f"Tags: {', '.join(config.tags)}")
-            continue
-        else:
-            tags = tags.split(" ")
+        tags = input("Tags: ").lower().strip()
 
+        if tags in ("q", "quit"):
+            raise BTError("Input aborted by user.")
+        if tags == "help":
+            display.message(f"({', '.join(config.udata.tags)})")
+            continue
+
+        tags = tags.split(" ")
         if not all(tags := [_match_tag(t) for t in tags]):
-            display.message("Invalid tags given.")
+            display.message("Invalid tags given. Enter 'help' to see tags.")
             continue
         return tags
             
@@ -83,8 +91,10 @@ def get_note() -> str:
     while True:
         display.refresh()
         note = input("Note: ")
-        if note.lower() == "back":
-            raise BTError("Command terminated.")
+
+        if note.lower() in ("q", "quit"):
+            raise BTError("Input aborted by user.")
+
         if not note:
             return "..."
         return note
@@ -164,7 +174,7 @@ class RemoveEntryCommand(command.Command):
         ans = None
         while ans not in ("yes", "no", "y", "n"):
             display.refresh()
-            ans = input("(Y/n) Are you sure you want to delete this entry?").lower()
+            ans = input("(Y/n) Are you sure you want to delete this entry? ").lower()
         if ans in ("yes", "y"):
             config.records[self.entry.date.year].remove(self.entry)
         display.deselect()

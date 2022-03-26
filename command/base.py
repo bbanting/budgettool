@@ -35,7 +35,7 @@ class CommandController:
 
     def get_command(self, args) -> Union[Command, None]:
         """Return the command function."""
-        command = self.command_register.get(args.pop(0))
+        command = self.command_register.get(args.pop(0).lower())
         if not command:
             return
         # Check for and process fork command

@@ -69,7 +69,7 @@ class Entry:
     @staticmethod
     def cents_to_dollars(cent_amount) -> str:
         """Convert a cent amount to dollars for display."""
-        if cent_amount > 0:
+        if cent_amount >= 0:
             return f"+${cent_amount/100:.2f}"
         else:
             return f"-${abs(cent_amount/100):.2f}"
@@ -196,11 +196,8 @@ class Record(collections.UserList):
 
 
 def show_entries(month, category, tags):
-    try:
-        entries = _filter_entries(month, category, tags)
-    except BTError as e:
-        display.error(str(e))
-        return
+    """Push the current entries to the display."""
+    entries = _filter_entries(month, category, tags)
     total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
     summary = _get_filter_summary(len(entries), month, category, tags)
 
@@ -218,15 +215,12 @@ def _get_filter_summary(n, month, category, tags) -> str:
 
 def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
     """Filter and return entries based on input.
-    Raise exception if none found
+    Raise exception if none found.
     """
     if month is None and config.active_year == TODAY.year:
         month = TODAY.month
     elif month is None and config.active_year != TODAY.year:
         month = 12
-
-    if len(config.records[config.active_year]) == 0:
-        raise BTError("Record is empty.")
 
     filtered_entries = []
     for e in config.records[config.active_year]:
@@ -238,8 +232,6 @@ def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
             continue
         filtered_entries.append(e)
 
-    if not filtered_entries:
-        raise BTError("No entries found.")
     return sorted(filtered_entries, key=lambda x: x.date)
 
 

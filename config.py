@@ -14,7 +14,7 @@ MONTHS = {
     "may": 5, "june": 6, "july": 7, "august": 8,
     "september": 9, "october": 10, "november": 11, "december": 12,
 }
-KEYWORDS = ("income", "expense", "all", "tag") + tuple(MONTHS)
+KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit") + tuple(MONTHS)
 
 # Widths for display columns
 IDW = 8
