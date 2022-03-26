@@ -249,6 +249,11 @@ def select(index) -> Any:
     return buffer.select(index)
 
 
+def deselect() -> None:
+    """Remove the highlight."""
+    buffer.highlight = 0
+
+
 def change_page(number:int) -> None:
     buffer.change_page(number)
 

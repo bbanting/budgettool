@@ -167,6 +167,7 @@ class RemoveEntryCommand(command.Command):
             ans = input("(Y/n) Are you sure you want to delete this entry?").lower()
         if ans in ("yes", "y"):
             config.records[self.entry.date.year].remove(self.entry)
+        display.deselect()
 
     def undo(self):
         config.records[self.entry.date.year].append(self.entry)
@@ -215,6 +216,7 @@ class EditEntryCommand(command.Command):
         new_value = globals()[self.new_entry.editable_fields[field]]()
         setattr(self.new_entry, field, new_value)
         config.records[config.active_year].replace(self.old_entry, self.new_entry)
+        display.deselect()
 
     def undo(self) -> None:
         config.records[config.active_year].replace(self.new_entry, self.old_entry)

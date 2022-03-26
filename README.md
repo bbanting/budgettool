@@ -22,8 +22,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [x] Fix page number display bug
-- [ ] Figure out when to clear highlight
+- [x] Figure out when to clear highlight
 
 ## Notes
 

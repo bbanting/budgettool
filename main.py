@@ -271,8 +271,11 @@ def main():
         try:
             user_input = shlex.split(input("> "))
             controller.route_command(user_input)
-        except (BTError, CommandError, display.DisplayError) as e:
+        except (BTError, display.DisplayError) as e:
             display.error(e)
+        except CommandError as e:
+            display.message(str(e))
+            display.refresh()
         except KeyboardInterrupt:
             print("")
             return

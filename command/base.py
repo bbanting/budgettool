@@ -59,8 +59,7 @@ class CommandController:
         """Process user input, execute command."""
         # Ensure input isn't empty
         if not args or not args[0]:
-            print("Try 'help' if you're having trouble.")
-            return
+            raise CommandError("Try 'help' if you're having trouble.")
         
         # Get the command
         command_cls = self.get_command(args)
