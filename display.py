@@ -61,6 +61,8 @@ class LineBuffer:
         """Change which page to display."""
         if page != self.page:
             self.highlight = 0
+        if page < 1:
+            return
         self._page = page
     
     def push(self, item:Any, target:str="body") -> None:
@@ -103,6 +105,15 @@ class LineBuffer:
             count += int(result + 1)
         return count
 
+    def _print_header(self) -> None:
+        """Print the header."""
+        for line in self.header:
+            style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
+            lpadding = " " * 3
+            line = line[:(t_width()-len(lpadding))]
+            rpadding = " " * (t_width() - len(lpadding + line))
+            print(f"{style}{lpadding}{line}{rpadding}")
+
     def _print_filler(self) -> None:
         """Print the space between the last body line and the header."""
         if not self.page == self.n_pages:
@@ -115,19 +126,31 @@ class LineBuffer:
             print(Style.DIM + num)
             count -= 1
 
-    def _print_header(self) -> None:
-        """Print the header."""
-        for line in self.header:
-            style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
-            lpadding = " " * 3
-            line = line[:(t_width()-len(lpadding))]
-            rpadding = " " * (t_width() - len(lpadding + line))
-            print(f"{style}{lpadding}{line}{rpadding}")
-
     def _print_footer(self) -> None:
         """Print the footer."""
         for line in self.footer:
             print(line[:t_width()])
+
+    def _print_body(self) -> None:
+        """Print the body."""
+        index = self.page * self.body_space
+        count = self.body_space
+        if self.page == self.n_pages:
+            count = len(self.body) - ((self.n_pages-1) * self.body_space)
+        for line in self.body[-index:]:
+            to_print = str(line)
+            if self.numbered:
+                num = str(count).zfill(2)
+                to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
+                count -= 1
+            if self.truncate:
+                to_print = to_print[:t_width()]
+            if count+1 == self.highlight:
+                to_print = Fore.CYAN + to_print
+            
+            print(to_print)
+            if count == 0:
+                break
     
     def _get_page_range(self) -> tuple[range, str]:
         """Return the range of pages to be displayed and the markings
@@ -160,38 +183,16 @@ class LineBuffer:
         if self.n_pages < 2:
             print(f"{style}{div_char*t_width()}", end="\n")
             return
+
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
-        nums = " ".join([str(n) for n in page_range])
-        pindex = nums.find(str(self.page))
-        nums = f"{nums[:pindex-1]}|{self.page}|{nums[pindex+2:]}"
+        nums = "".join([f" {n} " if n != self.page else f"|{n}|" for n in page_range])
         trailing = t_width()-(leading+len(nums))
         print(f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}")
 
-    def _print_body(self) -> None:
-        """Print the body."""
-        index = self.page * self.body_space
-
-        count = self.body_space
-        if self.page == self.n_pages:
-            count = len(self.body) - ((self.n_pages-1) * self.body_space)
-        for line in self.body[-index:]:
-            to_print = str(line)
-            if self.numbered:
-                num = str(count).zfill(2)
-                to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
-                count -= 1
-            if self.truncate:
-                to_print = to_print[:t_width()]
-            if count+1 == self.highlight:
-                to_print = Fore.CYAN + to_print
-            
-            print(to_print)
-            if count == 0:
-                break
-
-    def _print_message_bar(self):
+    def _print_message_bar(self) -> None:
+        """Print the line below the page numbers."""
         print(self.message)
         self.message = ""
 
@@ -239,7 +240,7 @@ def push_f(*items:Any) -> None:
         buffer.push(item, target="footer")
 
 
-def message(text:str):
+def message(text:str) -> None:
     buffer.message = text
 
 
@@ -252,12 +253,12 @@ def change_page(number:int) -> None:
     buffer.change_page(number)
 
 
-def configure(numbered:bool=True, truncate:bool=True, offset:int=0):
+def configure(numbered:bool=True, truncate:bool=True, offset:int=0) -> None:
     """Public function for modifying current buffer."""
     buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
 
 
-def error(error):
+def error(error) -> None:
     clear_terminal()
     buffer.clear()
 

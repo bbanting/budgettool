@@ -270,14 +270,11 @@ def main():
     while True:
         try:
             user_input = shlex.split(input("> "))
-        except KeyboardInterrupt:
-            print("")
-            return
-
-        try:
             controller.route_command(user_input)
         except (BTError, CommandError) as e:
             display.error(e)
+        except KeyboardInterrupt:
+            print("")
         else:
             show_entries(*config.last_query)
             display.refresh()

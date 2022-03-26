@@ -47,7 +47,7 @@ def _match_tag(query: str) -> str:
     query = query.strip().lower()
     results = []
 
-    for t in config.tags:
+    for t in config.udata.tags:
         if t.lower().startswith(query):
             results.append(t)
     

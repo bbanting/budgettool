@@ -22,8 +22,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [x] Make page numbers full height regardless of body size
-- [ ] Fix page number display bug
+- [x] Fix page number display bug
 
 ## Notes
 
@@ -33,8 +32,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - An option would be to use sqlite and have the option to export to csv instead
 - Possible to have no tags on entry?
 - Is changing year necessary if an entry can easily be made with a different year?
-- If there's no active year, how to differentiate ids between years when selecting for edit and delete?
-  - hexadeciaml ids?
 - A master records class; when iterated over, checks most recent years first
   - All records from all years are available but this way there isn't one ginormous file
   - Maybe use UserDict with custom `__iter__` and `__getitem__` methods?
