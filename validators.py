@@ -54,7 +54,7 @@ class VNewTag(Validator):
             return ValidatorError("Tag name may not be a keyword.")
         if ("+" in value) or ("!" in value):
             return ValidatorError("Tag name may not contain '+' or '!'.")
-        if value in config.tags:
+        if value in config.udata.tags:
             return ValidatorError("Tag already exists.")
         return value
 

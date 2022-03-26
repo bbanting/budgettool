@@ -15,9 +15,10 @@ from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
 def get_date():
     """Retrieve the date input from the user."""
     while True:
+        display.refresh()
         user_input = input("Date: ").split()
         if not user_input and TODAY.year != config.active_year:
-            print("Can't infer date when current year not active.")
+            display.message("Can't infer date when current year not active.")
         elif not user_input:
             return TODAY
         elif len(user_input) >= 2 <= 3:
@@ -26,17 +27,18 @@ def get_date():
             year = VYear(default=config.active_year)(user_input)
             return datetime(year, month, day)
         else:
-            print("Invalid input.")
+            display.message("Invalid input.")
 
 
 def get_amount():
     """Retrieve the amount input from the user."""
     while True:
+        display.refresh()
         amount = input("Amount: ").strip()
         if amount.lower() == "back":
             raise BTError("Command terminated.")
         if not amount.startswith(("-", "+")):
-            print("The amount must start with + or -")
+            display.message("The amount must start with + or -")
             continue
         amount = Entry.dollars_to_cents(amount)
         return amount
@@ -60,17 +62,18 @@ def _match_tag(query: str) -> str:
 def get_tags() -> List:
     """Get tag(s) input from user."""
     while True:
+        display.refresh()
         tags = input("Tags: ")
         if tags.lower().strip() == "back":
             raise BTError("Command terminated.")
         if tags == "":
-            print(f"Tags: {', '.join(config.tags)}")
+            display.message(f"Tags: {', '.join(config.tags)}")
             continue
         else:
             tags = tags.split(" ")
 
         if not all(tags := [_match_tag(t) for t in tags]):
-            print("Invalid tags given.")
+            display.message("Invalid tags given.")
             continue
         return tags
             
@@ -78,20 +81,13 @@ def get_tags() -> List:
 def get_note() -> str:
     """Get note input from the user"""
     while True:
+        display.refresh()
         note = input("Note: ")
         if note.lower() == "back":
             raise BTError("Command terminated.")
         if not note:
             return "..."
         return note
-
-
-def find_entry(year: Record, id: int) -> Union[Entry, None]:
-    """Find an entry by ID and return it."""
-    for entry in reversed(year):
-        if entry.id != id:
-            continue
-        return entry
 
 
 class ListCommand(command.Command):
@@ -137,13 +133,13 @@ class AddTagCommand(command.Command):
     }
 
     def execute(self):
-        config.add_tag(self.data["name"])
+        config.udata.add_tag(self.data["name"])
 
     def undo(self):
-        config.remove_tag(self.data["name"], for_undo=True)
+        config.udata.remove_tag(self.data["name"], for_undo=True)
 
     def redo(self):
-        config.add_tag(self.data["name"])
+        config.udata.add_tag(self.data["name"])
 
 
 class AddCommand(command.ForkCommand):
@@ -164,14 +160,11 @@ class RemoveEntryCommand(command.Command):
     }
 
     def execute(self, id):
-        self.entry = find_entry(config.records[config.active_year], id)
-        if not self.entry:
-            raise command.CommandError("Entry not found.")
+        self.entry = display.select(id)
         ans = None
-        date = self.entry.date.strftime("%b %d")
-        prompt = f"(Y/n) Are you sure you want to delete entry {self.entry.id}? ({date}: {self.entry.in_dollars()})\n"
         while ans not in ("yes", "no", "y", "n"):
-            ans = input(prompt).lower()
+            display.refresh()
+            ans = input("(Y/n) Are you sure you want to delete this entry?").lower()
         if ans in ("yes", "y"):
             config.records[self.entry.date.year].remove(self.entry)
 
@@ -189,13 +182,13 @@ class RemoveTagCommand(command.Command):
     }
 
     def execute(self):
-        config.remove_tag(self.data["name"])
+        config.udata.remove_tag(self.data["name"])
 
     def undo(self):
-        config.add_tag(self.data["name"])
+        config.udata.add_tag(self.data["name"])
 
     def redo(self):
-        config.remove_tag(self.data["name"])
+        config.udata.remove_tag(self.data["name"])
 
 
 class RemoveCommand(command.ForkCommand):
@@ -217,10 +210,7 @@ class EditEntryCommand(command.Command):
     }
 
     def execute(self, id: int, field: str) -> None:
-        self.old_entry = find_entry(config.records[config.active_year], id)
-        if not self.old_entry:
-            print("Entry not found.")
-            return
+        self.old_entry = display.select(id)
         self.new_entry = copy.copy(self.old_entry)
         new_value = globals()[self.new_entry.editable_fields[field]]()
         setattr(self.new_entry, field, new_value)

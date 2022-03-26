@@ -85,7 +85,7 @@ class LineBuffer:
         if end > -1: end = None
         items = self.body[start:end][::-1]
         if index > len(items) or index < 1:
-            raise IndexError("Invalid selection.")
+            raise DisplayError("Invalid line selection.")
 
         self.highlight = index
         return items[index-1]
