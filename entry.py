@@ -3,9 +3,11 @@ from datetime import datetime
 from typing import List
 
 import config
-import main
 from config import DATEW, AMOUNTW, TAGSW
 
+
+class EntryError(Exception):
+    pass
 
 class Entry:
     editable_fields = {
@@ -15,16 +17,11 @@ class Entry:
         "date":     "get_date",
         }
 
-    def __init__(self, date: datetime, amount: int, tags: List, note:str, id:int=0):
+    def __init__(self, id, date: datetime, amount: int, tags: List, note:str):
         self.date = date
         self.amount = amount
         self.tags = tags
         self.note = note
-
-        if id:
-            self.id = id
-        else:
-            self.id = self.generate_id()
 
     @property
     def catgeory(self) -> str:
@@ -33,9 +30,9 @@ class Entry:
         else:
             return "expense"
 
-    @property
-    def parent_record(self) -> main.Record:
-        return config.records[self.date.year]
+    # @property
+    # def parent_record(self) -> main.Record:
+    #     return config.records[self.date.year]
 
     @classmethod
     def from_csv(cls, data: list):
@@ -69,7 +66,7 @@ class Entry:
         """
         for t in tags:
             if t not in (config.udata.tags + config.udata.old_tags):
-                raise main.BTError("Invalid tag.")
+                raise EntryError("Invalid tag.")
         return tags
 
     def in_dollars(self):
@@ -82,15 +79,18 @@ class Entry:
 
     def to_tuple(self) -> tuple:
         date = self.date.strftime("%Y/%m/%d")
-        return (date, str(self.amount), " ".join(self.tags), self.note)
+        values = (date, str(self.amount), " ".join(self.tags), self.note)
+        if self.id:
+            values = (self.id, date, self.amount, " ".join(self.tags), self.note)
+        return values
 
-    def generate_id(self) -> int:
-        """Generate a new unused ID for a new entry."""
-        if len(self.parent_record) > 0:
-            prev_id = self.parent_record[-1].id
-            return prev_id + 1
-        else:
-            return 1
+    # def generate_id(self) -> int:
+    #     """Generate a new unused ID for a new entry."""
+    #     if len(self.parent_record) > 0:
+    #         prev_id = self.parent_record[-1].id
+    #         return prev_id + 1
+    #     else:
+    #         return 1
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")

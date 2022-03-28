@@ -7,13 +7,10 @@ import config
 import display
 
 from config import TODAY
-from main import BTError, Entry
+import main
+from entry import Entry
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
-
-
-def input_preprocessing(input:str) -> None:
-    """"""
 
 
 def get_date():
@@ -23,7 +20,7 @@ def get_date():
         date = input("Date: ")
 
         if date.lower() in ("q", "quit"):
-            raise BTError("Input aborted by user.")
+            raise main.BTError("Input aborted by user.")
 
         date = date.split()   
         if not date and TODAY.year != config.active_year:
@@ -46,7 +43,7 @@ def get_amount() -> int:
         amount = input("Amount: ").strip()
 
         if amount.lower() in ("q", "quit"):
-            raise BTError("Input aborted by user.")
+            raise main.BTError("Input aborted by user.")
 
         if not amount.startswith(("-", "+")):
             display.message("The amount must start with + or -")
@@ -74,7 +71,7 @@ def get_tags() -> List:
         tags = input("Tags: ").lower().strip()
 
         if tags in ("q", "quit"):
-            raise BTError("Input aborted by user.")
+            raise main.BTError("Input aborted by user.")
         if tags == "help":
             display.message(f"({', '.join(config.udata.tags)})")
             continue
@@ -93,7 +90,7 @@ def get_note() -> str:
         note = input("Note: ")
 
         if note.lower() in ("q", "quit"):
-            raise BTError("Input aborted by user.")
+            raise main.BTError("Input aborted by user.")
 
         if not note:
             return "..."
@@ -123,10 +120,11 @@ class AddEntryCommand(command.Command):
             amount = get_amount()
             tags = get_tags()
             note = get_note()
-        except BTError:
+        except main.BTError:
             pass # Exit the command
         else:
             self.entry = Entry(date, amount, tags, note)
+            # self.entry = Entry(0, date, amount, tags, note)
             config.records[date.year].append(self.entry)
         
     def undo(self):

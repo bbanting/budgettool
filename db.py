@@ -20,8 +20,9 @@ def run_query(conn:sqlite3.Connection, query:str) -> Union[None, sqlite3.Cursor]
         return cursor
 
 
-def fetch(con:sqlite3.Connection, query:str) -> List[Any]:
-    cursor = con.cursor()
+def fetch(query:str) -> List[Any]:
+    conn = connection
+    cursor = conn.cursor()
     try:
         cursor.execute(query)
         return cursor.fetchall()
@@ -32,7 +33,11 @@ def fetch(con:sqlite3.Connection, query:str) -> List[Any]:
 
 def insert_entry(entry:entry.Entry) -> int:
     """Insert an entry into the database."""
-    q = f"INSERT INTO entries (date, amount, tags, note) VALUES {entry.to_tuple()}"
+    fields = "(date, amount, tags, note)"
+    if entry.id:
+        fields = "(id, date, amount, tags, note)"
+    values = entry.to_tuple()
+    q = f"INSERT INTO entries {fields} VALUES {values}"
     cursor = run_query(connection, q)
     if not cursor: 
         return
@@ -50,10 +55,11 @@ CREATE TABLE IF NOT EXISTS entries (
 
 connection = sqlite3.connect("records.db")
 run_query(connection, table_query)
+# run_query(connection, "DROP TABLE entries;")
 
-entry1 = entry.Entry(datetime.now(), 5000, "other", "Nothing to note")
-entry2 = entry.Entry(datetime.now(), -7000, "food", "Bought food")
-insert_entry(entry1.to_tuple)
-insert_entry(entry2.to_tuple)
+entry1 = entry.Entry(datetime.now(), 5000, ["other"], "Nothing to note")
+# entry2 = entry.Entry(datetime.now(), -7000, ["food"], "Bought food")
+insert_entry(entry1)
+# insert_entry(entry2)
 
-print(fetch(connection, "SELECT * FROM entries"))
+print(fetch("SELECT * FROM entries"))

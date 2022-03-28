@@ -20,13 +20,14 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
+- [ ] Make month into an Enum
+- [ ] Change to sqlite3
 
 ## Notes
 
 - Seems pretty tightly coupled as it is now.
   - Entry is tied to EntryList through global variable
   - Can I make this better?
-- An option would be to use sqlite and have the option to export to csv instead
 - Is changing year necessary if an entry can easily be made with a different year?
 - A master records class; when iterated over, checks most recent years first
   - All records from all years are available but this way there isn't one ginormous file

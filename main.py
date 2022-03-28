@@ -14,6 +14,7 @@ import config
 import command
 import display
 import commands
+import db
 from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW
 from entry import Entry
 
@@ -144,6 +145,22 @@ def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
 
     return sorted(filtered_entries, key=lambda x: x.date)
 
+
+def _fetch_entries(month=None, category=None, tags=()) -> list[Entry]:
+    if month is None and config.active_year == TODAY.year:
+        month = TODAY.month
+    elif month is None and config.active_year != TODAY.year:
+        month = 12
+
+    query = "SELECT * FROM entries"
+    if category == "income":
+        query += " WHERE amount > 0"
+    elif category == "expense":
+        query += " WHERE amount < 0"
+
+    query += ";"
+    return db.fetch(query)
+    
 
 def register_commands(controller: command.CommandController):
     controller.register(command.UndoCommand)
