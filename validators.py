@@ -1,17 +1,19 @@
+import enum
 from typing import Union
 
 import config
-from config import MONTHS, KEYWORDS
+from config import KEYWORDS, Month
 from command.validator import Validator, ValidatorError
 
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
-    def validate(self, value) -> Union[int, ValidatorError]:
+    def validate(self, value) -> Union[enum.IntEnum, ValidatorError]:
         name = value.lower()
-        for month in MONTHS:
-            if month.startswith(name): 
-                return MONTHS[month]
+        for month in Month:
+            if not month.name.lower().startswith(name): 
+                continue
+            return month
         
         # if not self.strict and name in ("all", "year"):
         #     return "year"

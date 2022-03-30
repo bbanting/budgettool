@@ -15,7 +15,7 @@ import command
 import display
 import commands
 import db
-from config import TODAY, MONTHS, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW
+from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month
 from entry import Entry
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
@@ -118,7 +118,7 @@ def show_entries(month, category, tags):
 
 
 def _get_filter_summary(n, month, category, tags) -> str:
-    month = list(MONTHS)[month].title()
+    month = month.name
     category = f" of type {category}" if category else ""
     tags = " with tags: " + ', '.join(tags) if tags else ""
     return f"{n} entries{category} from {month} of {config.active_year}{tags}."
@@ -129,9 +129,9 @@ def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
     Raise exception if none found.
     """
     if month is None and config.active_year == TODAY.year:
-        month = TODAY.month
+        month = Month(TODAY.month)
     elif month is None and config.active_year != TODAY.year:
-        month = 12
+        month = Month.December
 
     filtered_entries = []
     for e in config.records[config.active_year]:
@@ -148,9 +148,9 @@ def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
 
 def _fetch_entries(month=None, category=None, tags=()) -> list[Entry]:
     if month is None and config.active_year == TODAY.year:
-        month = TODAY.month
+        month = Month(TODAY.month)
     elif month is None and config.active_year != TODAY.year:
-        month = 12
+        month = Month.December
 
     query = "SELECT * FROM entries"
     if category == "income":

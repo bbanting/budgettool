@@ -20,7 +20,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] Make month into an Enum
+- [x] Make month into an Enum
 - [ ] Change to sqlite3
 
 ## Notes

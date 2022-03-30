@@ -1,19 +1,18 @@
 from __future__ import annotations
 import json
 import datetime
-from tokenize import Token
-
+import enum
 
 # Constants
 FILENAME = "config.json"
 ENTRY_FOLDER = "records"
 TODAY = datetime.datetime.now()
 HEADERS = ("id","date","amount","tags","note")
-MONTHS = {
-    "all": 0, "january": 1, "february": 2, "march": 3, "april": 4,
-    "may": 5, "june": 6, "july": 7, "august": 8,
-    "september": 9, "october": 10, "november": 11, "december": 12,
-}
+MONTHS = (
+    "all", "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December",
+)
 KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit") + tuple(MONTHS)
 
 # Widths for display columns
@@ -21,6 +20,9 @@ IDW = 8
 DATEW = 8
 AMOUNTW = 10
 TAGSW = 12
+
+
+Month: enum.IntEnum = enum.IntEnum("Month", " ".join(MONTHS),start=0)
 
 
 class ConfigError(Exception):
