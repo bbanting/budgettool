@@ -8,6 +8,7 @@ import display
 
 from config import TODAY
 import main
+import entry
 from entry import Entry
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
@@ -48,7 +49,7 @@ def get_amount() -> int:
         if not amount.startswith(("-", "+")):
             display.message("The amount must start with + or -")
             continue
-        amount = Entry.dollars_to_cents(amount)
+        amount = entry.dollars_to_cents(amount)
         return amount
 
 

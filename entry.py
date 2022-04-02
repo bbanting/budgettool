@@ -45,18 +45,6 @@ class Entry:
 
         return cls(date, amount, tags, note, id=id)
 
-    @staticmethod
-    def cents_to_dollars(cent_amount) -> str:
-        """Convert a cent amount to dollars for display."""
-        if cent_amount >= 0:
-            return f"+${cent_amount/100:.2f}"
-        else:
-            return f"-${abs(cent_amount/100):.2f}"
-
-    @staticmethod
-    def dollars_to_cents(dollar_amount: str) -> int:
-        """Convert a string dollar ammount to cents for storage."""
-        return int(float(dollar_amount) * 100)
 
     @staticmethod
     def _verify_tags(tags: List):
@@ -70,7 +58,7 @@ class Entry:
         return tags
 
     def in_dollars(self):
-        return Entry.cents_to_dollars(self.amount)
+        return cents_to_dollars(self.amount)
 
     def to_csv(self) -> List:
         """Convert entry into list for writing by the csv module."""
@@ -98,3 +86,16 @@ class Entry:
         if len(tags) > 12:
             tags = tags[:9] + "..."
         return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
+
+
+def cents_to_dollars(cent_amount:int) -> str:
+    """Convert a cent amount to dollars for display."""
+    if cent_amount >= 0:
+        return f"+${cent_amount/100:.2f}"
+    else:
+        return f"-${abs(cent_amount/100):.2f}"
+
+
+def dollars_to_cents(dollar_amount:str) -> int:
+    """Convert a string dollar ammount to cents for storage."""
+    return int(float(dollar_amount) * 100)

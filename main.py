@@ -15,6 +15,7 @@ import command
 import display
 import commands
 import db
+import entry
 from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month
 from entry import Entry
 
@@ -109,7 +110,7 @@ class Record(collections.UserList):
 def show_entries(month, category, tags):
     """Push the current entries to the display."""
     entries = _filter_entries(month, category, tags)
-    total = Entry.cents_to_dollars(sum([e.amount for e in entries]))
+    total = entry.cents_to_dollars(sum([e.amount for e in entries]))
     summary = _get_filter_summary(len(entries), month, category, tags)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
