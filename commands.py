@@ -16,41 +16,39 @@ from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
 
 def get_date():
     """Retrieve the date input from the user."""
-    while True:
-        display.refresh()
-        date = input("Date: ")
+    display.refresh()
+    date = input("Date: ")
 
-        if date.lower() in ("q", "quit"):
-            raise main.BTError("Input aborted by user.")
+    if date.lower() in ("q", "quit"):
+        raise main.BTError("Input aborted by user.")
 
-        date = date.split()   
-        if not date and TODAY.year != config.active_year:
-            display.message("Can't infer date when current year not active.")
-        elif not date:
-            return TODAY
-        elif len(date) >= 2 <= 3:
-            month = VMonth(strict=True)(date)
-            day = VDay()(date)
-            year = VYear(default=config.active_year)(date)
-            return datetime(year, month, day)
-        else:
-            display.message("Invalid input.")
+    date = date.split()   
+    if not date and TODAY.year != config.active_year:
+        display.message("Can't infer date when current year not active.")
+    elif not date:
+        return TODAY
+    elif len(date) >= 2 <= 3:
+        month = VMonth(strict=True)(date)
+        day = VDay()(date)
+        year = VYear(default=config.active_year)(date)
+        return datetime(year, month, day)
+    else:
+        display.message("Invalid input.")
 
 
 def get_amount() -> int:
     """Retrieve the amount input from the user."""
-    while True:
-        display.refresh()
-        amount = input("Amount: ").strip()
+    display.refresh()
+    amount = input("Amount: ").strip()
 
-        if amount.lower() in ("q", "quit"):
-            raise main.BTError("Input aborted by user.")
+    if amount.lower() in ("q", "quit"):
+        raise main.BTError("Input aborted by user.")
 
-        if not amount.startswith(("-", "+")):
-            display.message("The amount must start with + or -")
-            continue
-        amount = entry.dollars_to_cents(amount)
-        return amount
+    if not amount.startswith(("-", "+")):
+        display.message("The amount must start with + or -")
+        return
+    amount = entry.dollars_to_cents(amount)
+    return amount
 
 
 def _match_tag(query: str) -> Union[str, None]:
@@ -67,35 +65,42 @@ def _match_tag(query: str) -> Union[str, None]:
 def get_tags() -> List:
     """Get tag(s) input from user."""
     display.message(f"({', '.join(config.udata.tags)})")
-    while True:
-        display.refresh()
-        tags = input("Tags: ").lower().strip()
+    display.refresh()
+    tags = input("Tags: ").lower().strip()
 
-        if tags in ("q", "quit"):
-            raise main.BTError("Input aborted by user.")
-        if tags == "help":
-            display.message(f"({', '.join(config.udata.tags)})")
-            continue
+    if tags in ("q", "quit"):
+        raise main.BTError("Input aborted by user.")
+    if tags == "help":
+        display.message(f"({', '.join(config.udata.tags)})")
+        return
 
-        tags = tags.split(" ")
-        if not all(tags := [_match_tag(t) for t in tags]):
-            display.message("Invalid tags given. Enter 'help' to see tags.")
-            continue
-        return tags
+    tags = tags.split(" ")
+    if not all(tags := [_match_tag(t) for t in tags]):
+        display.message("Invalid tags given. Enter 'help' to see tags.")
+        return
+    return tags
             
 
 def get_note() -> str:
     """Get note input from the user"""
-    while True:
-        display.refresh()
-        note = input("Note: ")
+    display.refresh()
+    note = input("Note: ")
 
-        if note.lower() in ("q", "quit"):
-            raise main.BTError("Input aborted by user.")
+    if note.lower() in ("q", "quit"):
+        raise main.BTError("Input aborted by user.")
 
-        if not note:
-            return "..."
-        return note
+    if not note:
+        return "..."
+    return note
+
+
+def get_input() -> tuple:
+    """Get input from the user."""
+    data = []
+    for getter in (get_date, get_amount, get_tags, get_note):
+        while True:
+            if val := getter():
+                data.append(val)
 
 
 class ListCommand(command.Command):
