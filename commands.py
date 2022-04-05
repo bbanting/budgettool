@@ -1,5 +1,5 @@
 import copy
-from typing import List, Union
+from typing import Union
 from datetime import datetime
 
 import command
@@ -14,7 +14,7 @@ from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
 
 
-def get_date():
+def get_date() -> Union[datetime, None]:
     """Retrieve the date input from the user."""
     display.refresh()
     date = input("Date: ")
@@ -22,10 +22,9 @@ def get_date():
     if date.lower() in ("q", "quit"):
         raise main.BTError("Input aborted by user.")
 
-    date = date.split()   
-    if not date and TODAY.year != config.active_year:
-        display.message("Can't infer date when current year not active.")
-    elif not date:
+    date = date.split()
+
+    if not date:
         return TODAY
     elif len(date) >= 2 <= 3:
         month = VMonth(strict=True)(date)
@@ -36,7 +35,7 @@ def get_date():
         display.message("Invalid input.")
 
 
-def get_amount() -> int:
+def get_amount() -> Union[int, None]:
     """Retrieve the amount input from the user."""
     display.refresh()
     amount = input("Amount: ").strip()
@@ -48,6 +47,7 @@ def get_amount() -> int:
         display.message("The amount must start with + or -")
         return
     amount = entry.dollars_to_cents(amount)
+
     return amount
 
 
@@ -62,7 +62,7 @@ def _match_tag(query: str) -> Union[str, None]:
     return result
 
 
-def get_tags() -> List:
+def get_tags() -> Union[list, None]:
     """Get tag(s) input from user."""
     display.message(f"({', '.join(config.udata.tags)})")
     display.refresh()
@@ -78,6 +78,7 @@ def get_tags() -> List:
     if not all(tags := [_match_tag(t) for t in tags]):
         display.message("Invalid tags given. Enter 'help' to see tags.")
         return
+
     return tags
             
 
@@ -91,6 +92,7 @@ def get_note() -> str:
 
     if not note:
         return "..."
+
     return note
 
 
@@ -99,8 +101,12 @@ def get_input() -> tuple:
     data = []
     for getter in (get_date, get_amount, get_tags, get_note):
         while True:
-            if val := getter():
-                data.append(val)
+            ret_val = getter()
+            if not ret_val:
+                continue
+            data.append(ret_val)
+            break
+    return data
 
 
 class ListCommand(command.Command):
