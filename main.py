@@ -8,7 +8,6 @@ import csv
 import shlex
 import collections
 import logging
-from command.base import CommandError
 
 import config
 import command
@@ -16,6 +15,7 @@ import display
 import commands
 import db
 import entry
+from command.base import CommandError
 from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month
 from entry import Entry
 

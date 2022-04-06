@@ -1,4 +1,5 @@
 import copy
+import logging
 from typing import Union
 from datetime import datetime
 
@@ -24,9 +25,10 @@ def get_date() -> Union[datetime, None]:
 
     date = date.split()
 
+    logging.info(len(date))
     if not date:
         return TODAY
-    elif len(date) >= 2 <= 3:
+    elif 2 <= len(date) <= 3:
         month = VMonth(strict=True)(date)
         day = VDay()(date)
         year = VYear(default=config.active_year)(date)

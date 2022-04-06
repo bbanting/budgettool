@@ -35,3 +35,23 @@ class TestGetDate(unittest.TestCase):
         with patch("commands.input", return_value="jan 15 2020"):
             ret_val = commands.get_date()
             self.assertEqual(ret_val, datetime(2020, 1, 15))
+
+
+class TestGetAmount(unittest.TestCase):
+    def test_get_amount_abort(self):
+        with patch("commands.input", return_value="q"):
+            self.assertRaises(BTError, commands.get_date)
+    
+    def test_get_amount_no_sign(self):
+        with patch("commands.input", return_value="45"):
+            self.assertIsNone(commands.get_amount())
+    
+    def test_get_amount_positive(self):
+        with patch("commands.input", return_value="+45"):
+            ret_val = commands.get_amount()
+            self.assertEqual(ret_val, 4500)
+
+    def test_get_amount_positive(self):
+        with patch("commands.input", return_value="-45"):
+            ret_val = commands.get_amount()
+            self.assertEqual(ret_val, -4500)
