@@ -55,3 +55,39 @@ class TestGetAmount(unittest.TestCase):
         with patch("commands.input", return_value="-45"):
             ret_val = commands.get_amount()
             self.assertEqual(ret_val, -4500)
+
+
+class TestGetTags(unittest.TestCase):
+    def test_get_tags_abort(self):
+        with patch("commands.input", return_value="q"):
+            self.assertRaises(BTError, commands.get_tags)
+
+    def test_get_tags_help(self):
+        with patch("commands.input", return_value="help"):
+            self.assertIsNone(commands.get_tags())
+
+    @patch("config.udata.tags", ["food", "other"])
+    def test_get_tags_invalid(self):
+        with patch("commands.input", return_value="lamps paper"):
+            self.assertIsNone(commands.get_tags())
+
+    @patch("config.udata.tags", ["food", "other"])
+    def test_get_tags_valid(self):
+        with patch("commands.input", return_value="other"):
+            ret_val = commands.get_tags()
+            self.assertEqual(ret_val, ["other"])
+    
+
+class TestGetNote(unittest.TestCase):
+    def test_get_note_about(self):
+        with patch("commands.input", return_value="q"):
+            self.assertRaises(BTError, commands.get_tags)
+    
+    def test_get_note_empty(self):
+        with patch("commands.input", return_value=""):
+            self.assertEqual(commands.get_note(), "...")
+    
+    def test_get_note_success(self):
+        with patch("commands.input", return_value="Example note!"):
+            self.assertEqual(commands.get_note(), "Example note!")
+            

@@ -25,7 +25,6 @@ def get_date() -> Union[datetime, None]:
 
     date = date.split()
 
-    logging.info(len(date))
     if not date:
         return TODAY
     elif 2 <= len(date) <= 3:
@@ -48,9 +47,8 @@ def get_amount() -> Union[int, None]:
     if not amount.startswith(("-", "+")):
         display.message("The amount must start with + or -")
         return
-    amount = entry.dollars_to_cents(amount)
 
-    return amount
+    return entry.dollars_to_cents(amount)
 
 
 def _match_tag(query: str) -> Union[str, None]:
@@ -98,10 +96,10 @@ def get_note() -> str:
     return note
 
 
-def get_input() -> tuple:
+def get_input(*getters) -> tuple:
     """Get input from the user."""
     data = []
-    for getter in (get_date, get_amount, get_tags, get_note):
+    for getter in getters:
         while True:
             ret_val = getter()
             if not ret_val:
@@ -109,6 +107,14 @@ def get_input() -> tuple:
             data.append(ret_val)
             break
     return data
+
+
+editable_fields = {
+        "amount":   get_amount, 
+        "tags":     get_tags,
+        "note":     get_note,
+        "date":     get_date,
+        }
 
 
 class ListCommand(command.Command):
@@ -130,10 +136,7 @@ class AddEntryCommand(command.Command):
     """Add an entry, entering input through a series of prompts."""
     def execute(self):
         try:
-            date = get_date()
-            amount = get_amount()
-            tags = get_tags()
-            note = get_note()
+            date, amount, tags, note = get_input(get_date, get_amount, get_tags, get_note)
         except main.BTError:
             pass # Exit the command
         else:
@@ -229,13 +232,13 @@ class EditEntryCommand(command.Command):
     names = ("edit",)
     params = {
         "id": VID(req=True),
-        "field": VLit(Entry.editable_fields, lower=True, req=True),
+        "field": VLit(editable_fields, lower=True, req=True),
     }
 
     def execute(self, id: int, field: str) -> None:
         self.old_entry = display.select(id)
         self.new_entry = copy.copy(self.old_entry)
-        new_value = globals()[self.new_entry.editable_fields[field]]()
+        new_value = editable_fields[field]()
         setattr(self.new_entry, field, new_value)
         config.records[config.active_year].replace(self.old_entry, self.new_entry)
         display.deselect()

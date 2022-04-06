@@ -12,13 +12,7 @@ class EntryError(Exception):
 
 @dataclass
 class Entry:
-    editable_fields = {
-        "amount":   "get_amount", 
-        "tags":     "get_tags",
-        "note":     "get_note",
-        "date":     "get_date",
-        }
-
+    """Represent one entry in the budget."""
     def __init__(self, id:int, date:datetime, amount:int, tags:list, note:str):
         self.id: int = id
         self.date: datetime = date
