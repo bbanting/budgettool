@@ -110,7 +110,7 @@ class Record(collections.UserList):
 def show_entries(month, category, tags):
     """Push the current entries to the display."""
     entries = _filter_entries(month, category, tags)
-    total = entry.cents_to_dollars(sum([e.amount for e in entries]))
+    total = entry.cents_to_dollars(sum(entries))
     summary = _get_filter_summary(len(entries), month, category, tags)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
@@ -121,7 +121,7 @@ def show_entries(month, category, tags):
 def _get_filter_summary(n, month, category, tags) -> str:
     month = month.name
     category = f" of type {category}" if category else ""
-    tags = " with tags: " + ', '.join(tags) if tags else ""
+    tags = f" with tags: {', '.join(tags)}" if tags else ""
     return f"{n} entries{category} from {month} of {config.active_year}{tags}."
 
 

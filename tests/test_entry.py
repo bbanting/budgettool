@@ -33,11 +33,16 @@ class TestEntry(unittest.TestCase):
 
 
 class TestAmountConvert(unittest.TestCase):
-    def test_cents_to_dollars_positive(self):
-        self.assertEqual(cents_to_dollars(5000), "+$50.00")
+    def test_in_dollars_positive(self):
+        entry = make_entry(amount=5000)
+        self.assertEqual(entry.in_dollars(), "+$50.00")
 
-    def test_cents_to_dollars_negative(self):
-        self.assertEqual(cents_to_dollars(-700), "-$7.00")
+    def test_in_dollars_negative(self):
+        entry = make_entry(amount=-700)
+        self.assertEqual(entry.in_dollars(), "-$7.00")
+
+    def test_cents_to_dollars(self):
+        self.assertEqual(cents_to_dollars(7050), 70.50)
 
     def test_dollars_to_cents_positive(self):
         self.assertEqual(dollars_to_cents("50"), 5000)

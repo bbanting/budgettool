@@ -74,8 +74,7 @@ def get_tags() -> Union[list, None]:
         display.message(f"({', '.join(config.udata.tags)})")
         return
 
-    tags = tags.split(" ")
-    if not all(tags := [_match_tag(t) for t in tags]):
+    if not all(tags := [_match_tag(t) for t in tags.split(" ")]):
         display.message("Invalid tags given. Enter 'help' to see tags.")
         return
 
@@ -141,8 +140,11 @@ class AddEntryCommand(command.Command):
             pass # Exit the command
         else:
             self.entry = Entry(date, amount, tags, note)
-            # self.entry = Entry(0, date, amount, tags, note)
             config.records[date.year].append(self.entry)
+
+            date = date.strftime("%b %d")
+            amount = entry.in_dollars()
+            display.message(f"Entry added: {date} - {amount} - {note}")
         
     def undo(self):
         config.records[self.entry.date.year].remove(self.entry)
