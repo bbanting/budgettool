@@ -3,17 +3,13 @@ import json
 import datetime
 import enum
 
+
 # Constants
 FILENAME = "config.json"
 ENTRY_FOLDER = "records"
-TODAY = datetime.datetime.now()
+TODAY = datetime.date.today()
 HEADERS = ("id","date","amount","tags","note")
-MONTHS = (
-    "all", "January", "February", "March", "April",
-    "May", "June", "July", "August",
-    "September", "October", "November", "December",
-)
-KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit") + tuple(MONTHS)
+KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit") 
 
 # Widths for display columns
 IDW = 8
@@ -22,7 +18,27 @@ AMOUNTW = 10
 TAGSW = 12
 
 
-Month: enum.IntEnum = enum.IntEnum("Month", " ".join(MONTHS),start=0)
+class Month(enum.IntEnum):
+    all = 0
+    January = 1
+    February = 2
+    March = 3
+    April = 4
+    May = 5
+    June = 6
+    July = 7
+    August = 8
+    September = 9
+    October = 10
+    November = 11
+    December = 12
+KEYWORDS += tuple(Month.__members__)
+
+
+class Date:
+    def __init__(self, year=TODAY.year, month=TODAY.month):
+        year: int = year
+        month: Month = month
 
 
 class ConfigError(Exception):
@@ -88,6 +104,5 @@ class UserData:
 
 # Other globals
 udata = UserData(FILENAME)
-active_year = TODAY.year
-last_query = (TODAY.month, None, None)
+last_query = (Date(), None, None)
 records = None

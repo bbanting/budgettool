@@ -16,7 +16,7 @@ import commands
 import db
 import entry
 from command.base import CommandError
-from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month
+from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month, Date
 from entry import Entry
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
@@ -26,85 +26,85 @@ class BTError(Exception):
     pass
 
 
-class RecordHandler(collections.UserDict):
-    """A class to hold all YearlyRecords."""
-    def __iter__(self):
-        return super().__iter__()
-        # Overwrite this to allow traversing between years
+# class RecordHandler(collections.UserDict):
+#     """A class to hold all YearlyRecords."""
+#     def __iter__(self):
+#         return super().__iter__()
+#         # Overwrite this to allow traversing between years
     
-    def __getitem__(self, key: int):
-        try:
-            super().__getitem__(key)
-        except KeyError:
-            self.update({key: Record(key)})
-        return super().__getitem__(key)
+#     def __getitem__(self, key: int):
+#         try:
+#             super().__getitem__(key)
+#         except KeyError:
+#             self.update({key: Record(key)})
+#         return super().__getitem__(key)
 
 
-class Record(collections.UserList):
-    """
-    A list to group entry sets together by year and 
-    handle saving them to disk.
-    """
-    def __init__(self, year: int) -> None:
-        """Initialize and check for file errors."""
-        super().__init__()
+# class Record(collections.UserList):
+#     """
+#     A list to group entry sets together by year and 
+#     handle saving them to disk.
+#     """
+#     def __init__(self, year: int) -> None:
+#         """Initialize and check for file errors."""
+#         super().__init__()
 
-        self.year = year
-        self._check_file()
+#         self.year = year
+#         self._check_file()
 
-        with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r", newline="") as fp:
-            lines = list(csv.reader(fp))
-        if lines[0] != list(HEADERS):
-            print(f"Error: Invalid CSV headers.")
-            quit()
+#         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r", newline="") as fp:
+#             lines = list(csv.reader(fp))
+#         if lines[0] != list(HEADERS):
+#             print(f"Error: Invalid CSV headers.")
+#             quit()
 
-        entries = []
-        for i, ln in enumerate(lines[1:]):
-            try:
-                entry = Entry.from_csv(ln)
-            except (ValueError, BTError):
-                print(f"Error parsing line {i+2}. Your CSV file may be corrupted.")
-                quit()
-            else:
-                entries.append(entry)
-        self.extend(entries)
+#         entries = []
+#         for i, ln in enumerate(lines[1:]):
+#             try:
+#                 entry = Entry.from_csv(ln)
+#             except (ValueError, BTError):
+#                 print(f"Error parsing line {i+2}. Your CSV file may be corrupted.")
+#                 quit()
+#             else:
+#                 entries.append(entry)
+#         self.extend(entries)
 
-    def _check_file(self) -> None:
-        """Ensure the CSV file can be opened barring a permission error."""
-        os.makedirs(f"{os.getcwd()}/{ENTRY_FOLDER}", exist_ok=True)
-        try:
-            with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r+"):
-                pass
-        except PermissionError:
-            print("You do not have the necessary file permissions.")
-            quit()
-        except FileNotFoundError:
-            with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
-                csv.writer(fp).writerow(HEADERS)
+#     def _check_file(self) -> None:
+#         """Ensure the CSV file can be opened barring a permission error."""
+#         os.makedirs(f"{os.getcwd()}/{ENTRY_FOLDER}", exist_ok=True)
+#         try:
+#             with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r+"):
+#                 pass
+#         except PermissionError:
+#             print("You do not have the necessary file permissions.")
+#             quit()
+#         except FileNotFoundError:
+#             with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
+#                 csv.writer(fp).writerow(HEADERS)
 
-    def _overwrite(self):
-        """Overwrite the csv file with current entries."""
-        self._check_file()
-        rows = []
-        rows.append(list(HEADERS))
-        for e in self:
-            rows.append(e.to_csv())
-        with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
-            csv.writer(fp).writerows(rows)
+#     def _overwrite(self):
+#         """Overwrite the csv file with current entries."""
+#         self._check_file()
+#         rows = []
+#         rows.append(list(HEADERS))
+#         for e in self:
+#             rows.append(e.to_csv())
+#         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
+#             csv.writer(fp).writerows(rows)
 
-    def replace(self, old: Entry, new: Entry) -> None:
-        """Replace old Entry with new Entry."""
-        index = self.index(old)
-        self[index] = new
-        self._overwrite()
+#     def replace(self, old: Entry, new: Entry) -> None:
+#         """Replace old Entry with new Entry."""
+#         index = self.index(old)
+#         self[index] = new
+#         self._overwrite()
 
-    def append(self, item: Entry) -> None:
-        super().append(item)
-        self._overwrite()
+#     def append(self, item: Entry) -> None:
+#         super().append(item)
+#         self._overwrite()
 
-    def remove(self, item: Entry) -> None:
-        super().remove(item)
-        self._overwrite()
+#     def remove(self, item: Entry) -> None:
+#         super().remove(item)
+#         self._overwrite()
 
 
 def show_entries(month, category, tags):
@@ -147,12 +147,8 @@ def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
     return sorted(filtered_entries, key=lambda x: x.date)
 
 
-def _fetch_entries(month=None, category=None, tags=()) -> list[Entry]:
-    if month is None and config.active_year == TODAY.year:
-        month = Month(TODAY.month)
-    elif month is None and config.active_year != TODAY.year:
-        month = Month.December
-
+def _fetch_entries(date, category, tags) -> list[Entry]:
+    """Fetch entries from database based on last query"""
     query = "SELECT * FROM entries"
     if category == "income":
         query += " WHERE amount > 0"

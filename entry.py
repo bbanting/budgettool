@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import date
 from dataclasses import dataclass
 
 import config
@@ -13,9 +13,9 @@ class EntryError(Exception):
 @dataclass
 class Entry:
     """Represent one entry in the budget."""
-    def __init__(self, id:int, date:datetime, amount:int, tags:str, note:str):
+    def __init__(self, id:int, date:date, amount:int, tags:str, note:str):
         self.id: int = id
-        self.date: datetime = date
+        self.date: date = date
         self.amount: int = amount
         self.tags: str = tags
         self.note: str = note
@@ -48,7 +48,7 @@ class Entry:
         """Construct an entry from a database row."""
         id, date, amount, tags, note = data
         id = int(id)
-        date = datetime.strptime(date, "%Y/%m/%d")
+        date = date.strptime(date, "%Y/%m/%d")
         amount = int(amount)
         tags = verify_tags(tags)
 

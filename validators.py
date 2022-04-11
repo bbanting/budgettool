@@ -1,5 +1,4 @@
 import enum
-from typing import Union
 
 import config
 from config import KEYWORDS, Month
@@ -8,7 +7,7 @@ from command.validator import Validator, ValidatorError
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
-    def validate(self, value) -> Union[enum.IntEnum, ValidatorError]:
+    def validate(self, value) -> enum.IntEnum | ValidatorError:
         name = value.lower()
         for month in Month:
             if not month.name.lower().startswith(name): 
@@ -22,15 +21,15 @@ class VMonth(Validator):
 
 class VDay(Validator):
     """Verify and capture day of a month."""
-    def validate(self, value) -> Union[int, ValidatorError]:
+    def validate(self, value) -> int | ValidatorError:
         if value.isdigit() and int(value) in range(1, 32):
             return int(value)
         return ValidatorError("Invalid day number")
 
 
 class VYear(Validator):
-    """Verify and capture year number."""
-    def validate(self, value) -> Union[int, ValidatorError]:
+    """Verify and return year number."""
+    def validate(self, value) -> int | ValidatorError:
         if value.isdigit() and len(value) == 4:
             return int(value)
         return ValidatorError("Invalid year number")
@@ -41,7 +40,7 @@ class VTag(Validator):
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)
 
-    def validate(self, value) -> Union[str, ValidatorError]:
+    def validate(self, value) -> str | ValidatorError:
         if value.lower() in config.udata.tags:
             return value.lower()
         else:
@@ -50,7 +49,7 @@ class VTag(Validator):
 
 class VNewTag(Validator):
     """Verify that str is a valid name for a new tag."""
-    def validate(self, value: str) -> Union[str, ValidatorError]:
+    def validate(self, value: str) -> str | ValidatorError:
         value = value.lower()
         if value in KEYWORDS:
             return ValidatorError("Tag name may not be a keyword.")
@@ -63,7 +62,7 @@ class VNewTag(Validator):
 
 class VType(Validator):
     """Capture the type of entry."""
-    def validate(self, value: str) -> Union[str, ValidatorError]:
+    def validate(self, value: str) -> str | ValidatorError:
         value = value.lower()
         if value == "income":
             return value
@@ -74,7 +73,7 @@ class VType(Validator):
 
 class VID(Validator):
     """Capture an ID"""
-    def validate(self, value: str) -> Union[int, ValidatorError]:
+    def validate(self, value: str) -> int | ValidatorError:
         if value.isdigit() and len(value) <= 4:
             return int(value)
         return ValidatorError("Invalid ID")

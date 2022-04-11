@@ -1,21 +1,21 @@
 import copy
 import logging
 from typing import Union
-from datetime import datetime
+from datetime import date
 
 import command
 import config
 import display
-
-from config import TODAY
 import main
 import entry
+
+from config import TODAY
 from entry import Entry
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
 
 
-def get_date() -> Union[datetime, None]:
+def get_date() -> Union[date, None]:
     """Retrieve the date input from the user."""
     display.refresh()
     date = input("Date: ")
@@ -31,7 +31,7 @@ def get_date() -> Union[datetime, None]:
         month = VMonth(strict=True)(date)
         day = VDay()(date)
         year = VYear(default=config.active_year)(date)
-        return datetime(year, month, day)
+        return date(year, month, day)
     else:
         display.message("Invalid input.")
 
@@ -120,14 +120,16 @@ class ListCommand(command.Command):
     """Display a list of entries filtered by type, month, and tags."""
     names = ("list",)
     params = {
+        "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(),
         "tags": VTag(),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
-    def execute(self, month, category, tags):
-        config.last_query = [month, category, tags]
+    def execute(self, year, month, category, tags):
+        date = config.Date(year, month)
+        config.last_query = [date, category, tags]
         display.change_page(1)
 
 

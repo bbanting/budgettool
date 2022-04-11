@@ -1,5 +1,5 @@
-from typing import Union, Any, List
 import abc
+from typing import Any
 
 import command.base
 
@@ -25,7 +25,7 @@ class Validator(abc.ABC):
         self.default = default
         self.strict = strict
 
-    def __call__(self, args:list) -> Union[Any, List[Any]]:
+    def __call__(self, args:list) -> Any | list[Any]:
         """Calls validate on a list of arguments."""
         data = []
         to_remove = []
@@ -49,7 +49,7 @@ class Validator(abc.ABC):
         return data[0]
     
     @abc.abstractmethod
-    def validate(self, value: str) -> Union[Any, ValidatorError]:
+    def validate(self, value: str) -> Any | ValidatorError:
         """
         This method must return ValidatorError on failure 
         and a validated value on success.
@@ -74,7 +74,7 @@ class VLit(Validator):
         else:
             return lval.lower() == rval.lower()
 
-    def validate(self, value: str) -> Union[Any, ValidatorError]:
+    def validate(self, value: str) -> Any | ValidatorError:
         found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
             if not all([True if type(x) is str else False for x in self.literal]):
@@ -107,7 +107,7 @@ class VBool(Validator):
         self.func = func
         self.lower = lower
 
-    def validate(self, value: str) -> Union[Any, ValidatorError]:
+    def validate(self, value: str) -> Any | ValidatorError:
         ret_val = None
         # If it's a method
         if hasattr(str, self.func.__name__):
@@ -131,7 +131,7 @@ class VAny(Validator):
         super().__init__(*args, **kwargs)
         self.lower = lower
     
-    def validate(self, value) -> Union[Any, None]:
+    def validate(self, value) -> Any | None:
         if self.lower:
             return value.lower()
         return value

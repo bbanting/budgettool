@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import date
 from typing import Any, Union, List
 
 
@@ -57,7 +57,7 @@ connection = sqlite3.connect("records.db")
 run_query(connection, table_query)
 # run_query(connection, "DROP TABLE entries;")
 
-entry1 = entry.Entry(0, datetime.now(), 5000, ["other"], "Nothing to note")
+entry1 = entry.Entry(0, date.today(), 5000, ["other"], "Nothing to note")
 # entry2 = entry.Entry(datetime.now(), -7000, ["food"], "Bought food")
 insert_entry(entry1)
 # insert_entry(entry2)

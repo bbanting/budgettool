@@ -21,8 +21,9 @@ I made this because I like to code and want to improve. I can't see this being u
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
 - [ ] Change to sqlite3
-- [x] Change how tags are handled
-- [x] Print message when new entry created
+  - select entries from database
+  - insert entries into database
+  - delete entries
 
 ## Notes
 
