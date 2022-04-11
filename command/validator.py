@@ -8,22 +8,47 @@ class ValidatorError(Exception):
     pass
 
 
+class Result:
+    def __init__(self, ok, value=None):
+        _ok: bool = ok
+        _value: Any = value
+
+    @property
+    def is_ok(self) -> bool:
+        return self._ok
+
+    @property
+    def value(self) -> Any:
+        return self._value
+
+    @classmethod
+    def ok(cls, value):
+        return cls(ok=True, value=value)
+
+    @classmethod
+    def err(cls):
+        return cls(ok=False)
+    
+    def __str__(self) -> str:
+        if self.is_ok:
+            return f"Result.ok({self._value})"
+        return "Result.err"
+
+
 class Validator(abc.ABC):
-    """
-    Base class from which validators are derived.
+    """Base class from which validators are derived.
     A validator is passed a list of arguments and calls validate on each until
     a non-None value is returned. If only None is returned, the validator
     returns it's default, which defaults to None.
 
     plural: Allows more than one value to be returned from validate.
-    required: The command will fail if set to True.
+    req: The command will fail if set to True.
     default: Specify a different value to return on failure.
     """
-    def __init__(self, plural=False, req=False, default=None, strict=False):
+    def __init__(self, plural=False, req=False, default=None):
         self.plural = plural
         self.required = req
         self.default = default
-        self.strict = strict
 
     def __call__(self, args:list) -> Any | list[Any]:
         """Calls validate on a list of arguments."""
@@ -31,9 +56,9 @@ class Validator(abc.ABC):
         to_remove = []
         for arg in args:
             result = self.validate(arg)
-            if isinstance(result, ValidatorError):
+            if not result.is_ok:
                 continue
-            data.append(result)
+            data.append(result.value)
             to_remove.append(arg)
             if not self.plural:
                 break
@@ -49,7 +74,7 @@ class Validator(abc.ABC):
         return data[0]
     
     @abc.abstractmethod
-    def validate(self, value: str) -> Any | ValidatorError:
+    def validate(self, value: str) -> Result:
         """
         This method must return ValidatorError on failure 
         and a validated value on success.
@@ -62,11 +87,12 @@ class VLit(Validator):
     If the input value matches any of the literals, it is returned.
     Otherwise, return ValidatorError.
     """
-    def __init__(self, literal, lower=False, invert=False, *args, **kwargs):
+    def __init__(self, literal, lower=False, invert=False, strict=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.literal = literal
         self.lower = lower
         self.invert = invert
+        self.strict = strict
 
     def compare(self, lval: str, rval: str):
         if self.strict:
@@ -74,7 +100,7 @@ class VLit(Validator):
         else:
             return lval.lower() == rval.lower()
 
-    def validate(self, value: str) -> Any | ValidatorError:
+    def validate(self, value: str) -> Result:
         found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
             if not all([True if type(x) is str else False for x in self.literal]):
@@ -90,9 +116,9 @@ class VLit(Validator):
         if self.invert:
             found = not found
         if found:
-            return value if not self.lower else value.lower()
+            return Result.ok(value) if not self.lower else Result.ok(value.lower())
         else:
-            return ValidatorError()
+            return Result.err()
 
 
 class VBool(Validator):
@@ -107,9 +133,9 @@ class VBool(Validator):
         self.func = func
         self.lower = lower
 
-    def validate(self, value: str) -> Any | ValidatorError:
+    def validate(self, value: str) -> Result:
         ret_val = None
-        # If it's a method
+        # If it's a string method
         if hasattr(str, self.func.__name__):
             if getattr(value, self.func.__name__)():
                 ret_val = value
@@ -119,10 +145,10 @@ class VBool(Validator):
                 ret_val = value
 
         if not ret_val:
-            return ValidatorError()
+            return Result.err()
         if self.lower:
             ret_val = ret_val.lower()
-        return ret_val
+        return Result.ok(ret_val)
 
 
 class VAny(Validator):
@@ -131,10 +157,10 @@ class VAny(Validator):
         super().__init__(*args, **kwargs)
         self.lower = lower
     
-    def validate(self, value) -> Any | None:
+    def validate(self, value) -> Result:
         if self.lower:
-            return value.lower()
-        return value
+            value = value.lower()
+        return Result.ok(value.lower())
 
 
 class VComment(Validator):
@@ -149,18 +175,18 @@ class VComment(Validator):
         if filtered_args:
             for arg in filtered_args[::-1]:
                 result = self.validate(arg)
-                if isinstance(result, ValidatorError):
+                if not result.is_ok:
                     continue
-                data.append(result)
+                data.append(result.value)
                 to_remove.append(arg)
                 if not self.plural:
                     break
         else:
             for arg in filtered_args[::-1]:
                 result = self.validate(arg)
-                if isinstance(result, ValidatorError):
+                if result.is_ok:
                     continue
-                data.append(result)
+                data.append(result.value)
                 to_remove.append(arg)
                 if not self.plural:
                     break
@@ -174,6 +200,6 @@ class VComment(Validator):
                 raise ValidatorError("Missing required input")
             return self.default
     
-    def validate(self, value: str) -> str:
-        return value
+    def validate(self, value: str) -> Result:
+        return Result.ok(value)
         

@@ -2,37 +2,35 @@ import enum
 
 import config
 from config import KEYWORDS, Month
-from command.validator import Validator, ValidatorError
+from command.validator import Validator, Result
 
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
-    def validate(self, value) -> enum.IntEnum | ValidatorError:
+    def validate(self, value) -> Result:
         name = value.lower()
         for month in Month:
             if not month.name.lower().startswith(name): 
                 continue
-            return month
+            return Result.ok(month)
         
-        # if not self.strict and name in ("all", "year"):
-        #     return "year"
-        return ValidatorError("Month not found")
+        return Result.err()
 
 
 class VDay(Validator):
     """Verify and capture day of a month."""
-    def validate(self, value) -> int | ValidatorError:
+    def validate(self, value) -> Result:
         if value.isdigit() and int(value) in range(1, 32):
-            return int(value)
-        return ValidatorError("Invalid day number")
+            return Result.ok(int(value))
+        return Result.err()
 
 
 class VYear(Validator):
     """Verify and return year number."""
-    def validate(self, value) -> int | ValidatorError:
+    def validate(self, value) -> Result:
         if value.isdigit() and len(value) == 4:
-            return int(value)
-        return ValidatorError("Invalid year number")
+            return Result.ok(int(value))
+        return Result.err()
 
 
 class VTag(Validator):
@@ -40,40 +38,44 @@ class VTag(Validator):
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)
 
-    def validate(self, value) -> str | ValidatorError:
-        if value.lower() in config.udata.tags:
-            return value.lower()
+    def validate(self, value) -> Result:
+        value = value.lower()
+        if value in config.udata.tags:
+            return Result.ok(value)
         else:
-            return ValidatorError("Tag not found.")
+            return Result.err()
 
 
 class VNewTag(Validator):
     """Verify that str is a valid name for a new tag."""
-    def validate(self, value: str) -> str | ValidatorError:
+    def validate(self, value: str) -> Result:
         value = value.lower()
         if value in KEYWORDS:
-            return ValidatorError("Tag name may not be a keyword.")
+            # Tag name may not be a keyword.
+            return Result.err()
         if ("+" in value) or ("!" in value):
-            return ValidatorError("Tag name may not contain '+' or '!'.")
+            # Tag name may not contain '+' or '!'.
+            return Result.err()
         if value in config.udata.tags:
-            return ValidatorError("Tag already exists.")
-        return value
+            # Tag already exists.
+            return Result.err()
+        return Result.ok(value)
 
 
 class VType(Validator):
     """Capture the type of entry."""
-    def validate(self, value: str) -> str | ValidatorError:
+    def validate(self, value: str) -> Result:
         value = value.lower()
         if value == "income":
-            return value
+            return Result.ok("income")
         elif value in ("expense", "expenses"):
-            return "expense"
-        return ValidatorError("Invalid type.")
+            return Result.ok("expense")
+        return Result.err()
 
 
-class VID(Validator):
-    """Capture an ID"""
-    def validate(self, value: str) -> int | ValidatorError:
-        if value.isdigit() and len(value) <= 4:
-            return int(value)
-        return ValidatorError("Invalid ID")
+# class VID(Validator):
+#     """Capture an ID"""
+#     def validate(self, value: str) -> Result:
+#         if value.isdigit() and len(value) <= 4:
+#             return Result.ok(int(value))
+#         return Result.err()

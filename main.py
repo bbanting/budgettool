@@ -107,22 +107,22 @@ class BTError(Exception):
 #         self._overwrite()
 
 
-def show_entries(month, category, tags):
+def show_entries(date:Date, category:str, tags:str) -> None:
     """Push the current entries to the display."""
-    entries = _filter_entries(month, category, tags)
+    entries = _fetch_entries(date, category, tags)
     total = entry.cents_to_dollars(sum(entries))
-    summary = _get_filter_summary(len(entries), month, category, tags)
+    summary = _get_filter_summary(len(entries), date, category, tags)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
     for entry in entries: display.push(entry)
     display.push_f("", f"TOTAL: {total}", summary)
 
 
-def _get_filter_summary(n, month, category, tags) -> str:
-    month = month.name
+def _get_filter_summary(n:int, date:Date, category:str, tags:str) -> str:
+    date = date.name
     category = f" of type {category}" if category else ""
     tags = f" with tags: {', '.join(tags)}" if tags else ""
-    return f"{n} entries{category} from {month} of {config.active_year}{tags}."
+    return f"{n} entries{category} from {date} of {config.active_year}{tags}."
 
 
 def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
