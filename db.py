@@ -1,4 +1,5 @@
 import sqlite3
+import abc
 from datetime import date
 from typing import Any, Union, List
 
@@ -7,7 +8,49 @@ import entry
 import display
 
 
-def run_query(conn:sqlite3.Connection, query:str) -> Union[None, sqlite3.Cursor]:
+class Query(abc.ABC):
+    """Base class for an SQL query tailored for budget entries."""
+    head: str
+    tail: str
+
+    def date(self, date):
+        """Sets the date in the where clause."""
+        if not self.tail:
+            self.tail += " AND"
+
+    def category(self, category):
+        """Adds a category to the where clause."""
+        pass
+
+    def tag(self, tag):
+        """Adds a tag to the where clause."""
+        pass
+
+    def note(self, note):
+        """Adds a note to search for in the where clause."""
+        pass
+
+    def id(self, id):
+        """Sets an id to search for in the where clause."""
+    
+    def __str__(self):
+        return f"{self.head}{self.tail}"
+
+
+class SelectQuery(Query):
+    def __init__(self):
+        self.head = "SELECT * FROM entries WHERE"
+
+class UpdateQuery(Query):
+    def __init__(self):
+        self.head = "UPDATE entries"
+
+class DeleteQuery(Query):
+    def __init__(self):
+        self.head = "DELETE FROM entries WHERE"
+
+
+def run_query(conn:sqlite3.Connection, query:str) -> None | sqlite3.Cursor:
     """Execute an SQL query. Uses execute or executemany depending on 'value.'"""
     cursor = conn.cursor()  
     try:
