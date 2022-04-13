@@ -8,46 +8,24 @@ import entry
 import display
 
 
-class Query(abc.ABC):
-    """Base class for an SQL query tailored for budget entries."""
-    head: str
-    tail: str
-
-    def date(self, date):
-        """Sets the date in the where clause."""
-        if not self.tail:
-            self.tail += " AND"
-
-    def category(self, category):
-        """Adds a category to the where clause."""
-        pass
-
-    def tag(self, tag):
-        """Adds a tag to the where clause."""
-        pass
-
-    def note(self, note):
-        """Adds a note to search for in the where clause."""
-        pass
-
-    def id(self, id):
-        """Sets an id to search for in the where clause."""
-    
-    def __str__(self):
-        return f"{self.head}{self.tail}"
+def make_select_query():
+    pass
 
 
-class SelectQuery(Query):
-    def __init__(self):
-        self.head = "SELECT * FROM entries WHERE"
+def make_delete_query():
+    pass
 
-class UpdateQuery(Query):
-    def __init__(self):
-        self.head = "UPDATE entries"
 
-class DeleteQuery(Query):
-    def __init__(self):
-        self.head = "DELETE FROM entries WHERE"
+def make_update_query(old_entry:entry.Entry, new_entry:entry.Entry):
+    """Construct a query to update an entry in the database."""
+    new_entry = new_entry.to_tuple()
+    query = \
+    """
+    UPDATE entries 
+    SET date = {}, amount = {}, tags = {}, note = {}
+    WHERE id = {id}
+    """
+    query.format(id=new_entry[0], *new_entry[1:])
 
 
 def run_query(conn:sqlite3.Connection, query:str) -> None | sqlite3.Cursor:
