@@ -1,23 +1,53 @@
 import sqlite3
 import abc
 from datetime import date
-from typing import Any, Union, List
+from typing import Any
 
 
 import entry
 import display
+import config
 
 
-def make_select_query():
-    pass
+def make_select_query(date:config.Date, category:str, tags:list) -> str:
+    """Construct a query to select entries in the database."""
+    if date.month == 0:
+        date = f"{date.year}-%"
+    else:
+        date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
+
+    query = f"SELECT * FROM entries WHERE date LIKE {date}"
+
+    if category == "expense":
+        query += " AND amount < 0"
+    elif category == "income":
+        query += " AND amount >= 0"
+
+    for tag in tags:
+        query += f"AND tags LIKE %{tag}%"
+
+    return query
 
 
-def make_delete_query():
-    pass
+def make_insert_query(entry:entry.Entry) -> str:
+    """Construct a query to insert an entry into the database."""
+    fields = "(date, amount, tags, note)"
+    if entry.id:
+        fields = "(id, date, amount, tags, note)"
+    values = entry.to_tuple()
+    
+    return f"INSERT INTO entries {fields} VALUES {values}"
 
 
-def make_update_query(old_entry:entry.Entry, new_entry:entry.Entry):
-    """Construct a query to update an entry in the database."""
+def make_delete_query(entry:entry.Entry) -> str:
+    """Construct a query to delete an entry from the database."""
+    return f"DELETE FROM entries where id = {entry.id}"
+
+
+def make_update_query(new_entry:entry.Entry) -> str:
+    """Construct a query to overwrite an entry in the database. The
+    new entry has the same id and the entry it's replacing.
+    """
     new_entry = new_entry.to_tuple()
     query = \
     """
@@ -25,12 +55,14 @@ def make_update_query(old_entry:entry.Entry, new_entry:entry.Entry):
     SET date = {}, amount = {}, tags = {}, note = {}
     WHERE id = {id}
     """
-    query.format(id=new_entry[0], *new_entry[1:])
+    query = query.format(id=new_entry[0], *new_entry[1:])
+
+    return query
 
 
 def run_query(conn:sqlite3.Connection, query:str) -> None | sqlite3.Cursor:
-    """Execute an SQL query. Uses execute or executemany depending on 'value.'"""
-    cursor = conn.cursor()  
+    """Execute an SQL query"""
+    cursor = conn.cursor()
     try:
         cursor.execute(query)
     except sqlite3.Error as e:
@@ -41,7 +73,7 @@ def run_query(conn:sqlite3.Connection, query:str) -> None | sqlite3.Cursor:
         return cursor
 
 
-def fetch(query:str) -> List[Any]:
+def fetch(query:str) -> list[Any]:
     conn = connection
     cursor = conn.cursor()
     try:
@@ -54,12 +86,8 @@ def fetch(query:str) -> List[Any]:
 
 def insert_entry(entry:entry.Entry) -> int:
     """Insert an entry into the database."""
-    fields = "(date, amount, tags, note)"
-    if entry.id:
-        fields = "(id, date, amount, tags, note)"
-    values = entry.to_tuple()
-    q = f"INSERT INTO entries {fields} VALUES {values}"
-    cursor = run_query(connection, q)
+    query = make_insert_query(entry)
+    cursor = run_query(connection, query)
     if not cursor: 
         return
     return cursor.lastrowid

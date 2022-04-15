@@ -12,10 +12,10 @@ import entry
 from config import TODAY
 from entry import Entry
 from command.validator import VLit, VBool
-from validators import VDay, VMonth, VYear, VType, VTag, VNewTag, VID
+from validators import VDay, VMonth, VYear, VType, VTags, VNewTag, VID
 
 
-def get_date() -> Union[date, None]:
+def get_date() -> date | None:
     """Retrieve the date input from the user."""
     display.refresh()
     date = input("Date: ")
@@ -36,7 +36,7 @@ def get_date() -> Union[date, None]:
         display.message("Invalid input.")
 
 
-def get_amount() -> Union[int, None]:
+def get_amount() -> int | None:
     """Retrieve the amount input from the user."""
     display.refresh()
     amount = input("Amount: ").strip()
@@ -48,10 +48,13 @@ def get_amount() -> Union[int, None]:
         display.message("The amount must start with + or -")
         return
 
+    if not amount[1:].isnumeric() or int(amount) == 0:
+        display.message("Invalid amount.")
+
     return entry.dollars_to_cents(amount)
 
 
-def _match_tag(query: str) -> Union[str, None]:
+def _match_tag(query: str) -> str | None:
     """Check if string matches a tag. If so, return the tag."""
     result = None
     for t in config.udata.tags:
@@ -62,7 +65,7 @@ def _match_tag(query: str) -> Union[str, None]:
     return result
 
 
-def get_tags() -> Union[list, None]:
+def get_tags() -> list | None:
     """Get tag(s) input from user."""
     display.message(f"({', '.join(config.udata.tags)})")
     display.refresh()
@@ -123,7 +126,7 @@ class ListCommand(command.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(),
-        "tags": VTag(),
+        "tags": VTags(),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
@@ -208,7 +211,7 @@ class RemoveEntryCommand(command.Command):
 class RemoveTagCommand(command.Command):
     """Remove a tag by its name."""
     params = {
-        "name": VTag(req=True),
+        "name": VTags(req=True),
     }
 
     def execute(self):

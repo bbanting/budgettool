@@ -36,9 +36,11 @@ KEYWORDS += tuple(Month.__members__)
 
 
 class Date:
+    year: int
+    month: Month
     def __init__(self, year=TODAY.year, month=TODAY.month):
-        year: int = year
-        month: Month = month
+        year = year
+        month = month
 
 
 class ConfigError(Exception):

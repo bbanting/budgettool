@@ -33,7 +33,7 @@ class VYear(Validator):
         return Result.err()
 
 
-class VTag(Validator):
+class VTags(Validator):
     """Verify that input belongs to the user's tags; if so, return it."""
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)

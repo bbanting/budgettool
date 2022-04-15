@@ -48,14 +48,14 @@ class Entry:
         """Construct an entry from a database row."""
         id, date, amount, tags, note = data
         id = int(id)
-        date = date.strptime(date, "%Y/%m/%d")
+        date = date.strptime(date, "%Y-%m-%d")
         amount = int(amount)
         tags = verify_tags(tags)
 
         return cls(id, date, amount, tags, note)
 
     def to_tuple(self) -> tuple:
-        date = self.date.strftime("%Y/%m/%d")
+        date = self.date.isoformat()
         values = (date, str(self.amount), self.tags, self.note)
         if self.id:
             values = (self.id, date, self.amount, self.tags, self.note)
