@@ -107,9 +107,31 @@ class BTError(Exception):
 #         self._overwrite()
 
 
+# def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
+#     """Filter and return entries based on input.
+#     Raise exception if none found.
+#     """
+#     if month is None and config.active_year == TODAY.year:
+#         month = Month(TODAY.month)
+#     elif month is None and config.active_year != TODAY.year:
+#         month = Month.December
+
+#     filtered_entries = []
+#     for e in config.records[config.active_year]:
+#         if month != 0 and e.date.month != month:
+#             continue
+#         if category and category != e.category:
+#             continue
+#         if tags and not any([True if t in e.tags else False for t in tags]):
+#             continue
+#         filtered_entries.append(e)
+
+#     return sorted(filtered_entries, key=lambda x: x.date)
+
+
 def show_entries(date:Date, category:str, tags:str) -> None:
     """Push the current entries to the display."""
-    entries = _fetch_entries(date, category, tags)
+    entries = db.fetch_entries(date, category, tags)
     total = entry.cents_to_dollars(sum(entries))
     summary = _get_filter_summary(len(entries), date, category, tags)
 
@@ -123,40 +145,6 @@ def _get_filter_summary(n:int, date:Date, category:str, tags:str) -> str:
     category = f" of type {category}" if category else ""
     tags = f" with tags: {', '.join(tags)}" if tags else ""
     return f"{n} entries{category} from {date} of {config.active_year}{tags}."
-
-
-def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
-    """Filter and return entries based on input.
-    Raise exception if none found.
-    """
-    if month is None and config.active_year == TODAY.year:
-        month = Month(TODAY.month)
-    elif month is None and config.active_year != TODAY.year:
-        month = Month.December
-
-    filtered_entries = []
-    for e in config.records[config.active_year]:
-        if month != 0 and e.date.month != month:
-            continue
-        if category and category != e.category:
-            continue
-        if tags and not any([True if t in e.tags else False for t in tags]):
-            continue
-        filtered_entries.append(e)
-
-    return sorted(filtered_entries, key=lambda x: x.date)
-
-
-def _fetch_entries(date, category, tags) -> list[Entry]:
-    """Fetch entries from database based on last query"""
-    query = "SELECT * FROM entries"
-    if category == "income":
-        query += " WHERE amount > 0"
-    elif category == "expense":
-        query += " WHERE amount < 0"
-
-    query += ";"
-    return db.fetch(query)
     
 
 def register_commands(controller: command.CommandController):

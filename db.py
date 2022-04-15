@@ -60,28 +60,30 @@ def make_update_query(new_entry:entry.Entry) -> str:
     return query
 
 
-def run_query(conn:sqlite3.Connection, query:str) -> None | sqlite3.Cursor:
+def run_query(query:str) -> None | sqlite3.Cursor:
     """Execute an SQL query"""
-    cursor = conn.cursor()
+    cursor = connection.cursor()
     try:
         cursor.execute(query)
     except sqlite3.Error as e:
         # display.error("Database error")
         print(e)
     else:
-        conn.commit()
+        connection.commit()
         return cursor
 
 
-def fetch(query:str) -> list[Any]:
-    conn = connection
-    cursor = conn.cursor()
+def fetch_entries(date:config.Date, category:str, tags:list) -> list[tuple]:
+    cursor = connection.cursor()
+    query = make_select_query(date, category, tags)
     try:
         cursor.execute(query)
-        return cursor.fetchall()
+        entries = cursor.fetchall()
     except sqlite3.Error as e:
         # display.error(f"Database error")
         print(e)
+    else:
+        return [e.from_tuple() for e in entries]
 
 
 def insert_entry(entry:entry.Entry) -> int:
@@ -111,4 +113,4 @@ entry1 = entry.Entry(0, date.today(), 5000, ["other"], "Nothing to note")
 insert_entry(entry1)
 # insert_entry(entry2)
 
-print(fetch("SELECT * FROM entries"))
+print(fetch_entries("SELECT * FROM entries"))
