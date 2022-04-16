@@ -2,6 +2,8 @@ from __future__ import annotations
 import json
 import datetime
 import enum
+import dataclasses
+import collections
 
 
 # Constants
@@ -35,12 +37,17 @@ class Month(enum.IntEnum):
 KEYWORDS += tuple(Month.__members__)
 
 
-class Date:
+@dataclasses.dataclass
+class TimeFrame:
+    """Represents a timeframe within which to filter entries."""
     year: int
     month: Month
-    def __init__(self, year=TODAY.year, month=TODAY.month):
-        year = year
-        month = month
+    def __init__(self, year:int, month:int):
+        self.year = year
+        self.month = Month(month)
+
+
+Query = collections.namedtuple("Query", ("date", "category", "tags"))
 
 
 class ConfigError(Exception):
@@ -106,5 +113,4 @@ class UserData:
 
 # Other globals
 udata = UserData(FILENAME)
-last_query = (Date(), None, None)
-records = None
+last_query = Query(TimeFrame(TODAY.year, TODAY.month), "", [])

@@ -1,5 +1,3 @@
-import enum
-
 import config
 from config import KEYWORDS, Month
 from command.validator import Validator, Result
@@ -73,9 +71,9 @@ class VType(Validator):
         return Result.err()
 
 
-# class VID(Validator):
-#     """Capture an ID"""
-#     def validate(self, value: str) -> Result:
-#         if value.isdigit() and len(value) <= 4:
-#             return Result.ok(int(value))
-#         return Result.err()
+class VID(Validator):
+    """Capture an ID"""
+    def validate(self, value: str) -> Result:
+        if value.isdigit():
+            return Result.ok(int(value))
+        return Result.err()

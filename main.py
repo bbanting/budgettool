@@ -3,10 +3,7 @@
 # A simple tool to keep track of expenses and earnings.
 
 from __future__ import annotations
-import os
-import csv
 import shlex
-import collections
 import logging
 
 import config
@@ -14,10 +11,10 @@ import command
 import display
 import commands
 import db
-import entry
+
+from entry import cents_to_dollars
 from command.base import CommandError
-from config import TODAY, ENTRY_FOLDER, HEADERS, DATEW, AMOUNTW, TAGSW, Month, Date
-from entry import Entry
+from config import DATEW, AMOUNTW, TAGSW, TimeFrame
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
@@ -26,125 +23,25 @@ class BTError(Exception):
     pass
 
 
-# class RecordHandler(collections.UserDict):
-#     """A class to hold all YearlyRecords."""
-#     def __iter__(self):
-#         return super().__iter__()
-#         # Overwrite this to allow traversing between years
-    
-#     def __getitem__(self, key: int):
-#         try:
-#             super().__getitem__(key)
-#         except KeyError:
-#             self.update({key: Record(key)})
-#         return super().__getitem__(key)
-
-
-# class Record(collections.UserList):
-#     """
-#     A list to group entry sets together by year and 
-#     handle saving them to disk.
-#     """
-#     def __init__(self, year: int) -> None:
-#         """Initialize and check for file errors."""
-#         super().__init__()
-
-#         self.year = year
-#         self._check_file()
-
-#         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r", newline="") as fp:
-#             lines = list(csv.reader(fp))
-#         if lines[0] != list(HEADERS):
-#             print(f"Error: Invalid CSV headers.")
-#             quit()
-
-#         entries = []
-#         for i, ln in enumerate(lines[1:]):
-#             try:
-#                 entry = Entry.from_csv(ln)
-#             except (ValueError, BTError):
-#                 print(f"Error parsing line {i+2}. Your CSV file may be corrupted.")
-#                 quit()
-#             else:
-#                 entries.append(entry)
-#         self.extend(entries)
-
-#     def _check_file(self) -> None:
-#         """Ensure the CSV file can be opened barring a permission error."""
-#         os.makedirs(f"{os.getcwd()}/{ENTRY_FOLDER}", exist_ok=True)
-#         try:
-#             with open(f"{ENTRY_FOLDER}/{self.year}.csv", "r+"):
-#                 pass
-#         except PermissionError:
-#             print("You do not have the necessary file permissions.")
-#             quit()
-#         except FileNotFoundError:
-#             with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
-#                 csv.writer(fp).writerow(HEADERS)
-
-#     def _overwrite(self):
-#         """Overwrite the csv file with current entries."""
-#         self._check_file()
-#         rows = []
-#         rows.append(list(HEADERS))
-#         for e in self:
-#             rows.append(e.to_csv())
-#         with open(f"{ENTRY_FOLDER}/{self.year}.csv", "w", newline="") as fp:
-#             csv.writer(fp).writerows(rows)
-
-#     def replace(self, old: Entry, new: Entry) -> None:
-#         """Replace old Entry with new Entry."""
-#         index = self.index(old)
-#         self[index] = new
-#         self._overwrite()
-
-#     def append(self, item: Entry) -> None:
-#         super().append(item)
-#         self._overwrite()
-
-#     def remove(self, item: Entry) -> None:
-#         super().remove(item)
-#         self._overwrite()
-
-
-# def _filter_entries(month=None, category=None, tags=()) -> list[Entry]:
-#     """Filter and return entries based on input.
-#     Raise exception if none found.
-#     """
-#     if month is None and config.active_year == TODAY.year:
-#         month = Month(TODAY.month)
-#     elif month is None and config.active_year != TODAY.year:
-#         month = Month.December
-
-#     filtered_entries = []
-#     for e in config.records[config.active_year]:
-#         if month != 0 and e.date.month != month:
-#             continue
-#         if category and category != e.category:
-#             continue
-#         if tags and not any([True if t in e.tags else False for t in tags]):
-#             continue
-#         filtered_entries.append(e)
-
-#     return sorted(filtered_entries, key=lambda x: x.date)
-
-
-def show_entries(date:Date, category:str, tags:str) -> None:
+def show_entries(date:TimeFrame, category:str, tags:str) -> None:
     """Push the current entries to the display."""
     entries = db.fetch_entries(date, category, tags)
-    total = entry.cents_to_dollars(sum(entries))
+    total = cents_to_dollars(sum(entries))
+    total_str = f"${total:.2f}"
+    if total > 0: total_str += "+"
+    if total < 0: total_str += "-"
     summary = _get_filter_summary(len(entries), date, category, tags)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
     for entry in entries: display.push(entry)
-    display.push_f("", f"TOTAL: {total}", summary)
+    display.push_f("", f"TOTAL: {total_str}", summary)
 
 
-def _get_filter_summary(n:int, date:Date, category:str, tags:str) -> str:
-    date = date.name
+def _get_filter_summary(n:int, date:TimeFrame, category:str, tags:str) -> str:
+    date = f"{date.month.name} {date.year}"
     category = f" of type {category}" if category else ""
     tags = f" with tags: {', '.join(tags)}" if tags else ""
-    return f"{n} entries{category} from {date} of {config.active_year}{tags}."
+    return f"{n} entries{category} from {date}{tags}."
     
 
 def register_commands(controller: command.CommandController):
@@ -189,5 +86,4 @@ def main():
 
 
 if __name__=="__main__":
-    config.records = RecordHandler({TODAY.year: Record(TODAY.year)})
     main()

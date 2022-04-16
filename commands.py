@@ -1,6 +1,5 @@
 import copy
 import logging
-from typing import Union
 from datetime import date
 
 import command
@@ -131,7 +130,7 @@ class ListCommand(command.Command):
     help_text = "If no year or month are specified it will default to the current year and month."
     
     def execute(self, year, month, category, tags):
-        date = config.Date(year, month)
+        date = config.TimeFrame(year, month)
         config.last_query = [date, category, tags]
         display.change_page(1)
 

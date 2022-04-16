@@ -1,22 +1,19 @@
 import sqlite3
-import abc
-from datetime import date
-from typing import Any
-
+import logging
 
 import entry
 import display
 import config
 
 
-def make_select_query(date:config.Date, category:str, tags:list) -> str:
+def make_select_query(date:config.TimeFrame, category:str, tags:list) -> str:
     """Construct a query to select entries in the database."""
     if date.month == 0:
         date = f"{date.year}-%"
     else:
         date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
 
-    query = f"SELECT * FROM entries WHERE date LIKE {date}"
+    query = f"SELECT * FROM entries WHERE date LIKE '{date}'"
 
     if category == "expense":
         query += " AND amount < 0"
@@ -24,7 +21,7 @@ def make_select_query(date:config.Date, category:str, tags:list) -> str:
         query += " AND amount >= 0"
 
     for tag in tags:
-        query += f"AND tags LIKE %{tag}%"
+        query += f"AND tags LIKE '%{tag}%'"
 
     return query
 
@@ -60,7 +57,7 @@ def make_update_query(new_entry:entry.Entry) -> str:
     return query
 
 
-def run_query(query:str) -> None | sqlite3.Cursor:
+def run_query(query:str) -> sqlite3.Cursor | None:
     """Execute an SQL query"""
     cursor = connection.cursor()
     try:
@@ -73,7 +70,7 @@ def run_query(query:str) -> None | sqlite3.Cursor:
         return cursor
 
 
-def fetch_entries(date:config.Date, category:str, tags:list) -> list[tuple]:
+def fetch_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry.Entry]:
     cursor = connection.cursor()
     query = make_select_query(date, category, tags)
     try:
@@ -105,12 +102,12 @@ CREATE TABLE IF NOT EXISTS entries (
 );"""
 
 connection = sqlite3.connect("records.db")
-run_query(connection, table_query)
-# run_query(connection, "DROP TABLE entries;")
+# run_query(connection, table_query)
+# # run_query(connection, "DROP TABLE entries;")
 
-entry1 = entry.Entry(0, date.today(), 5000, ["other"], "Nothing to note")
-# entry2 = entry.Entry(datetime.now(), -7000, ["food"], "Bought food")
-insert_entry(entry1)
-# insert_entry(entry2)
+# entry1 = entry.Entry(0, date.today(), 5000, ["other"], "Nothing to note")
+# # entry2 = entry.Entry(datetime.now(), -7000, ["food"], "Bought food")
+# insert_entry(entry1)
+# # insert_entry(entry2)
 
-print(fetch_entries("SELECT * FROM entries"))
+# print(fetch_entries("SELECT * FROM entries"))

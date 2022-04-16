@@ -27,22 +27,6 @@ class Entry:
         else:
             return "expense"
 
-    # @classmethod
-    # def from_csv(cls, data: list):
-    #     """Contruct an entry from a csv line."""
-    #     id, date, amount, tags, note = data
-    #     id = int(id)
-    #     date = datetime.strptime(date, "%Y/%m/%d")
-    #     amount = int(amount)
-    #     tags = verify_tags(tags.split(" "))
-
-    #     return cls(date, amount, tags, note, id=id)
-
-    # def to_csv(self) -> list:
-    #     """Convert entry into list for writing by the csv module."""
-    #     date = self.date.strftime("%Y/%m/%d")
-    #     return [self.id, date, str(self.amount), " ".join(self.tags), self.note]
-
     @classmethod
     def from_tuple(cls, data:tuple):
         """Construct an entry from a database row."""
