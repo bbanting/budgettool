@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import datetime
 
 import entry
 import display
@@ -21,7 +22,7 @@ def make_select_query(date:config.TimeFrame, category:str, tags:list) -> str:
         query += " AND amount >= 0"
 
     for tag in tags:
-        query += f"AND tags LIKE '%{tag}%'"
+        query += f" AND tags LIKE '%{tag}%'"
 
     return query
 
@@ -80,13 +81,13 @@ def fetch_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry.
         # display.error(f"Database error")
         print(e)
     else:
-        return [e.from_tuple() for e in entries]
+        return [entry.Entry.from_tuple(e) for e in entries]
 
 
 def insert_entry(entry:entry.Entry) -> int:
     """Insert an entry into the database."""
     query = make_insert_query(entry)
-    cursor = run_query(connection, query)
+    cursor = run_query(query)
     if not cursor: 
         return
     return cursor.lastrowid
@@ -102,12 +103,11 @@ CREATE TABLE IF NOT EXISTS entries (
 );"""
 
 connection = sqlite3.connect("records.db")
-# run_query(connection, table_query)
-# # run_query(connection, "DROP TABLE entries;")
+# run_query("DROP TABLE entries;")
+run_query(table_query)
 
-# entry1 = entry.Entry(0, date.today(), 5000, ["other"], "Nothing to note")
-# # entry2 = entry.Entry(datetime.now(), -7000, ["food"], "Bought food")
+# entry1 = entry.Entry(0, datetime.date.today(), 5000, ["other"], "Nothing to note")
 # insert_entry(entry1)
-# # insert_entry(entry2)
 
-# print(fetch_entries("SELECT * FROM entries"))
+# for e in fetch_entries(config.TimeFrame(2022, 4), "income", ["other"]): 
+#     print(e.id, e)

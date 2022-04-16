@@ -1,12 +1,13 @@
 import copy
 import logging
-from datetime import date
+import datetime
 
 import command
 import config
 import display
 import main
 import entry
+import db
 
 from config import TODAY
 from entry import Entry
@@ -14,7 +15,7 @@ from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTags, VNewTag, VID
 
 
-def get_date() -> date | None:
+def get_date() -> datetime.date | None:
     """Retrieve the date input from the user."""
     display.refresh()
     date = input("Date: ")
@@ -27,10 +28,10 @@ def get_date() -> date | None:
     if not date:
         return TODAY
     elif 2 <= len(date) <= 3:
-        month = VMonth(strict=True)(date)
+        month = VMonth()(date)
         day = VDay()(date)
-        year = VYear(default=config.active_year)(date)
-        return date(year, month, day)
+        year = VYear(default=config.TODAY.year)(date)
+        return datetime.date(year, month, day)
     else:
         display.message("Invalid input.")
 
@@ -141,14 +142,13 @@ class AddEntryCommand(command.Command):
         try:
             date, amount, tags, note = get_input(get_date, get_amount, get_tags, get_note)
         except main.BTError:
-            pass # Exit the command
-        else:
-            self.entry = Entry(date, amount, tags, note)
-            config.records[date.year].append(self.entry)
+            return # Exit the command
+        self.entry = Entry(0, date, amount, tags, note)
+        db.insert_entry(self.entry)
 
-            date = date.strftime("%b %d")
-            amount = entry.in_dollars()
-            display.message(f"Entry added: {date} - {amount} - {note}")
+        date = date.strftime("%b %d")
+        amount = self.entry.in_dollars()
+        display.message(f"Entry added: {date} - {amount} - {note}")
         
     def undo(self):
         config.records[self.entry.date.year].remove(self.entry)

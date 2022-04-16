@@ -10,8 +10,8 @@ class ValidatorError(Exception):
 
 class Result:
     def __init__(self, ok, value=None):
-        _ok: bool = ok
-        _value: Any = value
+        self._ok: bool = ok
+        self._value: Any = value
 
     @property
     def is_ok(self) -> bool:

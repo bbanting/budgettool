@@ -1,4 +1,6 @@
 from __future__ import annotations
+import datetime
+
 from datetime import date
 from dataclasses import dataclass
 
@@ -32,7 +34,7 @@ class Entry:
         """Construct an entry from a database row."""
         id, date, amount, tags, note = data
         id = int(id)
-        date = date.strptime(date, "%Y-%m-%d")
+        date = datetime.datetime.strptime(date, "%Y-%m-%d")
         amount = int(amount)
         tags = verify_tags(tags)
 
@@ -40,9 +42,9 @@ class Entry:
 
     def to_tuple(self) -> tuple:
         date = self.date.isoformat()
-        values = (date, str(self.amount), self.tags, self.note)
+        values = (date, str(self.amount), " ".join(self.tags), self.note)
         if self.id:
-            values = (self.id, date, self.amount, self.tags, self.note)
+            values = (self.id, date, self.amount, " ".join(self.tags), self.note)
         return values
 
     def in_dollars(self):
@@ -55,9 +57,10 @@ class Entry:
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
+        tags = self.tags
         if len(tags) > 12:
             tags = tags[:9] + "..."
-        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {self.tags:{TAGSW}} {self.note}"
+        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):
