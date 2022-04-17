@@ -36,7 +36,6 @@ class Entry:
         id, date, amount, tags, note = data
         id = int(id)
         date = datetime.date(int(date[0:4]), int(date[5:7]), int(date[8:10]))
-        logging.info(date)
         amount = int(amount)
         tags = verify_tags(tags)
 

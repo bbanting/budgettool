@@ -50,7 +50,7 @@ def make_update_query(new_entry:entry.Entry) -> str:
     query = \
     """
     UPDATE entries 
-    SET date = {}, amount = {}, tags = {}, note = {}
+    SET date = '{}', amount = {}, tags = '{}', note = '{}'
     WHERE id = {id}
     """
     query = query.format(id=new_entry[0], *new_entry[1:])
@@ -76,7 +76,6 @@ def select_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry
     try:
         cursor.execute(query)
         entries = cursor.fetchall()
-        logging.info(entries)
     except sqlite3.Error as e:
         display.error(f"Database error")
     else:

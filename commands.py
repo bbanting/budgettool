@@ -126,8 +126,8 @@ class ListCommand(command.Command):
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
-        "category": VType(),
-        "tags": VTags(),
+        "category": VType(default=""),
+        "tags": VTags(default=[]),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
@@ -284,19 +284,8 @@ class ShowBillsCommand(command.Command):
     names = ("bills",)
 
     def execute(self):
-        for k, v in config.bills.items():
+        for k, v in config.udata.bills.items():
             print(f"{k}:\t{v}")
-
-
-# def switch_year(year=VBool(str.isdigit, req=True)):
-#     """Switches to different year.""" ### Maybe don't write to config??
-#     year = int(year)
-#     if os.path.exists(f"{year}.csv"):
-#         config.active_year = year
-#         print(f"Records for {year} are now active.")
-#         return
-
-#     print("Invalid year input.")
 
 
 # def quick_add_entry(*args):

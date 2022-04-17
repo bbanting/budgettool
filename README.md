@@ -20,8 +20,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Compound relationships for search tags; negating
     - tag+tag tag !tag tag+!tag
     - ! and + are reserved and cant be used in tag names
-- [ ] Change to sqlite3
-  - delete entries
+- [x] Change to sqlite3
+- [ ] Make tool to migrate csv records to sqlite
+- [ ] Non-list views in display.py
 
 ## Notes
 

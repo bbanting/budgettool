@@ -79,7 +79,7 @@ class CommandController:
     
     def undo(self) -> None:
         if not self.undo_stack:
-            print("Nothing to undo")
+            display.message("Nothing to undo")
             return
         command = self.undo_stack.pop()
         self.redo_stack.append(command)
@@ -87,7 +87,7 @@ class CommandController:
 
     def redo(self) -> None:
         if not self.redo_stack:
-            print("Nothing to redo")
+            display.message("Nothing to redo")
             return
         command = self.redo_stack.pop()
         self.undo_stack.append(command)
