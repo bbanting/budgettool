@@ -64,33 +64,41 @@ def run_query(query:str) -> sqlite3.Cursor | None:
     try:
         cursor.execute(query)
     except sqlite3.Error as e:
-        # display.error("Database error")
-        print(e)
+        display.error("Database error")
     else:
         connection.commit()
         return cursor
 
 
-def fetch_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry.Entry]:
+def select_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry.Entry]:
     cursor = connection.cursor()
     query = make_select_query(date, category, tags)
     try:
         cursor.execute(query)
         entries = cursor.fetchall()
+        logging.info(entries)
     except sqlite3.Error as e:
-        # display.error(f"Database error")
-        print(e)
+        display.error(f"Database error")
     else:
         return [entry.Entry.from_tuple(e) for e in entries]
 
 
-def insert_entry(entry:entry.Entry) -> int:
+def insert_entry(entry:entry.Entry) -> None:
     """Insert an entry into the database."""
     query = make_insert_query(entry)
-    cursor = run_query(query)
-    if not cursor: 
-        return
-    return cursor.lastrowid
+    run_query(query)
+
+
+def delete_entry(entry:entry.Entry) -> None:
+    """Delete an entry from the database."""
+    query = make_delete_query(entry)
+    run_query(query)
+
+
+def update_entry(entry:entry.Entry) -> None:
+    """Update an entry in the database."""
+    query = make_update_query(entry)
+    run_query(query)
 
 
 table_query = """
@@ -109,5 +117,5 @@ run_query(table_query)
 # entry1 = entry.Entry(0, datetime.date.today(), 5000, ["other"], "Nothing to note")
 # insert_entry(entry1)
 
-# for e in fetch_entries(config.TimeFrame(2022, 4), "income", ["other"]): 
+# for e in select_entries(config.TimeFrame(2022, 4), "income", ["other"]): 
 #     print(e.id, e)

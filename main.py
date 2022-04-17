@@ -25,7 +25,7 @@ class BTError(Exception):
 
 def show_entries(date:TimeFrame, category:str, tags:str) -> None:
     """Push the current entries to the display."""
-    entries = db.fetch_entries(date, category, tags)
+    entries = db.select_entries(date, category, tags)
     total = cents_to_dollars(sum(entries))
     total_str = f"${total:.2f}"
     if total > 0: total_str += "+"

@@ -50,6 +50,7 @@ def get_amount() -> int | None:
 
     if not amount[1:].isnumeric() or int(amount) == 0:
         display.message("Invalid amount.")
+        return
 
     return entry.dollars_to_cents(amount)
 
@@ -77,7 +78,7 @@ def get_tags() -> list | None:
         display.message(f"({', '.join(config.udata.tags)})")
         return
 
-    if not all(tags := [_match_tag(t) for t in tags.split(" ")]):
+    if not all([_match_tag(t) for t in tags.split(" ")]):
         display.message("Invalid tags given. Enter 'help' to see tags.")
         return
 
@@ -111,7 +112,7 @@ def get_input(*getters) -> tuple:
     return data
 
 
-editable_fields = {
+input_functions = {
         "amount":   get_amount, 
         "tags":     get_tags,
         "note":     get_note,
@@ -151,10 +152,10 @@ class AddEntryCommand(command.Command):
         display.message(f"Entry added: {date} - {amount} - {note}")
         
     def undo(self):
-        config.records[self.entry.date.year].remove(self.entry)
+        db.delete_entry(self.entry)
 
     def redo(self):
-        config.records[self.entry.date.year].append(self.entry)
+        db.insert_entry(self.entry)
 
 
 class AddTagCommand(command.Command):
@@ -197,14 +198,14 @@ class RemoveEntryCommand(command.Command):
             display.refresh()
             ans = input("(Y/n) Are you sure you want to delete this entry? ").lower()
         if ans in ("yes", "y"):
-            config.records[self.entry.date.year].remove(self.entry)
+            db.delete_entry(self.entry)
         display.deselect()
 
     def undo(self):
-        config.records[self.entry.date.year].append(self.entry)
+        db.insert_entry(self.entry)
 
     def redo(self):
-        config.records[self.entry.date.year].remove(self.entry)
+        db.delete_entry(self.entry)
 
 
 class RemoveTagCommand(command.Command):
@@ -238,22 +239,24 @@ class EditEntryCommand(command.Command):
     names = ("edit",)
     params = {
         "id": VID(req=True),
-        "field": VLit(editable_fields, lower=True, req=True),
+        "field": VLit(input_functions, lower=True, req=True),
     }
 
     def execute(self, id: int, field: str) -> None:
         self.old_entry = display.select(id)
+
         self.new_entry = copy.copy(self.old_entry)
-        new_value = editable_fields[field]()
+        new_value = input_functions[field]()
         setattr(self.new_entry, field, new_value)
-        config.records[config.active_year].replace(self.old_entry, self.new_entry)
+
+        db.update_entry(self.new_entry)
         display.deselect()
 
     def undo(self) -> None:
-        config.records[config.active_year].replace(self.new_entry, self.old_entry)
+        db.update_entry(self.old_entry)
     
     def redo(self) -> None:
-        config.records[config.active_year].replace(self.old_entry, self.new_entry)
+        db.update_entry(self.new_entry)
 
 
 class ChangePageCommand(command.Command):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import datetime
+import logging
 
 from datetime import date
 from dataclasses import dataclass
@@ -34,7 +35,8 @@ class Entry:
         """Construct an entry from a database row."""
         id, date, amount, tags, note = data
         id = int(id)
-        date = datetime.datetime.strptime(date, "%Y-%m-%d")
+        date = datetime.date(int(date[0:4]), int(date[5:7]), int(date[8:10]))
+        logging.info(date)
         amount = int(amount)
         tags = verify_tags(tags)
 
@@ -42,9 +44,9 @@ class Entry:
 
     def to_tuple(self) -> tuple:
         date = self.date.isoformat()
-        values = (date, str(self.amount), " ".join(self.tags), self.note)
+        values = (date, str(self.amount), self.tags, self.note)
         if self.id:
-            values = (self.id, date, self.amount, " ".join(self.tags), self.note)
+            values = (self.id, date, self.amount, self.tags, self.note)
         return values
 
     def in_dollars(self):
