@@ -4,17 +4,15 @@ import datetime
 import enum
 import dataclasses
 import collections
+import entry
 
 
 # Constants
 FILENAME = "config.json"
-ENTRY_FOLDER = "records"
 TODAY = datetime.date.today()
-HEADERS = ("id","date","amount","tags","note")
-KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit") 
+KEYWORDS = ("income", "expense", "all", "target", "help", "q", "quit") 
 
 # Widths for display columns
-IDW = 8
 DATEW = 8
 AMOUNTW = 12
 
@@ -46,7 +44,7 @@ class TimeFrame:
         self.month = Month(month)
 
 
-Query = collections.namedtuple("Query", ("date", "category", "tags"))
+Query = collections.namedtuple("Query", ("date", "category", "target"))
 
 
 class ConfigError(Exception):
@@ -60,7 +58,7 @@ class UserData:
             data = json.load(fp)
 
         self.filename = filename
-        self.tags = data["tags"]
+        self.targets = data["targets"]
         self.old_tags = data["old_tags"]
         self.bills = data["bills"]
 
@@ -75,7 +73,7 @@ class UserData:
             quit()
         except FileNotFoundError:
             with open(filename, "w") as fp:
-                cfg = {"tags": [], "old_tags": [], "bills": {}}
+                cfg = {"targets": [], "old_tags": [], "bills": {}}
                 json.dump(cfg, fp)
 
     def overwrite(self) -> None:
@@ -86,27 +84,18 @@ class UserData:
 
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the config."""
-        return {"tags": self.tags,
-                "old_tags": self.old_tags,
+        return {"tags": [t.__dict__ for t in self.targets],
                 "bills": self.bills,
                 }
 
-    def add_tag(self, name: str):
-        """Takes a str and adds it to config as a tag."""
-        self.tags.append(name)
-        if name in self.old_tags:
-            self.old_tags.remove(name)
+    def add_target(self, targ:entry.Target):
+        """Adds a new target to the config file."""
+        self.targets.append(targ)
         self.overwrite()
 
-    def remove_tag(self, name: str, for_undo=False):
+    def remove_target(self, targ:entry.Target):
         """Removes a tag from the config. str should already be validated."""
-        if name not in self.tags:
-            raise ConfigError("Tag not found.")
-
-        self.tags.remove(name)
-        # Only add to old_tags if this isn't for an undo command
-        if not for_undo: 
-            self.old_tags.append(name)
+        self.targets.remove(targ)
         self.overwrite()
 
 

@@ -1,4 +1,5 @@
 import config
+import entry
 from config import KEYWORDS, Month
 from command.validator import Validator, Result
 
@@ -31,14 +32,14 @@ class VYear(Validator):
         return Result.err()
 
 
-class VTags(Validator):
+class VTarget(Validator):
     """Verify that input belongs to the user's tags; if so, return it."""
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)
 
     def validate(self, value) -> Result:
         value = value.lower()
-        if value in config.udata.tags:
+        if value in [t.name for t in config.udata.targets]:
             return Result.ok(value)
         else:
             return Result.err()
@@ -54,15 +55,26 @@ class VNewTag(Validator):
         if ("+" in value) or ("!" in value):
             # Tag name may not contain '+' or '!'.
             return Result.err()
-        if value in config.udata.tags:
+        if value in config.udata.targets:
             # Tag already exists.
             return Result.err()
         return Result.ok(value)
 
 
+class VAmount(Validator):
+    """Capture a positive or negative amount."""
+    def validate(self, value:str) -> Result:
+        if not value.startswith(("-", "+")):
+            return Result.err()
+        if not value[1:].isnumeric() or int(value) == 0:
+            return Result.err()
+
+        return Result.ok(entry.dollars_to_cents(value))
+
+
 class VType(Validator):
     """Capture the type of entry."""
-    def validate(self, value: str) -> Result:
+    def validate(self, value:str) -> Result:
         value = value.lower()
         if value == "income":
             return Result.ok("income")

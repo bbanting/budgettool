@@ -12,7 +12,7 @@ import db
 from config import TODAY
 from entry import Entry
 from command.validator import VLit, VBool
-from validators import VDay, VMonth, VYear, VType, VTags, VNewTag, VID
+from validators import VDay, VMonth, VYear, VType, VTarget, VNewTag, VID, VAmount
 
 
 def get_date() -> datetime.date | None:
@@ -58,7 +58,7 @@ def get_amount() -> int | None:
 def _match_tag(query: str) -> str | None:
     """Check if string matches a tag. If so, return the tag."""
     result = None
-    for t in config.udata.tags:
+    for t in config.udata.targets:
         if t.lower().startswith(query):
             result = t
             break
@@ -68,14 +68,14 @@ def _match_tag(query: str) -> str | None:
 
 def get_tags() -> list | None:
     """Get tag(s) input from user."""
-    display.message(f"({', '.join(config.udata.tags)})")
+    display.message(f"({', '.join(config.udata.targets)})")
     display.refresh()
     tags = input("Tags: ").lower().strip()
 
     if tags in ("q", "quit"):
         raise main.BTError("Input aborted by user.")
     if tags == "help":
-        display.message(f"({', '.join(config.udata.tags)})")
+        display.message(f"({', '.join(config.udata.targets)})")
         return
 
     if not all([_match_tag(t) for t in tags.split(" ")]):
@@ -127,7 +127,7 @@ class ListCommand(command.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(default=""),
-        "tags": VTags(default=[]),
+        "tags": VTarget(default=[]),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
@@ -158,20 +158,22 @@ class AddEntryCommand(command.Command):
         db.insert_entry(self.entry)
 
 
-class AddTagCommand(command.Command):
+class AddTargetCommand(command.Command):
     """Add a name to the list of tags."""
     params = {
         "name": VNewTag(req=True),
+        "amount": VAmount(req=True),
     }
 
-    def execute(self):
-        config.udata.add_tag(self.data["name"])
+    def execute(self, name, amount):
+        self.target = entry.Target(name, amount)
+        config.udata.add_target(self.target)
 
     def undo(self):
-        config.udata.remove_tag(self.data["name"], for_undo=True)
+        config.udata.remove_target(self.data["name"])
 
     def redo(self):
-        config.udata.add_tag(self.data["name"])
+        config.udata.add_target(self.data["name"])
 
 
 class AddCommand(command.ForkCommand):
@@ -179,7 +181,7 @@ class AddCommand(command.ForkCommand):
     names = ("add",)
     forks = {
         "entry": AddEntryCommand,
-        "tag": AddTagCommand
+        "tag": AddTargetCommand
     }
     default = "entry"
     help_text = "If neither 'entry' or 'tag' are specified, it will default to 'entry.'"
@@ -208,20 +210,24 @@ class RemoveEntryCommand(command.Command):
         db.delete_entry(self.entry)
 
 
-class RemoveTagCommand(command.Command):
+class RemoveTargetCommand(command.Command):
     """Remove a tag by its name."""
     params = {
-        "name": VTags(req=True),
+        "name": VTarget(req=True),
     }
 
-    def execute(self):
-        config.udata.remove_tag(self.data["name"])
+    def execute(self, name:str):
+        if name not in [t.name for t in config.udata.targets]:
+            display.error("Target not found.")
+            return
+        self.target = entry.Target.from_str(name)
+        config.udata.remove_target(self.target)
 
     def undo(self):
-        config.udata.add_tag(self.data["name"])
+        config.udata.add_target(self.target)
 
     def redo(self):
-        config.udata.remove_tag(self.data["name"])
+        config.udata.remove_target(self.target)
 
 
 class RemoveCommand(command.ForkCommand):
@@ -229,7 +235,7 @@ class RemoveCommand(command.ForkCommand):
     names = ("del", "delete", "remove")
     forks = {
         "entry": RemoveEntryCommand,
-        "tag": RemoveTagCommand,
+        "tag": RemoveTargetCommand,
     }
     default = "entry"
 

@@ -52,10 +52,10 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.QuitCommand)
     controller.register(commands.RemoveCommand)
     controller.register(commands.RemoveEntryCommand)
-    controller.register(commands.RemoveTagCommand)
+    controller.register(commands.RemoveTargetCommand)
     controller.register(commands.AddCommand)
     controller.register(commands.AddEntryCommand)
-    controller.register(commands.AddTagCommand)
+    controller.register(commands.AddTargetCommand)
     controller.register(commands.EditEntryCommand)
     controller.register(commands.ChangePageCommand)
 

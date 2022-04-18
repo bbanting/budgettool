@@ -12,9 +12,11 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Calendar view
-- [x] Make tool to migrate csv records to sqlite
 - [ ] Non-list views in display.py
-- [ ] Targets
+- [x] Targets
+- [ ] Target group
+- [ ] Quick add entry
+- [ ] Default command
 
 ## Notes
 
