@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Any, Iterable
+from typing import Any, Iterable
 
 import colorama
 from colorama import Fore, Back, Style

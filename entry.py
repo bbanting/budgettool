@@ -4,9 +4,10 @@ import logging
 
 from datetime import date
 from dataclasses import dataclass
+from colorama import Style
 
 import config
-from config import DATEW, AMOUNTW, TAGSW
+from config import DATEW, AMOUNTW
 
 
 class EntryError(Exception):
@@ -35,7 +36,7 @@ class Entry:
         """Construct an entry from a database row."""
         id, date, amount, tags, note = data
         id = int(id)
-        date = datetime.date(int(date[0:4]), int(date[5:7]), int(date[8:10]))
+        date = datetime.date.fromisoformat(date)
         amount = int(amount)
         tags = verify_tags(tags)
 
@@ -61,7 +62,7 @@ class Entry:
         tags = self.tags
         if len(tags) > 12:
             tags = tags[:9] + "..."
-        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {tags:{TAGSW}} {self.note}"
+        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} {Style.DIM}({tags}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):

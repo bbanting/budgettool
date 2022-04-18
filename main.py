@@ -14,7 +14,7 @@ import db
 
 from entry import cents_to_dollars
 from command.base import CommandError
-from config import DATEW, AMOUNTW, TAGSW, TimeFrame
+from config import DATEW, AMOUNTW, TimeFrame
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
@@ -28,11 +28,11 @@ def show_entries(date:TimeFrame, category:str, tags:str) -> None:
     entries = db.select_entries(date, category, tags)
     total = cents_to_dollars(sum(entries))
     total_str = f"${total:.2f}"
-    if total > 0: total_str += "+"
-    if total < 0: total_str += "-"
+    if total > 0: total_str = "+" + total_str
+    if total < 0: total_str = "-" + total_str
     summary = _get_filter_summary(len(entries), date, category, tags)
 
-    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'TAGS':{TAGSW}} {'NOTE'}")
+    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: display.push(entry)
     display.push_f("", f"TOTAL: {total_str}", summary)
 
@@ -57,7 +57,6 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddEntryCommand)
     controller.register(commands.AddTagCommand)
     controller.register(commands.EditEntryCommand)
-    controller.register(commands.ShowBillsCommand)
     controller.register(commands.ChangePageCommand)
 
 

@@ -16,8 +16,7 @@ KEYWORDS = ("income", "expense", "all", "tag", "help", "q", "quit")
 # Widths for display columns
 IDW = 8
 DATEW = 8
-AMOUNTW = 10
-TAGSW = 12
+AMOUNTW = 12
 
 
 class Month(enum.IntEnum):

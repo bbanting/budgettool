@@ -279,15 +279,6 @@ class QuitCommand(command.Command):
         quit()
 
 
-class ShowBillsCommand(command.Command):
-    """Display the bills; placeholder command."""
-    names = ("bills",)
-
-    def execute(self):
-        for k, v in config.udata.bills.items():
-            print(f"{k}:\t{v}")
-
-
 # def quick_add_entry(*args):
 #     amount, category = args[:2]
 #     note = ",".join(args[2:])
