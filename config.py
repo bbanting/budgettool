@@ -59,7 +59,6 @@ class UserData:
 
         self.filename = filename
         self.targets = data["targets"]
-        self.old_tags = data["old_tags"]
         self.bills = data["bills"]
 
     @staticmethod
@@ -73,7 +72,7 @@ class UserData:
             quit()
         except FileNotFoundError:
             with open(filename, "w") as fp:
-                cfg = {"targets": [], "old_tags": [], "bills": {}}
+                cfg = {"targets": []}
                 json.dump(cfg, fp)
 
     def overwrite(self) -> None:
@@ -84,9 +83,7 @@ class UserData:
 
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the config."""
-        return {"tags": [t.__dict__ for t in self.targets],
-                "bills": self.bills,
-                }
+        return {"targets": [t.__dict__ for t in self.targets],}
 
     def add_target(self, targ:entry.Target):
         """Adds a new target to the config file."""
@@ -94,7 +91,7 @@ class UserData:
         self.overwrite()
 
     def remove_target(self, targ:entry.Target):
-        """Removes a tag from the config. str should already be validated."""
+        """Removes a target from the config."""
         self.targets.remove(targ)
         self.overwrite()
 

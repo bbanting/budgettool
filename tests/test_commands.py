@@ -60,28 +60,28 @@ class TestGetAmount(unittest.TestCase):
 class TestGetTags(unittest.TestCase):
     def test_get_tags_abort(self):
         with patch("commands.input", return_value="q"):
-            self.assertRaises(BTError, commands.get_tags)
+            self.assertRaises(BTError, commands.get_target)
 
     def test_get_tags_help(self):
         with patch("commands.input", return_value="help"):
-            self.assertIsNone(commands.get_tags())
+            self.assertIsNone(commands.get_target())
 
     @patch("config.udata.tags", ["food", "other"])
     def test_get_tags_invalid(self):
         with patch("commands.input", return_value="lamps paper"):
-            self.assertIsNone(commands.get_tags())
+            self.assertIsNone(commands.get_target())
 
     @patch("config.udata.tags", ["food", "other"])
     def test_get_tags_valid(self):
         with patch("commands.input", return_value="other"):
-            ret_val = commands.get_tags()
+            ret_val = commands.get_target()
             self.assertEqual(ret_val, ["other"])
     
 
 class TestGetNote(unittest.TestCase):
     def test_get_note_about(self):
         with patch("commands.input", return_value="q"):
-            self.assertRaises(BTError, commands.get_tags)
+            self.assertRaises(BTError, commands.get_target)
     
     def test_get_note_empty(self):
         with patch("commands.input", return_value=""):

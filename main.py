@@ -11,6 +11,7 @@ import command
 import display
 import commands
 import db
+import entry
 
 from entry import cents_to_dollars
 from command.base import CommandError
@@ -23,25 +24,25 @@ class BTError(Exception):
     pass
 
 
-def show_entries(date:TimeFrame, category:str, tags:str) -> None:
+def show_entries(date:TimeFrame, category:str, target:entry.Target) -> None:
     """Push the current entries to the display."""
-    entries = db.select_entries(date, category, tags)
+    entries = db.select_entries(date, category, target)
     total = cents_to_dollars(sum(entries))
     total_str = f"${total:.2f}"
     if total > 0: total_str = "+" + total_str
     if total < 0: total_str = "-" + total_str
-    summary = _get_filter_summary(len(entries), date, category, tags)
+    summary = _get_filter_summary(len(entries), date, category, target)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: display.push(entry)
     display.push_f("", f"TOTAL: {total_str}", summary)
 
 
-def _get_filter_summary(n:int, date:TimeFrame, category:str, tags:str) -> str:
+def _get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
     date = f"{date.month.name} {date.year}"
     category = f" of type {category}" if category else ""
-    tags = f" with tags: {', '.join(tags)}" if tags else ""
-    return f"{n} entries{category} from {date}{tags}."
+    target = f" at target: {', '.join(target)}" if target else ""
+    return f"{n} entries{category} from {date}{target}."
     
 
 def register_commands(controller: command.CommandController):

@@ -33,30 +33,27 @@ class VYear(Validator):
 
 
 class VTarget(Validator):
-    """Verify that input belongs to the user's tags; if so, return it."""
+    """Verify that input belongs to the user's targets; if so, return it."""
     def __init__(self, *args, **kwargs):
         super().__init__(plural=True, *args, **kwargs)
 
     def validate(self, value) -> Result:
         value = value.lower()
         if value in [t.name for t in config.udata.targets]:
-            return Result.ok(value)
+            return Result.ok(entry.Target.from_str(value))
         else:
             return Result.err()
 
 
-class VNewTag(Validator):
-    """Verify that str is a valid name for a new tag."""
+class VNewTarget(Validator):
+    """Verify that str is a valid name for a new target."""
     def validate(self, value: str) -> Result:
         value = value.lower()
         if value in KEYWORDS:
-            # Tag name may not be a keyword.
+            # Target name may not be a keyword.
             return Result.err()
-        if ("+" in value) or ("!" in value):
-            # Tag name may not contain '+' or '!'.
-            return Result.err()
-        if value in config.udata.targets:
-            # Tag already exists.
+        if value in [t.name for t in config.udata.targets]:
+            # Target already exists.
             return Result.err()
         return Result.ok(value)
 

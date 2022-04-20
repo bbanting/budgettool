@@ -7,7 +7,7 @@ import display
 import config
 
 
-def make_select_query(date:config.TimeFrame, category:str, tags:list) -> str:
+def make_select_query(date:config.TimeFrame, category:str, target:entry.Target) -> str:
     """Construct a query to select entries in the database."""
     if date.month == 0:
         date = f"{date.year}-%"
@@ -21,17 +21,16 @@ def make_select_query(date:config.TimeFrame, category:str, tags:list) -> str:
     elif category == "income":
         query += " AND amount >= 0"
 
-    for tag in tags:
-        query += f" AND tags LIKE '%{tag}%'"
+    if target: query += f" AND target = '{target.name}'"
 
     return query
 
 
 def make_insert_query(entry:entry.Entry) -> str:
     """Construct a query to insert an entry into the database."""
-    fields = "(date, amount, tags, note)"
+    fields = "(date, amount, target, note)"
     if entry.id:
-        fields = "(id, date, amount, tags, note)"
+        fields = "(id, date, amount, target, note)"
     values = entry.to_tuple()
     
     return f"INSERT INTO entries {fields} VALUES {values}"
@@ -50,7 +49,7 @@ def make_update_query(new_entry:entry.Entry) -> str:
     query = \
     """
     UPDATE entries 
-    SET date = '{}', amount = {}, tags = '{}', note = '{}'
+    SET date = '{}', amount = {}, target = '{}', note = '{}'
     WHERE id = {id}
     """
     query = query.format(id=new_entry[0], *new_entry[1:])
@@ -70,9 +69,9 @@ def run_query(query:str) -> sqlite3.Cursor | None:
         return cursor
 
 
-def select_entries(date:config.TimeFrame, category:str, tags:list) -> list[entry.Entry]:
+def select_entries(date:config.TimeFrame, category:str, target:entry.Target) -> list[entry.Entry]:
     cursor = connection.cursor()
-    query = make_select_query(date, category, tags)
+    query = make_select_query(date, category, target)
     try:
         cursor.execute(query)
         entries = cursor.fetchall()
@@ -105,16 +104,16 @@ CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    tags TEXT NOT NULL,
+    target TEXT NOT NULL,
     note TEXT
 );"""
 
-connection = sqlite3.connect("records.db")
-# run_query("DROP TABLE entries;")
+
+try:
+    connection = sqlite3.connect("records.db")
+except sqlite3.Error:
+    display.error("Database connection error.")
+    quit()
+
+run_query("DROP TABLE entries;")
 run_query(table_query)
-
-# entry1 = entry.Entry(0, datetime.date.today(), 5000, ["other"], "Nothing to note")
-# insert_entry(entry1)
-
-# for e in select_entries(config.TimeFrame(2022, 4), "income", ["other"]): 
-#     print(e.id, e)

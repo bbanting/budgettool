@@ -12,7 +12,7 @@ import db
 from config import TODAY
 from entry import Entry
 from command.validator import VLit, VBool
-from validators import VDay, VMonth, VYear, VType, VTarget, VNewTag, VID, VAmount
+from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount
 
 
 def get_date() -> datetime.date | None:
@@ -55,34 +55,23 @@ def get_amount() -> int | None:
     return entry.dollars_to_cents(amount)
 
 
-def _match_tag(query: str) -> str | None:
-    """Check if string matches a tag. If so, return the tag."""
-    result = None
-    for t in config.udata.targets:
-        if t.lower().startswith(query):
-            result = t
-            break
-
-    return result
-
-
-def get_tags() -> list | None:
-    """Get tag(s) input from user."""
-    display.message(f"({', '.join(config.udata.targets)})")
+def get_target() -> entry.Target | None:
+    """Get target input from user."""
+    display.message(f"({', '.join([t.name for t in config.udata.targets])})")
     display.refresh()
-    tags = input("Tags: ").lower().strip()
+    target = input("Target: ").lower().strip()
 
-    if tags in ("q", "quit"):
+    if target in ("q", "quit"):
         raise main.BTError("Input aborted by user.")
-    if tags == "help":
-        display.message(f"({', '.join(config.udata.targets)})")
+    if target == "help":
+        display.message(f"({', '.join([t.name for t in config.udata.targets])})")
         return
 
-    if not all([_match_tag(t) for t in tags.split(" ")]):
-        display.message("Invalid tags given. Enter 'help' to see tags.")
+    if target not in [t.name for t in config.udata.targets]:
+        display.message("Invalid target given. Enter 'help' to see targets.")
         return
 
-    return tags
+    return entry.Target.from_str(target)
             
 
 def get_note() -> str:
@@ -114,26 +103,26 @@ def get_input(*getters) -> tuple:
 
 input_functions = {
         "amount":   get_amount, 
-        "tags":     get_tags,
+        "target":     get_target,
         "note":     get_note,
         "date":     get_date,
         }
 
 
 class ListCommand(command.Command):
-    """Display a list of entries filtered by type, month, and tags."""
+    """Display a list of entries filtered by type, month, and target."""
     names = ("list",)
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(default=""),
-        "tags": VTarget(default=[]),
+        "target": VTarget(),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
-    def execute(self, year, month, category, tags):
+    def execute(self, year, month, category, target):
         date = config.TimeFrame(year, month)
-        config.last_query = [date, category, tags]
+        config.last_query = [date, category, target]
         display.change_page(1)
 
 
@@ -141,10 +130,10 @@ class AddEntryCommand(command.Command):
     """Add an entry, entering input through a series of prompts."""
     def execute(self):
         try:
-            date, amount, tags, note = get_input(get_date, get_amount, get_tags, get_note)
+            date, amount, target, note = get_input(get_date, get_amount, get_target, get_note)
         except main.BTError:
             return # Exit the command
-        self.entry = Entry(0, date, amount, tags, note)
+        self.entry = Entry(0, date, amount, target, note)
         db.insert_entry(self.entry)
 
         date = date.strftime("%b %d")
@@ -159,9 +148,9 @@ class AddEntryCommand(command.Command):
 
 
 class AddTargetCommand(command.Command):
-    """Add a name to the list of tags."""
+    """Add a new target."""
     params = {
-        "name": VNewTag(req=True),
+        "name": VNewTarget(req=True),
         "amount": VAmount(req=True),
     }
 
@@ -177,14 +166,14 @@ class AddTargetCommand(command.Command):
 
 
 class AddCommand(command.ForkCommand):
-    """Add an entry or tag."""    
+    """Add an entry or target."""    
     names = ("add",)
     forks = {
         "entry": AddEntryCommand,
-        "tag": AddTargetCommand
+        "target": AddTargetCommand
     }
     default = "entry"
-    help_text = "If neither 'entry' or 'tag' are specified, it will default to 'entry.'"
+    help_text = "If neither 'entry' or 'target' are specified, it will default to 'entry.'"
 
 
 class RemoveEntryCommand(command.Command):
@@ -211,7 +200,7 @@ class RemoveEntryCommand(command.Command):
 
 
 class RemoveTargetCommand(command.Command):
-    """Remove a tag by its name."""
+    """Remove a target by its name."""
     params = {
         "name": VTarget(req=True),
     }
@@ -231,11 +220,11 @@ class RemoveTargetCommand(command.Command):
 
 
 class RemoveCommand(command.ForkCommand):
-    """Delete an entry or tag."""
+    """Delete an entry or target."""
     names = ("del", "delete", "remove")
     forks = {
         "entry": RemoveEntryCommand,
-        "tag": RemoveTargetCommand,
+        "target": RemoveTargetCommand,
     }
     default = "entry"
 
