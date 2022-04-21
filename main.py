@@ -28,7 +28,7 @@ def show_entries(date:TimeFrame, category:str, target:entry.Target) -> None:
     """Push the current entries to the display."""
     entries = db.select_entries(date, category, target)
     total = cents_to_dollars(sum(entries))
-    total_str = f"${total:.2f}"
+    total_str = f"${abs(total):.2f}"
     if total > 0: total_str = "+" + total_str
     if total < 0: total_str = "-" + total_str
     summary = _get_filter_summary(len(entries), date, category, target)
@@ -59,6 +59,7 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddTargetCommand)
     controller.register(commands.EditEntryCommand)
     controller.register(commands.ChangePageCommand)
+    controller.register(commands.ListTargets)
 
 
 def main():

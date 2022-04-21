@@ -5,6 +5,7 @@ import enum
 import dataclasses
 import collections
 import entry
+import logging
 
 
 # Constants
@@ -58,8 +59,7 @@ class UserData:
             data = json.load(fp)
 
         self.filename = filename
-        self.targets = data["targets"]
-        self.bills = data["bills"]
+        self.targets = [entry.Target.from_dict(d) for d in data["targets"]]
 
     @staticmethod
     def check_file(filename):

@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Any, Iterable
+from typing import Any
 
 import colorama
 from colorama import Fore, Back, Style
@@ -16,9 +16,9 @@ class DisplayError(Exception):
 
 
 class LineBuffer:
-    """"""
+    """A buffer of lines to print."""
     def __init__(self, numbered, truncate, offset) -> None:
-        self.body: Iterable = []
+        self.body = []
         self.header = []
         self.footer = []
         self.numbered: int = numbered
@@ -67,10 +67,14 @@ class LineBuffer:
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
+        logging.info(f"before push: {self.printed}")
         if self.printed:
             self.printed = False
+            logging.info(self.body)
             self.clear()
+            logging.info(self.body)
         getattr(self, target).append(item)
+        logging.info(f"after push: {self.printed}")
 
     def clear(self):
         """Clear all sub-buffers."""
@@ -133,6 +137,7 @@ class LineBuffer:
 
     def _print_body(self) -> None:
         """Print the body."""
+        logging.info(f"body: {self.body}")
         index = self.page * self.body_space
         count = self.body_space
         if self.page == self.n_pages:
@@ -205,6 +210,7 @@ class LineBuffer:
         self._print_page_numbers()
         self._print_message_bar()
         self.printed = True
+        logging.info(f"after printing: {self.printed}")
 
 
 def clear_terminal() -> None:

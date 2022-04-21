@@ -13,7 +13,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Calendar view
 - [ ] Non-list views in display.py
-- [x] Targets
 - [ ] Target group
 - [ ] Quick add entry
 - [ ] Default command

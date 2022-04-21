@@ -1,13 +1,14 @@
 from __future__ import annotations
 import datetime
+from gc import collect
 import logging
+import collections
 
 from datetime import date
 from dataclasses import dataclass
 from colorama import Style
 
 import config
-from config import DATEW, AMOUNTW
 
 
 class EntryError(Exception):
@@ -60,7 +61,7 @@ class Entry:
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{DATEW}} {self.in_dollars():{AMOUNTW}} \
+        return f"{date:{config.DATEW}} {self.in_dollars():{config.AMOUNTW}} \
             {Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
@@ -88,7 +89,7 @@ class Target:
         """Return the target corresponding to the input string.
         For retrieving targets when creating Entry objects."""
         for t in config.udata.targets:
-            if not t.name.contains(name):
+            if name not in t.name:
                 continue
             return t
 
@@ -102,10 +103,12 @@ class Target:
             raise EntryError("Corrupted target in config file.")
         else:
             return cls(name, amount)
-
+    
 
 def cents_to_dollars(cent_amount:int) -> float:
     """Convert a cent amount to dollars."""
+    if not cent_amount:
+        return float(0)
     return cent_amount / 100
 
 

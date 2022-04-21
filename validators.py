@@ -34,9 +34,6 @@ class VYear(Validator):
 
 class VTarget(Validator):
     """Verify that input belongs to the user's targets; if so, return it."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(plural=True, *args, **kwargs)
-
     def validate(self, value) -> Result:
         value = value.lower()
         if value in [t.name for t in config.udata.targets]:

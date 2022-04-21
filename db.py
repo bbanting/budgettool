@@ -99,6 +99,20 @@ def update_entry(entry:entry.Entry) -> None:
     run_query(query)
 
 
+def sum_target(target:entry.Target, date:config.TimeFrame) -> int:
+    """Sum entries with a particular target in a time period."""
+    date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
+    query = f"SELECT SUM(amount) FROM entries WHERE date LIKE '{date}' AND target = '{target.name}'"
+    try:
+        cursor = connection.cursor()
+        cursor.execute(query)
+        sum_amount = cursor.fetchone()
+    except sqlite3.Error as e:
+        display.error(f"Database error")
+    else:
+        return sum_amount[0]
+
+
 table_query = """
 CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,5 +129,5 @@ except sqlite3.Error:
     display.error("Database connection error.")
     quit()
 
-run_query("DROP TABLE entries;")
+# run_query("DROP TABLE entries;")
 run_query(table_query)

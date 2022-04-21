@@ -1,1 +1,1 @@
-{"targets": ["jim", "barb", "workplace", "other", "gas", "bills", "donations", "food"]}
+{"targets": [{"name": "food", "amount": -50000}, {"name": "electricity", "amount": -5000}]}

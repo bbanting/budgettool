@@ -10,7 +10,7 @@ import entry
 import db
 
 from config import TODAY
-from entry import Entry
+from entry import Entry, cents_to_dollars
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount
 
@@ -159,10 +159,10 @@ class AddTargetCommand(command.Command):
         config.udata.add_target(self.target)
 
     def undo(self):
-        config.udata.remove_target(self.data["name"])
+        config.udata.remove_target(self.target)
 
     def redo(self):
-        config.udata.add_target(self.data["name"])
+        config.udata.add_target(self.target)
 
 
 class AddCommand(command.ForkCommand):
@@ -202,14 +202,11 @@ class RemoveEntryCommand(command.Command):
 class RemoveTargetCommand(command.Command):
     """Remove a target by its name."""
     params = {
-        "name": VTarget(req=True),
+        "target": VTarget(req=True),
     }
 
-    def execute(self, name:str):
-        if name not in [t.name for t in config.udata.targets]:
-            display.error("Target not found.")
-            return
-        self.target = entry.Target.from_str(name)
+    def execute(self, target:entry.Target):
+        self.target = target
         config.udata.remove_target(self.target)
 
     def undo(self):
@@ -227,6 +224,22 @@ class RemoveCommand(command.ForkCommand):
         "target": RemoveTargetCommand,
     }
     default = "entry"
+
+
+class ListTargets(command.Command):
+    """Display a list of the targets."""
+    names = ("targets",)
+    params = {
+        "year": VYear(default=TODAY.year),
+        "month": VMonth(default=TODAY.month),
+    }
+
+    def execute(self, year, month) -> None:
+        date = config.TimeFrame(year, month)
+        for t in config.udata.targets:
+            current = cents_to_dollars(db.sum_target(t, date))
+            goal = cents_to_dollars(t.amount)
+            display.push(f"{t.name}: {current:.2f}/{goal:.2f}")
 
 
 class EditEntryCommand(command.Command):
