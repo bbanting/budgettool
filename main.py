@@ -6,16 +6,11 @@ from __future__ import annotations
 import shlex
 import logging
 
-import config
 import command
 import display
 import commands
-import db
-import entry
 
-from entry import cents_to_dollars
 from command.base import CommandError
-from config import DATEW, AMOUNTW, TimeFrame
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
@@ -23,27 +18,6 @@ logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", en
 class BTError(Exception):
     pass
 
-
-def show_entries(date:TimeFrame, category:str, target:entry.Target) -> None:
-    """Push the current entries to the display."""
-    entries = db.select_entries(date, category, target)
-    total = cents_to_dollars(sum(entries))
-    total_str = f"${abs(total):.2f}"
-    if total > 0: total_str = "+" + total_str
-    if total < 0: total_str = "-" + total_str
-    summary = _get_filter_summary(len(entries), date, category, target)
-
-    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
-    for entry in entries: display.push(entry)
-    display.push_f("", f"TOTAL: {total_str}", summary)
-
-
-def _get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
-    date = f"{date.month.name} {date.year}"
-    category = f" of type {category}" if category else ""
-    target = f" at target: {', '.join(target)}" if target else ""
-    return f"{n} entries{category} from {date}{target}."
-    
 
 def register_commands(controller: command.CommandController):
     controller.register(command.UndoCommand)
@@ -65,10 +39,13 @@ def register_commands(controller: command.CommandController):
 def main():
     controller = command.CommandController()
     register_commands(controller)
-    display.configure(offset=1)
 
-    show_entries(*config.last_query)
+    display.add_screen("entries", offset=1, numbered=True)
+    display.add_screen("other", offset=1, numbered=True)
+
+    controller.route_command("list")
     display.refresh()
+
     while True:
         try:
             user_input = shlex.split(input("> "))
@@ -82,7 +59,6 @@ def main():
             print("")
             return
         else:
-            show_entries(*config.last_query)
             display.refresh()
 
 

@@ -1,5 +1,6 @@
 import os
 import logging
+
 from typing import Any
 
 import colorama
@@ -67,14 +68,12 @@ class LineBuffer:
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
-        logging.info(f"before push: {self.printed}")
         if self.printed:
             self.printed = False
             logging.info(self.body)
             self.clear()
             logging.info(self.body)
         getattr(self, target).append(item)
-        logging.info(f"after push: {self.printed}")
 
     def clear(self):
         """Clear all sub-buffers."""
@@ -137,7 +136,6 @@ class LineBuffer:
 
     def _print_body(self) -> None:
         """Print the body."""
-        logging.info(f"body: {self.body}")
         index = self.page * self.body_space
         count = self.body_space
         if self.page == self.n_pages:
@@ -210,7 +208,27 @@ class LineBuffer:
         self._print_page_numbers()
         self._print_message_bar()
         self.printed = True
-        logging.info(f"after printing: {self.printed}")
+
+
+class ScreenController:
+    """A class to switch to and from multiple buffers."""
+    _active: LineBuffer
+    _screens: dict[str | LineBuffer]
+
+    def __init__(self):
+        self._screens = {}
+
+    def add(self, name:str, numbered:bool, truncate:bool, offset:int) -> None:
+        """Add a screen to the list."""
+        self._screens.update({name: LineBuffer(numbered, truncate, offset)})
+        if len(self._screens) == 1:
+            self._active = self._screens[name]
+
+    def switch_to(self, name:str) -> None:
+        """Switch the active screen."""
+        if name not in self._screens:
+            raise DisplayError("A screen with that name does not exist.")
+        self._active = self._screens[name]
 
 
 def clear_terminal() -> None:
@@ -233,63 +251,80 @@ def t_height() -> int:
 def push(*items:Any) -> None:
     """Push an item to body."""
     for item in items:
-        buffer.push(item)
+        _screen().push(item)
 
 def push_h(*items:Any) -> None:
     """Push an item to header."""
     for item in items:
-        buffer.push(item, target="header")
+        _screen().push(item, target="header")
 
 def push_f(*items:Any) -> None:
     """Push an item to footer."""
     for item in items:
-        buffer.push(item, target="footer")
+        _screen().push(item, target="footer")
 
 
 def message(text:str) -> None:
-    buffer.message = text
+    _screen().message = text
 
 
 def select(index) -> Any:
     """Return an item by line number from the current view in screen."""
-    return buffer.select(index)
+    return _screen().select(index)
 
 
 def deselect() -> None:
     """Remove the highlight."""
-    buffer.highlight = 0
+    _screen().highlight = 0
 
 
 def change_page(number:int) -> None:
-    buffer.change_page(number)
-
-
-def configure(numbered:bool=True, truncate:bool=True, offset:int=0) -> None:
-    """Public function for modifying current buffer."""
-    buffer.__init__(numbered=numbered, truncate=truncate, offset=offset)
+    "Change the page of the active screen."
+    _screen().change_page(number)
 
 
 def error(error) -> None:
     clear_terminal()
-    buffer.clear()
+    _screen().clear()
 
     message(str(error))
-    buffer.print()
+    _screen().print()
+
+
+def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=0) -> None:
+    """Public func to add a screen to the controller."""
+    controller.add(name, numbered, truncate, offset)
+
+
+def switch_screen(name:str) -> None:
+    """Public func to switch the active screen."""
+    controller.switch_to(name)
+
+
+def _screen() -> LineBuffer:
+    """Get the active screen."""
+    if not controller._screens:
+        raise DisplayError("No screens have been created")
+    return controller._active
 
 
 def refresh() -> None:
     """Clear the terminal and print the current state of the screen."""
     clear_terminal()
-    buffer.print()
+    _screen().print()
 
 
-buffer = LineBuffer(True, True, 0)
+controller = ScreenController()
+
 
 if __name__ == "__main__":
-    configure(offset=1)
+    add_screen("main", offset=1, numbered=True)
+    add_screen("notmain", offset=1, numbered=False)
+    switch_screen("notmain")
     for n in range(80):
-        buffer.push(f"Old MacDonald had a farm {n+1}")
-    buffer.change_page(4)
+        push(f"Old MacDonald had a farm {n+1}")
+    change_page(4)
     select(3)
     refresh()
     print("> ")
+    print(controller._screens)

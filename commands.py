@@ -9,7 +9,7 @@ import main
 import entry
 import db
 
-from config import TODAY
+from config import TODAY, DATEW, AMOUNTW, TimeFrame
 from entry import Entry, cents_to_dollars
 from command.validator import VLit, VBool
 from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount
@@ -124,6 +124,29 @@ class ListCommand(command.Command):
         date = config.TimeFrame(year, month)
         config.last_query = [date, category, target]
         display.change_page(1)
+        self.push_entries()
+
+    def push_entries(self) -> None:
+        """Push the current entries to the display."""
+        date, category, target = config.last_query
+        entries = db.select_entries(date, category, target)
+        total = cents_to_dollars(sum(entries))
+        total_str = f"${abs(total):.2f}"
+        if total > 0: total_str = "+" + total_str
+        if total < 0: total_str = "-" + total_str
+        summary = self.get_filter_summary(len(entries), date, category, target)
+
+        display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
+        for entry in entries: 
+            display.push(entry)
+        display.push_f("", f"TOTAL: {total_str}", summary)
+
+    @staticmethod
+    def get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
+        date = f"{date.month.name} {date.year}"
+        category = f" of type {category}" if category else ""
+        target = f" at target: {', '.join(target)}" if target else ""
+        return f"{n} entries{category} from {date}{target}."
 
 
 class AddEntryCommand(command.Command):
