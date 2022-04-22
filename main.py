@@ -31,6 +31,7 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddCommand)
     controller.register(commands.AddEntryCommand)
     controller.register(commands.AddTargetCommand)
+    controller.register(commands.AddEntryTodayCommand)
     controller.register(commands.EditEntryCommand)
     controller.register(commands.ChangePageCommand)
     controller.register(commands.ListTargets)
@@ -43,7 +44,7 @@ def main():
     display.add_screen("entries", offset=1, numbered=True)
     display.add_screen("other", offset=1, numbered=True)
 
-    controller.route_command("list")
+    controller.route_command(["list"])
     display.refresh()
 
     while True:

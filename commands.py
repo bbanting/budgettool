@@ -11,7 +11,7 @@ import db
 
 from config import TODAY, DATEW, AMOUNTW, TimeFrame
 from entry import Entry, cents_to_dollars
-from command.validator import VLit, VBool
+from command.validator import VComment, VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount, VGroup, VNewGroup
 
 
@@ -109,6 +109,28 @@ input_functions = {
         }
 
 
+def push_entries() -> None:
+    """Push the current entries to the display."""
+    date, category, target = config.last_query
+    entries = db.select_entries(date, category, target)
+    total = cents_to_dollars(sum(entries))
+    total_str = f"${abs(total):.2f}"
+    if total > 0: total_str = "+" + total_str
+    if total < 0: total_str = "-" + total_str
+    summary = get_filter_summary(len(entries), date, category, target)
+
+    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
+    for entry in entries: 
+        display.push(entry)
+    display.push_f("", f"TOTAL: {total_str}", summary)
+
+def get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
+    date = f"{date.month.name} {date.year}"
+    category = f" of type {category}" if category else ""
+    target = f" at target: {', '.join(target)}" if target else ""
+    return f"{n} entries{category} from {date}{target}."
+
+
 class ListCommand(command.Command):
     """Display a list of entries filtered by type, month, and target."""
     names = ("list",)
@@ -124,34 +146,42 @@ class ListCommand(command.Command):
         date = config.TimeFrame(year, month)
         config.last_query = [date, category, target]
         display.change_page(1)
-        self.push_entries()
 
-    def push_entries(self) -> None:
-        """Push the current entries to the display."""
-        date, category, target = config.last_query
-        entries = db.select_entries(date, category, target)
-        total = cents_to_dollars(sum(entries))
-        total_str = f"${abs(total):.2f}"
-        if total > 0: total_str = "+" + total_str
-        if total < 0: total_str = "-" + total_str
-        summary = self.get_filter_summary(len(entries), date, category, target)
+        push_entries()
 
-        display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
-        for entry in entries: 
-            display.push(entry)
-        display.push_f("", f"TOTAL: {total_str}", summary)
 
-    @staticmethod
-    def get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
-        date = f"{date.month.name} {date.year}"
-        category = f" of type {category}" if category else ""
-        target = f" at target: {', '.join(target)}" if target else ""
-        return f"{n} entries{category} from {date}{target}."
+class AddEntryTodayCommand(command.Command):
+    """Add an entry for today with one line."""
+    params = {
+        "amount": VAmount(),
+        "target": VTarget(),
+        "note": VAny(plural=True),
+    }
+
+    def execute(self, amount, target, note) -> None:
+        date = datetime.date.today()
+        note = " ".join(note)
+        self.entry = Entry(0, date, amount, target, note)
+        db.insert_entry(self.entry)
+
+        date = date.strftime("%b %d")
+        amount = self.entry.in_dollars()
+        display.message(f"Entry added: {date} - {amount} - {note}")
+
+        push_entries()
+
+    def undo(self) -> None:
+        db.delete_entry(self.entry)
+        push_entries()
+
+    def redo(self) -> None:
+        db.insert_entry(self.entry)
+        push_entries()
 
 
 class AddEntryCommand(command.Command):
     """Add an entry, entering input through a series of prompts."""
-    def execute(self):
+    def execute(self) -> None:
         try:
             date, amount, target, note = get_input(get_date, get_amount, get_target, get_note)
         except main.BTError:
@@ -162,12 +192,16 @@ class AddEntryCommand(command.Command):
         date = date.strftime("%b %d")
         amount = self.entry.in_dollars()
         display.message(f"Entry added: {date} - {amount} - {note}")
+
+        push_entries()
         
     def undo(self):
         db.delete_entry(self.entry)
+        push_entries()
 
     def redo(self):
         db.insert_entry(self.entry)
+        push_entries()
 
 
 class AddTargetCommand(command.Command):
@@ -177,14 +211,14 @@ class AddTargetCommand(command.Command):
         "amount": VAmount(req=True),
     }
 
-    def execute(self, name, amount):
+    def execute(self, name, amount) -> None:
         self.target = entry.Target(name, amount)
         config.udata.add_target(self.target)
 
-    def undo(self):
+    def undo(self) -> None:
         config.udata.remove_target(self.target)
 
-    def redo(self):
+    def redo(self) -> None:
         config.udata.add_target(self.target)
 
 
@@ -200,10 +234,10 @@ class AddGroupCommand(command.Command):
         self.targets = targets
         config.udata.add_group(name, targets)
     
-    def undo(self):
+    def undo(self) -> None:
         config.udata.remove_group(self.name)
 
-    def redo(self):
+    def redo(self) -> None:
         config.udata.remove_group(self.name, self.targets)
 
 
@@ -212,11 +246,11 @@ class AddCommand(command.ForkCommand):
     names = ("add",)
     forks = {
         "entry": AddEntryCommand,
+        "today": AddEntryTodayCommand,
         "target": AddTargetCommand,
         "group": AddGroupCommand,
     }
     default = "entry"
-    help_text = "If neither 'entry', 'target', or 'group' are specified, it will default to 'entry.'"
 
 
 class RemoveEntryCommand(command.Command):
@@ -235,11 +269,15 @@ class RemoveEntryCommand(command.Command):
             db.delete_entry(self.entry)
         display.deselect()
 
+        push_entries()
+
     def undo(self):
         db.insert_entry(self.entry)
+        push_entries()
 
     def redo(self):
         db.delete_entry(self.entry)
+        push_entries()
 
 
 class RemoveTargetCommand(command.Command):
@@ -322,11 +360,15 @@ class EditEntryCommand(command.Command):
         db.update_entry(self.new_entry)
         display.deselect()
 
+        push_entries()
+
     def undo(self) -> None:
         db.update_entry(self.old_entry)
+        push_entries()
     
     def redo(self) -> None:
         db.update_entry(self.new_entry)
+        push_entries()
 
 
 class ChangePageCommand(command.Command):
@@ -347,9 +389,3 @@ class QuitCommand(command.Command):
 
     def execute(self):
         quit()
-
-
-# def quick_add_entry(*args):
-#     amount, category = args[:2]
-#     note = ",".join(args[2:])
-#     entry = Entry(TODAY.strftime("%Y/%m/%d"), amount, category, note)

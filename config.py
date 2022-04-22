@@ -59,8 +59,12 @@ class UserData:
             data = json.load(fp)
 
         self.filename = filename
-        self.targets = [entry.Target.from_dict(d) for d in data["targets"]]
-        self.groups = data["groups"]
+        try:
+            self.targets = [entry.Target.from_dict(d) for d in data["targets"]]
+            self.groups = data["groups"]
+        except KeyError:
+            print("Error loading config file.")
+            quit()
 
     @staticmethod
     def check_file(filename):

@@ -165,7 +165,7 @@ class VAny(Validator):
 
 class VComment(Validator):
     """
-    Looks for a comment in args. Higher indexes and strings with spaces
+    Looks for a comment in args. Larger indexes and strings with spaces
     are prioritized.
     """
     def __call__(self, args:list) -> Any:
@@ -182,9 +182,9 @@ class VComment(Validator):
                 if not self.plural:
                     break
         else:
-            for arg in filtered_args[::-1]:
+            for arg in args[::-1]:
                 result = self.validate(arg)
-                if result.is_ok:
+                if not result.is_ok:
                     continue
                 data.append(result.value)
                 to_remove.append(arg)

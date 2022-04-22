@@ -112,7 +112,7 @@ class Command(metaclass=abc.ABCMeta):
             except ValidatorError as e:
                 raise CommandError(f"{e}: {key}")
         if args: # Should be empty if successful
-            raise CommandError(f"Unrecognized input: {', '.join(args)}")
+            raise CommandError(f"Invalid input: {', '.join(args)}")
 
     @abc.abstractmethod
     def execute(self) -> None:

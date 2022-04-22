@@ -108,6 +108,7 @@ def sum_target(target:entry.Target, date:config.TimeFrame) -> int:
         cursor.execute(query)
         sum_amount = cursor.fetchone()
     except sqlite3.Error as e:
+        logging.info(e)
         display.error(f"Database error")
     else:
         return sum_amount[0]

@@ -51,7 +51,7 @@ class Entry:
             values = (self.id,) + values
         return values
 
-    def in_dollars(self):
+    def in_dollars(self) -> str:
         """Formats the amount for display."""
         amount = cents_to_dollars(self.amount)
         if amount >= 0:
@@ -61,8 +61,7 @@ class Entry:
     
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{config.DATEW}} {self.in_dollars():{config.AMOUNTW}} \
-            {Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
+        return f"{date:{config.DATEW}} {self.in_dollars():{config.AMOUNTW}} {Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):

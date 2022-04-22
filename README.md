@@ -12,10 +12,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Calendar view
-- [x] Target group
-- [ ] Quick add entry
+- [x] Quick add entry
 - [ ] Default command
-- [x] Fix display numbered=False bug
 - [ ] Rename target command
 - [ ] Warn when deleting target if entries exist with that target
 
