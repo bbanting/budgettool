@@ -60,6 +60,7 @@ class UserData:
 
         self.filename = filename
         self.targets = [entry.Target.from_dict(d) for d in data["targets"]]
+        self.groups = data["groups"]
 
     @staticmethod
     def check_file(filename):
@@ -72,7 +73,7 @@ class UserData:
             quit()
         except FileNotFoundError:
             with open(filename, "w") as fp:
-                cfg = {"targets": []}
+                cfg = {"targets": [], "groups": {}}
                 json.dump(cfg, fp)
 
     def overwrite(self) -> None:
@@ -85,14 +86,24 @@ class UserData:
         """Returns a dictionary representation of the config."""
         return {"targets": [t.__dict__ for t in self.targets],}
 
-    def add_target(self, targ:entry.Target):
+    def add_target(self, targ:entry.Target) -> None:
         """Adds a new target to the config file."""
         self.targets.append(targ)
         self.overwrite()
 
-    def remove_target(self, targ:entry.Target):
+    def remove_target(self, targ:entry.Target) -> None:
         """Removes a target from the config."""
         self.targets.remove(targ)
+        self.overwrite()
+
+    def add_group(self, name:str, targets:list[str]) -> None:
+        """Add a target group to the config file."""
+        self.groups.update({name:targets})
+        self.overwrite()
+
+    def remove_group(self, name:str) -> None:
+        """Remove a target group from the config file."""
+        self.groups.pop(name)
         self.overwrite()
 
 

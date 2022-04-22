@@ -7,10 +7,9 @@ import colorama
 from colorama import Fore, Back, Style
 
 
-
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
-
 colorama.init(autoreset=True)
+
 
 class DisplayError(Exception):
     pass
@@ -141,11 +140,11 @@ class LineBuffer:
         if self.page == self.n_pages:
             count = len(self.body) - ((self.n_pages-1) * self.body_space)
         for line in self.body[-index:]:
+            count -= 1
             to_print = str(line)
             if self.numbered:
                 num = str(count).zfill(2)
                 to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
-                count -= 1
             if self.truncate:
                 to_print = to_print[:t_width()]
             if count+1 == self.highlight:
@@ -327,4 +326,3 @@ if __name__ == "__main__":
     select(3)
     refresh()
     print("> ")
-    print(controller._screens)

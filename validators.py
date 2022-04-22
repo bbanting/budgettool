@@ -55,6 +55,24 @@ class VNewTarget(Validator):
         return Result.ok(value)
 
 
+class VGroup(Validator):
+    """Verify that the input string is the name of a target group."""
+    def validate(self, value) -> Result:
+        value = value.lower()
+        if value not in config.udata.groups:
+            return Result.err()
+        return Result.ok(value)
+
+
+class VNewGroup(Validator):
+    """Verify that the input string is not the name of a target group."""
+    def validate(self, value) -> Result:
+        value = value.lower()
+        if value in config.udata.groups:
+            return Result.err()
+        return Result.ok(value)
+
+
 class VAmount(Validator):
     """Capture a positive or negative amount."""
     def validate(self, value:str) -> Result:

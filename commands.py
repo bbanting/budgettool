@@ -12,7 +12,7 @@ import db
 from config import TODAY, DATEW, AMOUNTW, TimeFrame
 from entry import Entry, cents_to_dollars
 from command.validator import VLit, VBool
-from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount
+from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount, VGroup, VNewGroup
 
 
 def get_date() -> datetime.date | None:
@@ -188,15 +188,35 @@ class AddTargetCommand(command.Command):
         config.udata.add_target(self.target)
 
 
+class AddGroupCommand(command.Command):
+    """Remove a target group by it's name."""
+    params = {
+        "name": VNewGroup(req=True),
+        "targets": VTarget(req=True, plural=True),
+    }
+
+    def execute(self, name:str, targets:list[str]) -> None:
+        self.name = name
+        self.targets = targets
+        config.udata.add_group(name, targets)
+    
+    def undo(self):
+        config.udata.remove_group(self.name)
+
+    def redo(self):
+        config.udata.remove_group(self.name, self.targets)
+
+
 class AddCommand(command.ForkCommand):
     """Add an entry or target."""    
     names = ("add",)
     forks = {
         "entry": AddEntryCommand,
-        "target": AddTargetCommand
+        "target": AddTargetCommand,
+        "group": AddGroupCommand,
     }
     default = "entry"
-    help_text = "If neither 'entry' or 'target' are specified, it will default to 'entry.'"
+    help_text = "If neither 'entry', 'target', or 'group' are specified, it will default to 'entry.'"
 
 
 class RemoveEntryCommand(command.Command):
@@ -228,7 +248,7 @@ class RemoveTargetCommand(command.Command):
         "target": VTarget(req=True),
     }
 
-    def execute(self, target:entry.Target):
+    def execute(self, target:entry.Target) -> None:
         self.target = target
         config.udata.remove_target(self.target)
 
@@ -239,12 +259,31 @@ class RemoveTargetCommand(command.Command):
         config.udata.remove_target(self.target)
 
 
+class RemoveGroupCommand(command.Command):
+    """Remove a target group by it's name."""
+    params = {
+        "name": VGroup(req=True),
+    }
+
+    def execute(self, name:str) -> None:
+        self.name = name 
+        self.targets = config.udata.groups.get(name)
+        config.udata.remove_group(name)
+    
+    def undo(self):
+        config.udata.add_group(self.name, self.targets)
+
+    def redo(self):
+        config.udata.remove_group(self.name)
+
+
 class RemoveCommand(command.ForkCommand):
     """Delete an entry or target."""
     names = ("del", "delete", "remove")
     forks = {
         "entry": RemoveEntryCommand,
         "target": RemoveTargetCommand,
+        "group": RemoveGroupCommand,
     }
     default = "entry"
 

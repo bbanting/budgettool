@@ -103,7 +103,7 @@ class Target:
             raise EntryError("Corrupted target in config file.")
         else:
             return cls(name, amount)
-    
+
 
 def cents_to_dollars(cent_amount:int) -> float:
     """Convert a cent amount to dollars."""

@@ -12,11 +12,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Calendar view
-- [x] Non-list views in display.py
-- [ ] Target group
+- [x] Target group
 - [ ] Quick add entry
 - [ ] Default command
-- [ ] Fix display numbered=False bug
+- [x] Fix display numbered=False bug
+- [ ] Rename target command
+- [ ] Warn when deleting target if entries exist with that target
 
 ## Notes
 
