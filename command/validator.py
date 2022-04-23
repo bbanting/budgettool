@@ -45,9 +45,10 @@ class Validator(abc.ABC):
     req: The command will fail if set to True.
     default: Specify a different value to return on failure.
     """
-    def __init__(self, plural=False, req=False, default=None):
+    def __init__(self, plural=False, req=False, invert=False, default=None):
         self.plural = plural
         self.required = req
+        self.invert = invert
         self.default = default
 
     def __call__(self, args:list) -> Any | list[Any]:
@@ -76,8 +77,8 @@ class Validator(abc.ABC):
     @abc.abstractmethod
     def validate(self, value: str) -> Result:
         """
-        This method must return ValidatorError on failure 
-        and a validated value on success.
+        This method must return either a Result.ok() on success or
+        a Result.err() on failure.
         """
         pass
 
@@ -87,11 +88,10 @@ class VLit(Validator):
     If the input value matches any of the literals, it is returned.
     Otherwise, return ValidatorError.
     """
-    def __init__(self, literal, lower=False, invert=False, strict=False, *args, **kwargs):
+    def __init__(self, literal, lower=False, strict=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.literal = literal
         self.lower = lower
-        self.invert = invert
         self.strict = strict
 
     def compare(self, lval: str, rval: str):

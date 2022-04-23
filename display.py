@@ -69,9 +69,7 @@ class LineBuffer:
         """Append an item to one of the sub-buffers."""
         if self.printed:
             self.printed = False
-            logging.info(self.body)
             self.clear()
-            logging.info(self.body)
         getattr(self, target).append(item)
 
     def clear(self):

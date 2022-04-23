@@ -53,6 +53,9 @@ class ConfigError(Exception):
 
 
 class UserData:
+    targets: list[entry.Target]
+    groups: dict
+
     def __init__(self, filename) -> None:
         UserData.check_file(filename)
         with open(filename, "r") as fp:
@@ -67,7 +70,7 @@ class UserData:
             quit()
 
     @staticmethod
-    def check_file(filename):
+    def check_file(filename) -> None:
         """Ensures the config file exists and the user has file permissions."""
         try:
             with open(filename, "r+") as fp:
@@ -88,7 +91,10 @@ class UserData:
 
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the config."""
-        return {"targets": [t.__dict__ for t in self.targets],}
+        return {
+            "targets": [t.__dict__ for t in self.targets], 
+            "groups": self.groups
+            }
 
     def add_target(self, targ:entry.Target) -> None:
         """Adds a new target to the config file."""

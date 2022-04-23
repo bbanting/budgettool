@@ -11,8 +11,8 @@ import db
 
 from config import TODAY, DATEW, AMOUNTW, TimeFrame
 from entry import Entry, cents_to_dollars
-from command.validator import VComment, VLit, VBool, VAny
-from validators import VDay, VMonth, VYear, VType, VTarget, VNewTarget, VID, VAmount, VGroup, VNewGroup
+from command.validator import VLit, VBool, VAny
+from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount, VGroup
 
 
 def get_date() -> datetime.date | None:
@@ -207,7 +207,7 @@ class AddEntryCommand(command.Command):
 class AddTargetCommand(command.Command):
     """Add a new target."""
     params = {
-        "name": VNewTarget(req=True),
+        "name": VTarget(req=True, invert=True),
         "amount": VAmount(req=True),
     }
 
@@ -225,7 +225,7 @@ class AddTargetCommand(command.Command):
 class AddGroupCommand(command.Command):
     """Remove a target group by it's name."""
     params = {
-        "name": VNewGroup(req=True),
+        "name": VGroup(req=True, invert=True),
         "targets": VTarget(req=True, plural=True),
     }
 
@@ -286,8 +286,8 @@ class RemoveTargetCommand(command.Command):
         "target": VTarget(req=True),
     }
 
-    def execute(self, target:entry.Target) -> None:
-        self.target = target
+    def execute(self, target:str) -> None:
+        self.target = entry.Target.from_str(target)
         config.udata.remove_target(self.target)
 
     def undo(self):

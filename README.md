@@ -12,12 +12,12 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Calendar view
-- [x] Quick add entry
-- [ ] Default command
 - [ ] Rename target command
 - [ ] Warn when deleting target if entries exist with that target
+- [ ] display.LineBuffer refresh functions?
 
 ## Notes
 
 - LineBuffer.true_height needs to account for numbering too
 - Currently, if page numbers get too many digits long, they will overflow
+- Should I make the argument order strict? What is the best compromise there?

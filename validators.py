@@ -33,44 +33,31 @@ class VYear(Validator):
 
 
 class VTarget(Validator):
-    """Verify that input belongs to the user's targets; if so, return it."""
+    """Verify that input belongs to the user's targets. Invertable."""
     def validate(self, value) -> Result:
         value = value.lower()
-        if value in [t.name for t in config.udata.targets]:
-            return Result.ok(entry.Target.from_str(value))
-        else:
-            return Result.err()
-
-
-class VNewTarget(Validator):
-    """Verify that str is a valid name for a new target."""
-    def validate(self, value: str) -> Result:
-        value = value.lower()
         if value in KEYWORDS:
-            # Target name may not be a keyword.
             return Result.err()
         if value in [t.name for t in config.udata.targets]:
-            # Target already exists.
-            return Result.err()
-        return Result.ok(value)
+            ret_val = (Result.ok(value), Result.err())
+        else:
+            ret_val = (Result.err(), Result.ok(value))
+
+        return ret_val[self.invert]
 
 
 class VGroup(Validator):
     """Verify that the input string is the name of a target group."""
     def validate(self, value) -> Result:
         value = value.lower()
-        if value not in config.udata.groups:
+        if value in KEYWORDS:
             return Result.err()
-        return Result.ok(value)
-
-
-class VNewGroup(Validator):
-    """Verify that the input string is not the name of a target group."""
-    def validate(self, value) -> Result:
-        value = value.lower()
         if value in config.udata.groups:
-            return Result.err()
-        return Result.ok(value)
+            ret_val = (Result.ok(value), Result.err())
+        else:
+            ret_val = (Result.err(), Result.ok(value))
+
+        return ret_val[self.invert]
 
 
 class VAmount(Validator):
