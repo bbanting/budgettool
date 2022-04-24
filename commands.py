@@ -2,16 +2,16 @@ import copy
 import logging
 import datetime
 
-import command
+import kelevsma
 import config
-import display
+import kelevsma.display as display
 import main
 import entry
 import db
 
-from config import TODAY, DATEW, AMOUNTW, TimeFrame
+from config import TODAY
 from entry import Entry, cents_to_dollars
-from command.validator import VLit, VBool, VAny
+from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount, VGroup
 
 
@@ -109,29 +109,7 @@ input_functions = {
         }
 
 
-def push_entries() -> None:
-    """Push the current entries to the display."""
-    date, category, target = config.last_query
-    entries = db.select_entries(date, category, target)
-    total = cents_to_dollars(sum(entries))
-    total_str = f"${abs(total):.2f}"
-    if total > 0: total_str = "+" + total_str
-    if total < 0: total_str = "-" + total_str
-    summary = get_filter_summary(len(entries), date, category, target)
-
-    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
-    for entry in entries: 
-        display.push(entry)
-    display.push_f("", f"TOTAL: {total_str}", summary)
-
-def get_filter_summary(n:int, date:TimeFrame, category:str, target:entry.Target) -> str:
-    date = f"{date.month.name} {date.year}"
-    category = f" of type {category}" if category else ""
-    target = f" at target: {', '.join(target)}" if target else ""
-    return f"{n} entries{category} from {date}{target}."
-
-
-class ListCommand(command.Command):
+class ListCommand(kelevsma.Command):
     """Display a list of entries filtered by type, month, and target."""
     names = ("list",)
     params = {
@@ -147,10 +125,8 @@ class ListCommand(command.Command):
         config.last_query = [date, category, target]
         display.change_page(1)
 
-        push_entries()
 
-
-class AddEntryTodayCommand(command.Command):
+class AddEntryTodayCommand(kelevsma.Command):
     """Add an entry for today with one line."""
     params = {
         "amount": VAmount(),
@@ -168,18 +144,14 @@ class AddEntryTodayCommand(command.Command):
         amount = self.entry.in_dollars()
         display.message(f"Entry added: {date} - {amount} - {note}")
 
-        push_entries()
-
     def undo(self) -> None:
         db.delete_entry(self.entry)
-        push_entries()
 
     def redo(self) -> None:
         db.insert_entry(self.entry)
-        push_entries()
 
 
-class AddEntryCommand(command.Command):
+class AddEntryCommand(kelevsma.Command):
     """Add an entry, entering input through a series of prompts."""
     def execute(self) -> None:
         try:
@@ -192,19 +164,15 @@ class AddEntryCommand(command.Command):
         date = date.strftime("%b %d")
         amount = self.entry.in_dollars()
         display.message(f"Entry added: {date} - {amount} - {note}")
-
-        push_entries()
         
     def undo(self):
         db.delete_entry(self.entry)
-        push_entries()
 
     def redo(self):
         db.insert_entry(self.entry)
-        push_entries()
 
 
-class AddTargetCommand(command.Command):
+class AddTargetCommand(kelevsma.Command):
     """Add a new target."""
     params = {
         "name": VTarget(req=True, invert=True),
@@ -222,7 +190,7 @@ class AddTargetCommand(command.Command):
         config.udata.add_target(self.target)
 
 
-class AddGroupCommand(command.Command):
+class AddGroupCommand(kelevsma.Command):
     """Remove a target group by it's name."""
     params = {
         "name": VGroup(req=True, invert=True),
@@ -241,7 +209,7 @@ class AddGroupCommand(command.Command):
         config.udata.remove_group(self.name, self.targets)
 
 
-class AddCommand(command.ForkCommand):
+class AddCommand(kelevsma.ForkCommand):
     """Add an entry or target."""    
     names = ("add",)
     forks = {
@@ -253,7 +221,7 @@ class AddCommand(command.ForkCommand):
     default = "entry"
 
 
-class RemoveEntryCommand(command.Command):
+class RemoveEntryCommand(kelevsma.Command):
     """Remove and Entry by its ID."""
     params = {
         "id": VID(req=True),
@@ -269,18 +237,14 @@ class RemoveEntryCommand(command.Command):
             db.delete_entry(self.entry)
         display.deselect()
 
-        push_entries()
-
     def undo(self):
         db.insert_entry(self.entry)
-        push_entries()
 
     def redo(self):
         db.delete_entry(self.entry)
-        push_entries()
 
 
-class RemoveTargetCommand(command.Command):
+class RemoveTargetCommand(kelevsma.Command):
     """Remove a target by its name."""
     params = {
         "target": VTarget(req=True),
@@ -297,7 +261,7 @@ class RemoveTargetCommand(command.Command):
         config.udata.remove_target(self.target)
 
 
-class RemoveGroupCommand(command.Command):
+class RemoveGroupCommand(kelevsma.Command):
     """Remove a target group by it's name."""
     params = {
         "name": VGroup(req=True),
@@ -315,7 +279,7 @@ class RemoveGroupCommand(command.Command):
         config.udata.remove_group(self.name)
 
 
-class RemoveCommand(command.ForkCommand):
+class RemoveCommand(kelevsma.ForkCommand):
     """Delete an entry or target."""
     names = ("del", "delete", "remove")
     forks = {
@@ -326,7 +290,7 @@ class RemoveCommand(command.ForkCommand):
     default = "entry"
 
 
-class ListTargets(command.Command):
+class ListTargets(kelevsma.Command):
     """Display a list of the targets."""
     names = ("targets",)
     params = {
@@ -342,7 +306,7 @@ class ListTargets(command.Command):
             display.push(f"{t.name}: {current:.2f}/{goal:.2f}")
 
 
-class EditEntryCommand(command.Command):
+class EditEntryCommand(kelevsma.Command):
     """Edit an entry; requires an ID and a field."""
     names = ("edit",)
     params = {
@@ -360,18 +324,14 @@ class EditEntryCommand(command.Command):
         db.update_entry(self.new_entry)
         display.deselect()
 
-        push_entries()
-
     def undo(self) -> None:
         db.update_entry(self.old_entry)
-        push_entries()
     
     def redo(self) -> None:
         db.update_entry(self.new_entry)
-        push_entries()
 
 
-class ChangePageCommand(command.Command):
+class ChangePageCommand(kelevsma.Command):
     """Change to another page of the current entry list."""
     names = ("page",)
     params = {
@@ -383,7 +343,7 @@ class ChangePageCommand(command.Command):
         display.change_page(number)
 
 
-class QuitCommand(command.Command):
+class QuitCommand(kelevsma.Command):
     """Quits the program."""
     names = ("q", "quit")
 

@@ -1,7 +1,7 @@
 import config
 import entry
 from config import KEYWORDS, Month
-from command.validator import Validator, Result
+from kelevsma.validator import Validator, Result
 
 
 class VMonth(Validator):

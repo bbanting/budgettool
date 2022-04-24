@@ -12,9 +12,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Calendar view
-- [ ] Rename target command
+- [ ] RenameTarget command
 - [ ] Warn when deleting target if entries exist with that target
-- [ ] display.LineBuffer refresh functions?
+- [x] display.LineBuffer refresh functions?
 
 ## Notes
 

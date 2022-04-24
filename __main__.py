@@ -1,4 +1,4 @@
 import main
 import sys
 
-main.main(sys.argv[1:])
+main.main()

@@ -1,7 +1,7 @@
 import os
 import logging
 
-from typing import Any
+from typing import Any, Callable
 
 import colorama
 from colorama import Fore, Back, Style
@@ -17,13 +17,18 @@ class DisplayError(Exception):
 
 class LineBuffer:
     """A buffer of lines to print."""
-    def __init__(self, numbered, truncate, offset) -> None:
-        self.body = []
-        self.header = []
-        self.footer = []
+    def __init__(self, numbered, truncate, offset, refresh_func) -> None:
+        # Attributes
         self.numbered: int = numbered
         self.truncate: bool = truncate
         self.offset: int = abs(offset)
+        self.refresh_func: Callable = refresh_func
+
+        # Sub-buffers & state
+        self.body: list = []
+        self.header: list = []
+        self.footer: list = []
+
         self._page: int = 1
         self.printed: bool = False
         self.highlight: int = 0
@@ -210,14 +215,14 @@ class LineBuffer:
 class ScreenController:
     """A class to switch to and from multiple buffers."""
     _active: LineBuffer
-    _screens: dict[str | LineBuffer]
+    _screens: dict[str, LineBuffer]
 
     def __init__(self):
         self._screens = {}
 
-    def add(self, name:str, numbered:bool, truncate:bool, offset:int) -> None:
+    def add(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
         """Add a screen to the list."""
-        self._screens.update({name: LineBuffer(numbered, truncate, offset)})
+        self._screens.update({name: LineBuffer(numbered, truncate, offset, refresh_func)})
         if len(self._screens) == 1:
             self._active = self._screens[name]
 
@@ -248,49 +253,49 @@ def t_height() -> int:
 def push(*items:Any) -> None:
     """Push an item to body."""
     for item in items:
-        _screen().push(item)
+        get_screen().push(item)
 
 def push_h(*items:Any) -> None:
     """Push an item to header."""
     for item in items:
-        _screen().push(item, target="header")
+        get_screen().push(item, target="header")
 
 def push_f(*items:Any) -> None:
     """Push an item to footer."""
     for item in items:
-        _screen().push(item, target="footer")
+        get_screen().push(item, target="footer")
 
 
 def message(text:str) -> None:
-    _screen().message = text
+    get_screen().message = text
 
 
 def select(index) -> Any:
     """Return an item by line number from the current view in screen."""
-    return _screen().select(index)
+    return get_screen().select(index)
 
 
 def deselect() -> None:
     """Remove the highlight."""
-    _screen().highlight = 0
+    get_screen().highlight = 0
 
 
 def change_page(number:int) -> None:
     "Change the page of the active screen."
-    _screen().change_page(number)
+    get_screen().change_page(number)
 
 
 def error(error) -> None:
     clear_terminal()
-    _screen().clear()
+    get_screen().clear()
 
     message(str(error))
-    _screen().print()
+    get_screen().print()
 
 
-def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=0) -> None:
+def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=0, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
-    controller.add(name, numbered, truncate, offset)
+    controller.add(name, numbered, truncate, offset, refresh_func)
 
 
 def switch_screen(name:str) -> None:
@@ -298,17 +303,21 @@ def switch_screen(name:str) -> None:
     controller.switch_to(name)
 
 
-def _screen() -> LineBuffer:
+def get_screen(name:str = None) -> LineBuffer:
     """Get the active screen."""
     if not controller._screens:
-        raise DisplayError("No screens have been created")
+        raise DisplayError("No screens have been created.")
+    if screen := controller._screens.get(name):
+        return screen
     return controller._active
 
 
 def refresh() -> None:
     """Clear the terminal and print the current state of the screen."""
+    if get_screen().refresh_func:
+        get_screen().refresh_func()
     clear_terminal()
-    _screen().print()
+    get_screen().print()
 
 
 controller = ScreenController()

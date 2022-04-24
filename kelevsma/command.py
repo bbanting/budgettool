@@ -6,7 +6,7 @@ import inspect
 import abc
 import logging
 
-import display
+import kelevsma.display as display
 from .validator import Validator, ValidatorError, VLit
 
 logging.basicConfig(level=logging.INFO)
@@ -25,15 +25,17 @@ class CommandController:
         self.undo_stack = []
         self.redo_stack = []
 
-    def register(self, command: Command) -> None:
+    def register(self, command:Command, associated_screen:str="") -> None:
         """Attach the controller to the command and append command to commands list"""
         command.controller = self
         for n in command.names:
             if type(n) != str:
                 raise ParseError("Invalid command name format.")
             self.command_register.update({n: command})
+        if associated_screen:
+            command.screen = associated_screen
 
-    def get_command(self, args) -> Union[Command, None]:
+    def get_command(self, args) -> Command | None:
         """Return the command function."""
         command = self.command_register.get(args.pop(0).lower())
         if not command:
@@ -45,9 +47,11 @@ class CommandController:
             return command.fork(command.default)
         return command
 
-    def execute(self, command: Command) -> None:
+    def execute(self, command:Command) -> None:
         """Wrapper around execute methods to give the option to include
         parameters."""
+        if hasattr(command, "screen"):
+            display.switch_screen(command.screen)
         argspec = inspect.getfullargspec(command.execute)
         # If more than just self is specified, include **data in the call
         if len(argspec.args) > 1:
@@ -55,7 +59,7 @@ class CommandController:
         else:
             command.execute()
 
-    def route_command(self, args:List[str]):
+    def route_command(self, args:list[str]):
         """Process user input, execute command."""
         # Ensure input isn't empty
         if not args or not args[0]:
@@ -101,6 +105,7 @@ class Command(metaclass=abc.ABCMeta):
     data: dict[str, Any]
     controller: CommandController
     help_text: str = ""
+    screen: str
     
     def __init__(self, args: List[str]) -> None:
         """Ensures passed data is valid and store in self.data."""

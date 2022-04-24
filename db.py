@@ -3,7 +3,7 @@ import logging
 import datetime
 
 import entry
-import display
+import kelevsma.display as display
 import config
 
 
