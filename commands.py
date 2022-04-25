@@ -252,6 +252,11 @@ class RemoveTargetCommand(kelevsma.Command):
 
     def execute(self, target:str) -> None:
         self.target = entry.Target.from_str(target)
+        uses = db.target_instances(target)
+        if uses:
+            display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
+            return
+
         config.udata.remove_target(self.target)
 
     def undo(self):

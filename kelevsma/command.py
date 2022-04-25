@@ -1,5 +1,3 @@
-# Small module for parsing arguments
-
 from __future__ import annotations
 from typing import Union, Any, List
 import inspect

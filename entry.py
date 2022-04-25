@@ -1,8 +1,6 @@
 from __future__ import annotations
 import datetime
-from gc import collect
 import logging
-import collections
 
 from datetime import date
 from dataclasses import dataclass

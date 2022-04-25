@@ -288,9 +288,7 @@ def change_page(number:int) -> None:
 def error(error) -> None:
     clear_terminal()
     get_screen().clear()
-
     message(str(error))
-    get_screen().print()
 
 
 def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=0, refresh_func=None) -> None:

@@ -1,6 +1,5 @@
 import sqlite3
 import logging
-import datetime
 
 import entry
 import kelevsma.display as display
@@ -108,10 +107,22 @@ def sum_target(target:entry.Target, date:config.TimeFrame) -> int:
         cursor.execute(query)
         sum_amount = cursor.fetchone()
     except sqlite3.Error as e:
-        logging.info(e)
         display.error(f"Database error")
     else:
         return sum_amount[0]
+
+
+def target_instances(target_name:str) -> int:
+    """Return the number of times a target is used in the database."""
+    query = f"SELECT * FROM entries WHERE target = '{target_name}'"
+    try:
+        cursor = connection.cursor()
+        cursor.execute(query)
+        entries = cursor.fetchall()
+    except sqlite3.Error as e:
+        display.error(f"Database error")
+    else:
+        return len(entries)
 
 
 table_query = """

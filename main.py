@@ -1,6 +1,8 @@
-# Budget Tool
-# Created by Ben Banting
-# A simple tool to keep track of expenses and earnings.
+"""
+Budgetool
+Created by Ben Banting
+A simple tool to keep track of expenses and earnings.
+"""
 
 from __future__ import annotations
 import shlex
