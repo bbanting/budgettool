@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, Any, List
+from typing import Any, TypeVar
 import inspect
 import abc
 import logging
@@ -105,7 +105,7 @@ class Command(metaclass=abc.ABCMeta):
     help_text: str = ""
     screen: str
     
-    def __init__(self, args: List[str]) -> None:
+    def __init__(self, args: list[str]) -> None:
         """Ensures passed data is valid and store in self.data."""
         self.data = {}
         for key, validator in self.params.items():
@@ -132,19 +132,33 @@ class Command(metaclass=abc.ABCMeta):
         raise NotImplementedError("Redo has not been implemented.")
 
 
-class ForkCommand():
+class ForkCommand:
     """A class for two-word commands that fork based on the second word."""
     names: tuple[str] = ()
     forks: dict[str, Command] = {}
-    default: Union[str, None] = None
+    default: str | None = None
     controller: CommandController
     help_text: str = ""
 
     @classmethod
-    def fork(cls, chosen_fork) -> Command:
+    def fork(cls, chosen_fork) -> Command | None:
+        """Return the selected fork."""
         if not chosen_fork:
             return None
         return cls.forks[chosen_fork]
+
+
+class ContextualCommand:
+    """A class for commands that fork based on the active screen."""
+    names: tuple[str] = ()
+    forks: dict[str, Command] = {}
+    controller: CommandController
+    help_text: str = ""
+
+    @classmethod
+    def fork(cls) -> Command:
+        """Return the selected fork based on the screen."""
+        return cls.forks[display.get_screen().name]
 
 
 class UndoCommand(Command):
@@ -167,7 +181,7 @@ class HelpCommand(Command):
     """A command to give information on how to use other commands."""
     names = ("help",)
 
-    def __init__(self, args: List[str]):
+    def __init__(self, args: list[str]):
         # Overriding __init__ is necessary because the validator for "command"
         # in params depends on the prior instantiation of CommandController
         HelpCommand.params = {"command": VLit(self.controller.command_register)}

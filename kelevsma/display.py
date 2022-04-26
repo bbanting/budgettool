@@ -17,22 +17,23 @@ class DisplayError(Exception):
 
 class LineBuffer:
     """A buffer of lines to print."""
-    def __init__(self, numbered, truncate, offset, refresh_func) -> None:
+    def __init__(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
         # Attributes
-        self.numbered: int = numbered
-        self.truncate: bool = truncate
-        self.offset: int = abs(offset)
-        self.refresh_func: Callable = refresh_func
+        self.name = name
+        self.numbered = numbered
+        self.truncate = truncate
+        self.offset= abs(offset)
+        self.refresh_func= refresh_func
 
         # Sub-buffers & state
-        self.body: list = []
-        self.header: list = []
-        self.footer: list = []
+        self.body= []
+        self.header= []
+        self.footer= []
 
-        self._page: int = 1
-        self.printed: bool = False
-        self.highlight: int = 0
-        self.message: str = ""
+        self._page = 1
+        self.printed = False
+        self.highlight = 0
+        self.message = ""
     
     @property
     def body_space(self) -> int:
@@ -127,7 +128,7 @@ class LineBuffer:
         empty_space = self.body_space - filled_lines
         count = self.body_space
         for _ in range(empty_space):
-            num = str(count).zfill(2)
+            num = str(count).zfill(2) if self.numbered else ""
             print(Style.DIM + num)
             count -= 1
 
@@ -222,7 +223,7 @@ class ScreenController:
 
     def add(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
         """Add a screen to the list."""
-        self._screens.update({name: LineBuffer(numbered, truncate, offset, refresh_func)})
+        self._screens.update({name: LineBuffer(name, numbered, truncate, offset, refresh_func)})
         if len(self._screens) == 1:
             self._active = self._screens[name]
 

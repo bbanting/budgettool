@@ -67,7 +67,7 @@ def register_commands(controller: command.CommandController):
 
 def main():
     display.add_screen("entries", offset=1, numbered=True, refresh_func=push_entries)
-    display.add_screen("targets", offset=1, numbered=False)
+    display.add_screen("targets", offset=1, numbered=True)
     display.add_screen("help", offset=1)
 
     controller = command.CommandController()
