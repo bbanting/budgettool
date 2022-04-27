@@ -25,6 +25,12 @@ class BTError(Exception):
     pass
 
 
+def push_targets() -> None:
+    for t in config.udata.targets:
+        t.date = commands.ListTargetsCommand.query_date # Necessary for Target.__str__()
+        display.push(t)
+
+
 def push_entries() -> None:
     """Push the current entries to the display."""
     date, category, target = config.last_query
@@ -60,14 +66,16 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddEntryCommand, "entries")
     controller.register(commands.AddTargetCommand, "targets")
     controller.register(commands.AddEntryTodayCommand, "entries")
+    controller.register(commands.EditCommand)
     controller.register(commands.EditEntryCommand, "entries")
+    controller.register(commands.EditTargetCommand, "targets")
     controller.register(commands.ChangePageCommand)
-    controller.register(commands.ListTargets, "targets")
+    controller.register(commands.ListTargetsCommand, "targets")
 
 
 def main():
     display.add_screen("entries", offset=1, numbered=True, refresh_func=push_entries)
-    display.add_screen("targets", offset=1, numbered=True)
+    display.add_screen("targets", offset=1, numbered=True, refresh_func=push_targets)
     display.add_screen("help", offset=1)
 
     controller = command.CommandController()

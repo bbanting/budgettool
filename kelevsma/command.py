@@ -36,13 +36,9 @@ class CommandController:
     def get_command(self, args) -> Command | None:
         """Return the command function."""
         command = self.command_register.get(args.pop(0).lower())
-        if not command:
-            return
         # Check for and process fork command
-        if issubclass(command, ForkCommand):
-            if args and args[0] in command.forks:
-                return command.fork(args.pop(0))
-            return command.fork(command.default)
+        if hasattr(command, "forks"):
+            return command.fork(args)
         return command
 
     def execute(self, command:Command) -> None:
@@ -105,7 +101,7 @@ class Command(metaclass=abc.ABCMeta):
     help_text: str = ""
     screen: str
     
-    def __init__(self, args: list[str]) -> None:
+    def __init__(self, args:list[str]) -> None:
         """Ensures passed data is valid and store in self.data."""
         self.data = {}
         for key, validator in self.params.items():
@@ -141,24 +137,19 @@ class ForkCommand:
     help_text: str = ""
 
     @classmethod
-    def fork(cls, chosen_fork) -> Command | None:
+    def fork(cls, args:list[str]) -> Command | None:
         """Return the selected fork."""
-        if not chosen_fork:
-            return None
-        return cls.forks[chosen_fork]
+        if args and args[0] in cls.forks:
+            return cls.forks.get(args.pop(0))
+        return cls.forks.get(cls.default)
 
 
-class ContextualCommand:
+class ContextualCommand(ForkCommand):
     """A class for commands that fork based on the active screen."""
-    names: tuple[str] = ()
-    forks: dict[str, Command] = {}
-    controller: CommandController
-    help_text: str = ""
-
     @classmethod
-    def fork(cls) -> Command:
+    def fork(cls, args:list[str]) -> Command | None:
         """Return the selected fork based on the screen."""
-        return cls.forks[display.get_screen().name]
+        return cls.forks.get(display.get_screen().name)
 
 
 class UndoCommand(Command):

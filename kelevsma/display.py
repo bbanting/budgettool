@@ -299,6 +299,10 @@ def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=
 
 def switch_screen(name:str) -> None:
     """Public func to switch the active screen."""
+    for k, v in controller._screens.items():
+        if k == name:
+            continue
+        v.clear()
     controller.switch_to(name)
 
 

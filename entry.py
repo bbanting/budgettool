@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from colorama import Style
 
 import config
+import db
 
 
 class EntryError(Exception):
@@ -100,6 +101,11 @@ class Target:
             raise EntryError("Corrupted target in config file.")
         else:
             return cls(name, amount)
+
+    def __str__(self) -> str:
+        current = cents_to_dollars(db.sum_target(self, self.date))
+        goal = cents_to_dollars(self.amount)
+        return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 
 def cents_to_dollars(cent_amount:int) -> float:

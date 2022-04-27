@@ -92,7 +92,7 @@ class UserData:
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the config."""
         return {
-            "targets": [t.__dict__ for t in self.targets], 
+            "targets": [{"name":t.name, "amount":t.amount} for t in self.targets], 
             "groups": self.groups
             }
 

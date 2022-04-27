@@ -295,31 +295,27 @@ class RemoveCommand(kelevsma.ForkCommand):
     default = "entry"
 
 
-class ListTargets(kelevsma.Command):
+class ListTargetsCommand(kelevsma.Command):
     """Display a list of the targets."""
     names = ("targets",)
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
     }
+    query_date = config.TimeFrame(TODAY.year, TODAY.month)
 
     def execute(self, year, month) -> None:
-        date = config.TimeFrame(year, month)
-        for t in config.udata.targets:
-            current = cents_to_dollars(db.sum_target(t, date))
-            goal = cents_to_dollars(t.amount)
-            display.push(f"{t.name}: {current:.2f}/{goal:.2f}")
-
+        self.__class__.query_date = config.TimeFrame(year, month)
+    
 
 class EditEntryCommand(kelevsma.Command):
-    """Edit an entry; requires an ID and a field."""
-    names = ("edit",)
+    """Edit an entry; requires a line # and a field."""
     params = {
         "id": VID(req=True),
         "field": VLit(input_functions, lower=True, req=True),
     }
 
-    def execute(self, id: int, field: str) -> None:
+    def execute(self, id:int, field:str) -> None:
         self.old_entry = display.select(id)
 
         self.new_entry = copy.copy(self.old_entry)
@@ -328,12 +324,52 @@ class EditEntryCommand(kelevsma.Command):
 
         db.update_entry(self.new_entry)
         display.deselect()
-
+    
     def undo(self) -> None:
         db.update_entry(self.old_entry)
     
     def redo(self) -> None:
         db.update_entry(self.new_entry)
+
+
+class EditTargetCommand(kelevsma.Command):
+    """Edit a target; requires a line # and a field."""
+    params = {
+        "id": VID(req=True),
+        "name": VTarget(invert=True),
+        "amount": VAmount(),
+    }
+
+    def execute(self, id:int, name:str, amount:int) -> None:
+        self.old_target: entry.Target = display.select(id)
+
+        self.new_target = copy.copy(self.old_target)
+        if name:
+            setattr(self.new_target, "name", name)
+        if amount:
+            setattr(self.new_target, "amount", amount)
+        
+        config.udata.remove_target(self.old_target)
+        config.udata.add_target(self.new_target)
+        
+        display.deselect()
+
+    def undo(self) -> None:
+        config.udata.remove_target(self.new_target)
+        config.udata.add_target(self.old_target)
+
+    def redo(self) -> None:
+        config.udata.remove_target(self.old_target)
+        config.udata.add_target(self.new_target)
+
+
+class EditCommand(kelevsma.ContextualCommand):
+    """Edit either an entry or a target."""
+    names = ("edit",)
+    forks = {
+        "entries": EditEntryCommand,
+        "targets": EditTargetCommand,
+    }
 
 
 class ChangePageCommand(kelevsma.Command):
@@ -343,7 +379,7 @@ class ChangePageCommand(kelevsma.Command):
         "number": VBool(str.isdigit, req=True)
     }
 
-    def execute(self, number: str) -> None:
+    def execute(self, number:str) -> None:
         number = int(number)
         display.change_page(number)
 
@@ -352,5 +388,5 @@ class QuitCommand(kelevsma.Command):
     """Quits the program."""
     names = ("q", "quit")
 
-    def execute(self):
+    def execute(self) -> None:
         quit()
