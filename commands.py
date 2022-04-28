@@ -12,7 +12,7 @@ import db
 from config import TODAY
 from entry import Entry, cents_to_dollars
 from kelevsma.validator import VLit, VBool, VAny
-from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount, VGroup
+from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
 
 
 def get_date() -> datetime.date | None:
@@ -193,7 +193,7 @@ class AddTargetCommand(kelevsma.Command):
 class AddGroupCommand(kelevsma.Command):
     """Remove a target group by it's name."""
     params = {
-        "name": VGroup(req=True, invert=True),
+        "name": VTarget(req=True, invert=True),
         "targets": VTarget(req=True, plural=True),
     }
 
@@ -269,7 +269,7 @@ class RemoveTargetCommand(kelevsma.Command):
 class RemoveGroupCommand(kelevsma.Command):
     """Remove a target group by it's name."""
     params = {
-        "name": VGroup(req=True),
+        "name": VTarget(req=True),
     }
 
     def execute(self, name:str) -> None:

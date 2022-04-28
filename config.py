@@ -117,6 +117,11 @@ class UserData:
         self.overwrite()
 
 
+def get_group(name:str) -> list | None:
+    """If the string is a group, return the targets."""
+    return udata.groups.get(name)
+
+
 # Other globals
 udata = UserData(FILENAME)
 last_query = Query(TimeFrame(TODAY.year, TODAY.month), "", [])

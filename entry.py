@@ -83,7 +83,7 @@ class Target:
         self.amount = amount
 
     @staticmethod
-    def from_str(name:str) -> Target:
+    def from_str(name:str) -> Target | None:
         """Return the target corresponding to the input string.
         For retrieving targets when creating Entry objects."""
         for t in config.udata.targets:

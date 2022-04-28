@@ -11,8 +11,7 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [x] RenameTarget command
-- [ ] Fix numbering starting at 0 bug
+- [x] Fix numbering starting at 0 bug
 
 ## Notes
 

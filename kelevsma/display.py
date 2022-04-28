@@ -144,7 +144,6 @@ class LineBuffer:
         if self.page == self.n_pages:
             count = len(self.body) - ((self.n_pages-1) * self.body_space)
         for line in self.body[-index:]:
-            count -= 1
             to_print = str(line)
             if self.numbered:
                 num = str(count).zfill(2)
@@ -153,6 +152,7 @@ class LineBuffer:
                 to_print = to_print[:t_width()]
             if count+1 == self.highlight:
                 to_print = Fore.CYAN + to_print
+            count -= 1
             
             print(to_print)
             if count == 0:
@@ -336,3 +336,4 @@ if __name__ == "__main__":
     select(3)
     refresh()
     print("> ")
+    

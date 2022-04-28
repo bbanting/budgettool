@@ -33,26 +33,14 @@ class VYear(Validator):
 
 
 class VTarget(Validator):
-    """Verify that input belongs to the user's targets. Invertable."""
+    """Verify that input belongs to the user's targets or groups. Invertable."""
     def validate(self, value) -> Result:
         value = value.lower()
         if value in KEYWORDS:
             return Result.err()
-        if value in [t.name for t in config.udata.targets]:
-            ret_val = (Result.ok(value), Result.err())
-        else:
-            ret_val = (Result.err(), Result.ok(value))
-
-        return ret_val[self.invert]
-
-
-class VGroup(Validator):
-    """Verify that the input string is the name of a target group."""
-    def validate(self, value) -> Result:
-        value = value.lower()
-        if value in KEYWORDS:
-            return Result.err()
-        if value in config.udata.groups:
+        not_allowed = [t.name for t in config.udata.targets]
+        not_allowed += list(config.udata.groups)
+        if value in not_allowed:
             ret_val = (Result.ok(value), Result.err())
         else:
             ret_val = (Result.err(), Result.ok(value))

@@ -49,7 +49,7 @@ def push_entries() -> None:
 def get_filter_summary(n:int, date:TimeFrame, category:str, target:Target) -> str:
     date = f"{date.month.name} {date.year}"
     category = f" of type {category}" if category else ""
-    target = f" at target: {', '.join(target)}" if target else ""
+    target = f" at target '{target}'" if target else ""
     return f"{n} entries{category} from {date}{target}."
 
 
