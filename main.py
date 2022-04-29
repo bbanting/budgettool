@@ -27,19 +27,18 @@ class BTError(Exception):
 
 def push_targets() -> None:
     for t in config.udata.targets:
-        t.date = commands.ListTargetsCommand.query_date # Necessary for Target.__str__()
-        display.push(t)
+        display.push(config.get_target(t))
 
 
 def push_entries() -> None:
     """Push the current entries to the display."""
-    date, category, target = config.last_query
-    entries = db.select_entries(date, category, target)
+    s = config.entry_filter_state
+    entries = db.select_entries(s.date, s.category, s.target)
     total = cents_to_dollars(sum(entries))
     total_str = f"${abs(total):.2f}"
     if total > 0: total_str = "+" + total_str
     if total < 0: total_str = "-" + total_str
-    summary = get_filter_summary(len(entries), date, category, target)
+    summary = get_filter_summary(len(entries), s.date, s.category, s.target)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: 

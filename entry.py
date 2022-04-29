@@ -17,7 +17,7 @@ class EntryError(Exception):
 @dataclass
 class Entry:
     """Represent one entry in the budget."""
-    def __init__(self, id:int, date:date, amount:int, target:Target, note:str):
+    def __init__(self, id:int, date:date, amount:int, target:str, note:str):
         self.id = id
         self.date = date
         self.amount = amount
@@ -71,41 +71,6 @@ class Entry:
 
     def __radd__(self, other) -> int:
         return self.__add__(other)
-
-
-class Target:
-    """Represents a category/goal toward which entries are made."""
-    name: str
-    amount: int
-    
-    def __init__(self, name:str, amount:int):
-        self.name = name
-        self.amount = amount
-
-    @staticmethod
-    def from_str(name:str) -> Target | None:
-        """Return the target corresponding to the input string.
-        For retrieving targets when creating Entry objects."""
-        for t in config.udata.targets:
-            if name not in t.name:
-                continue
-            return t
-
-    @classmethod
-    def from_dict(cls, d:dict) -> Target:
-        """For instantiating targets from the config file at program start."""
-        try:
-            name = d["name"]
-            amount = d["amount"]
-        except KeyError:
-            raise EntryError("Corrupted target in config file.")
-        else:
-            return cls(name, amount)
-
-    def __str__(self) -> str:
-        current = cents_to_dollars(db.sum_target(self, self.date))
-        goal = cents_to_dollars(self.amount)
-        return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 
 def cents_to_dollars(cent_amount:int) -> float:

@@ -122,8 +122,22 @@ class ListCommand(kelevsma.Command):
     
     def execute(self, year, month, category, target):
         date = config.TimeFrame(year, month)
-        config.last_query = [date, category, target]
+        config.entry_filter_state.set(date=date, category=category, target=target)
         display.change_page(1)
+
+
+class ListTargetsCommand(kelevsma.Command):
+    """Display a list of the targets."""
+    names = ("targets",)
+    params = {
+        "year": VYear(default=TODAY.year),
+        "month": VMonth(default=TODAY.month),
+    }
+    query_date = config.TimeFrame(TODAY.year, TODAY.month)
+
+    def execute(self, year, month) -> None:
+        date = config.TimeFrame(year, month)
+        config.target_filter_state.set(date=date)
 
 
 class AddEntryTodayCommand(kelevsma.Command):
@@ -293,19 +307,6 @@ class RemoveCommand(kelevsma.ForkCommand):
         "group": RemoveGroupCommand,
     }
     default = "entry"
-
-
-class ListTargetsCommand(kelevsma.Command):
-    """Display a list of the targets."""
-    names = ("targets",)
-    params = {
-        "year": VYear(default=TODAY.year),
-        "month": VMonth(default=TODAY.month),
-    }
-    query_date = config.TimeFrame(TODAY.year, TODAY.month)
-
-    def execute(self, year, month) -> None:
-        self.__class__.query_date = config.TimeFrame(year, month)
     
 
 class EditEntryCommand(kelevsma.Command):

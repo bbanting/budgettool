@@ -23,7 +23,7 @@ def make_select_query(date:config.TimeFrame, category:str, target:str) -> str:
         query += " AND amount >= 0"
 
     if target:
-        if group := config.get_group(target):
+        if group := config.get_target(target):
             targets = [f"'{t}'" for t in group]
             query += f" AND target in ({', '.join(targets)})"
         else:
@@ -105,10 +105,10 @@ def update_entry(entry:entry.Entry) -> None:
     run_query(query)
 
 
-def sum_target(target:entry.Target, date:config.TimeFrame) -> int:
+def sum_target(target:str, date:config.TimeFrame) -> int:
     """Sum entries with a particular target in a time period."""
     date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
-    query = f"SELECT SUM(amount) FROM entries WHERE date LIKE '{date}' AND target = '{target.name}'"
+    query = f"SELECT SUM(amount) FROM entries WHERE date LIKE '{date}' AND target = '{target}'"
     try:
         cursor = connection.cursor()
         cursor.execute(query)

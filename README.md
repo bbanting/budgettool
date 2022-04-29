@@ -11,7 +11,8 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [x] Fix numbering starting at 0 bug
+- [ ] Remove UserData?
+- [ ] Turn ListCommand into a fork command
 
 ## Notes
 
