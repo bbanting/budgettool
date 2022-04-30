@@ -55,7 +55,7 @@ def get_amount() -> int | None:
     return entry.dollars_to_cents(amount)
 
 
-def get_target() -> entry.Target | None:
+def get_target() -> dict | None:
     """Get target input from user."""
     display.message(f"({', '.join([t.name for t in config.udata.targets])})")
     display.refresh()
@@ -67,11 +67,11 @@ def get_target() -> entry.Target | None:
         display.message(f"({', '.join([t.name for t in config.udata.targets])})")
         return
 
-    if target not in [t.name for t in config.udata.targets]:
+    if target not in [t["name"] for t in config.udata.targets]:
         display.message("Invalid target given. Enter 'help' to see targets.")
         return
 
-    return entry.Target.from_str(target)
+    return target
             
 
 def get_note() -> str:
@@ -188,24 +188,27 @@ class AddEntryCommand(kelevsma.Command):
 
 class AddTargetCommand(kelevsma.Command):
     """Add a new target."""
+    target: dict
     params = {
         "name": VTarget(req=True, invert=True),
         "amount": VAmount(req=True),
     }
 
     def execute(self, name, amount) -> None:
-        self.target = entry.Target(name, amount)
-        config.udata.add_target(self.target)
+        self.target = {"name": name, "amount": amount}
+        config.udata.add_target(**self.target)
 
     def undo(self) -> None:
-        config.udata.remove_target(self.target)
+        config.udata.remove_target(self.target["name"])
 
     def redo(self) -> None:
-        config.udata.add_target(self.target)
+        config.udata.add_target(**self.target)
 
 
 class AddGroupCommand(kelevsma.Command):
     """Remove a target group by it's name."""
+    name: str
+    targets: list
     params = {
         "name": VTarget(req=True, invert=True),
         "targets": VTarget(req=True, plural=True),
@@ -260,24 +263,25 @@ class RemoveEntryCommand(kelevsma.Command):
 
 class RemoveTargetCommand(kelevsma.Command):
     """Remove a target by its name."""
+    target: dict
     params = {
         "target": VTarget(req=True),
     }
 
     def execute(self, target:str) -> None:
-        self.target = entry.Target.from_str(target)
+        self.target = config.get_target(target).targets[0]
         uses = db.target_instances(target)
         if uses:
             display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
             return
 
-        config.udata.remove_target(self.target)
+        config.udata.remove_target(target)
 
     def undo(self):
         config.udata.add_target(self.target)
 
     def redo(self):
-        config.udata.remove_target(self.target)
+        config.udata.remove_target(self.target["name"])
 
 
 class RemoveGroupCommand(kelevsma.Command):
@@ -337,7 +341,7 @@ class EditTargetCommand(kelevsma.Command):
     """Edit a target; requires a line # and a field."""
     params = {
         "id": VID(req=True),
-        "name": VTarget(invert=True),
+        "name": VTarget(),
         "amount": VAmount(),
     }
 

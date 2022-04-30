@@ -38,7 +38,6 @@ class Entry:
         id = int(id)
         date = datetime.date.fromisoformat(date)
         amount = int(amount)
-        target = Target.from_str(target)
 
         return cls(id, date, amount, target, note)
 

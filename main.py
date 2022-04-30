@@ -14,7 +14,7 @@ import commands
 import config
 import db
 
-from entry import cents_to_dollars, Target
+from entry import cents_to_dollars
 from kelevsma.command import CommandError
 from config import TimeFrame, DATEW, AMOUNTW
 

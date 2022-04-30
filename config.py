@@ -50,7 +50,7 @@ class ConfigError(Exception):
 
 
 class UserData:
-    targets: list[entry.Target]
+    targets: list[dict]
     groups: list[dict]
 
     def __init__(self, filename) -> None:

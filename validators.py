@@ -38,12 +38,12 @@ class VTarget(Validator):
         value = value.lower()
         if value in KEYWORDS:
             return Result.err()
-        not_allowed = [t.name for t in config.udata.targets]
-        not_allowed += list(config.udata.groups)
-        if value in not_allowed:
-            ret_val = (Result.ok(value), Result.err())
-        else:
-            ret_val = (Result.err(), Result.ok(value))
+            
+        ret_val = [Result.ok(value), Result.err()]
+        targets = [t["name"] for t in config.udata.targets]
+        targets += [g["name"] for g in config.udata.groups]
+        if value not in targets:
+            ret_val.reverse()
 
         return ret_val[self.invert]
 

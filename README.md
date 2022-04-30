@@ -13,6 +13,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove UserData?
 - [ ] Turn ListCommand into a fork command
+- [x] Update get_target
+- [ ] Update Add and RemoveTargetCommand, and Edit
+- [ ] Update VTarget
 
 ## Notes
 
