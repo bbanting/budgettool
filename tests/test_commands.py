@@ -66,12 +66,12 @@ class TestGetTags(unittest.TestCase):
         with patch("commands.input", return_value="help"):
             self.assertIsNone(commands.get_target())
 
-    @patch("config.udata.tags", ["food", "other"])
+    @patch("config.tags", ["food", "other"])
     def test_get_tags_invalid(self):
         with patch("commands.input", return_value="lamps paper"):
             self.assertIsNone(commands.get_target())
 
-    @patch("config.udata.tags", ["food", "other"])
+    @patch("config.tags", ["food", "other"])
     def test_get_tags_valid(self):
         with patch("commands.input", return_value="other"):
             ret_val = commands.get_target()

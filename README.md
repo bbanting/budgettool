@@ -11,11 +11,11 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [ ] Remove UserData?
+- [x] Remove UserData?
 - [ ] Turn ListCommand into a fork command
-- [x] Update get_target
 - [ ] Update Add and RemoveTargetCommand, and Edit
-- [ ] Update VTarget
+- [ ] Remove groups and create shortcuts "/"
+- [ ] Make a Printable class with len attribute
 
 ## Notes
 

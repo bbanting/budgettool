@@ -35,7 +35,6 @@ class Month(enum.IntEnum):
 KEYWORDS += tuple(Month.__members__)
 
 
-@dataclasses.dataclass
 class TimeFrame:
     """Represents a timeframe within which to filter entries."""
     year: int
@@ -47,79 +46,6 @@ class TimeFrame:
 
 class ConfigError(Exception):
     pass
-
-
-class UserData:
-    targets: list[dict]
-    groups: list[dict]
-
-    def __init__(self, filename) -> None:
-        UserData.check_file(filename)
-        with open(filename, "r") as fp:
-            data = json.load(fp)
-
-        self.filename = filename
-        try:
-            self.targets = data["targets"]
-            self.groups = data["groups"]
-        except KeyError:
-            print("Error loading config file.")
-            quit()
-
-    @staticmethod
-    def check_file(filename) -> None:
-        """Ensures the config file exists and the user has file permissions."""
-        try:
-            with open(filename, "r+") as fp:
-                pass
-        except PermissionError:
-            print("You do not have the necessary file permissions.")
-            quit()
-        except FileNotFoundError:
-            with open(filename, "w") as fp:
-                cfg = {"targets": [], "groups": []}
-                json.dump(cfg, fp)
-
-    def overwrite(self) -> None:
-        """Overwrite file with current state."""
-        self.check_file(self.filename)
-        with open(self.filename, "w") as fp:
-            json.dump(self.to_dict(), fp)
-
-    def to_dict(self) -> dict:
-        """Returns a dictionary representation of the config."""
-        return {
-            "targets": self.targets, 
-            "groups": self.groups
-            }
-
-    def add_target(self, name:str, amount:int) -> None:
-        """Adds a new target to the config file."""
-        self.targets.append({"name": name, "amount": amount})
-        self.overwrite()
-
-    def remove_target(self, name:str) -> None:
-        """Removes a target from the config."""
-        for t in self.targets:
-            if t["name"] != name:
-                continue
-            self.groups.remove(t)
-            break
-        self.overwrite()
-
-    def add_group(self, name:str, targets:list[str]) -> None:
-        """Add a target group to the config file."""
-        self.groups.append({"name": name, "targets": targets})
-        self.overwrite()
-
-    def remove_group(self, name:str) -> None:
-        """Remove a target group from the config file."""
-        for g in self.groups:
-            if g["name"] != name:
-                continue
-            self.groups.remove(g)
-            break
-        self.overwrite()
 
 
 class TargetWrapper:
@@ -142,19 +68,6 @@ class TargetWrapper:
         return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 
-def get_target(name:str) -> TargetWrapper | None:
-    """Return a TargetWrapper if name refers to a target or group."""
-    for t in udata.targets:
-        if t["name"] != name:
-            continue
-        return TargetWrapper(name, [t])
-    
-    for g in udata.groups:
-        if g["name"] != name:
-            continue
-        return TargetWrapper(name, g["targets"])
-
-
 class StateObject:
     """Convenience class for state storage."""
     def __init__(self, **kwargs) -> None:
@@ -165,7 +78,90 @@ class StateObject:
         self.__init__(**kwargs)
 
 
-# Other globals
-udata = UserData(FILENAME)
+def check_file(filename) -> None:
+    """Ensures the config file exists and the user has file permissions."""
+    try:
+        with open(filename, "r+") as fp:
+            pass
+    except PermissionError:
+        print("You do not have the necessary file permissions.")
+        quit()
+    except FileNotFoundError:
+        with open(filename, "w") as fp:
+            cfg = {"targets": [], "groups": []}
+            json.dump(cfg, fp)
+
+
+def overwrite() -> None:
+    """Overwrite file with current state."""
+    check_file(FILENAME)
+    with open(FILENAME, "w") as fp:
+        json.dump(to_dict(), fp)
+
+
+def to_dict() -> dict:
+    """Returns a dictionary representation of the config."""
+    return {
+        "targets": targets, 
+        "groups": groups
+        }
+
+
+def add_target(name:str, amount:int) -> None:
+    """Adds a new target to the config file."""
+    targets.append({"name": name, "amount": amount})
+    overwrite()
+
+def remove_target(name:str) -> None:
+    """Removes a target from the config."""
+    for t in targets:
+        if t["name"] != name:
+            continue
+        groups.remove(t)
+        break
+    overwrite()
+
+def add_group(name:str, targets:list[str]) -> None:
+    """Add a target group to the config file."""
+    groups.append({"name": name, "targets": targets})
+    overwrite()
+
+def remove_group(name:str) -> None:
+    """Remove a target group from the config file."""
+    for g in groups:
+        if g["name"] != name:
+            continue
+        groups.remove(g)
+        break
+    overwrite()
+
+
+def get_target(name:str) -> TargetWrapper | None:
+    """Return a TargetWrapper if name refers to a target or group."""
+    for t in targets:
+        if t["name"] != name:
+            continue
+        return TargetWrapper(name, [t])
+    
+    for g in groups:
+        if g["name"] != name:
+            continue
+        return TargetWrapper(name, g["targets"])
+
+
+check_file(FILENAME)
+with open(FILENAME, "r") as fp:
+    data = json.load(fp)
+try:
+    targets = data["targets"]
+    groups = data["groups"]
+except KeyError:
+    print("Error loading config file.")
+    quit()
+
+
+targets: list[dict]
+groups: list[dict]
+
 entry_filter_state = StateObject(date=TimeFrame(), category="", target=None)
 target_filter_state = StateObject(date=TimeFrame(), category="")

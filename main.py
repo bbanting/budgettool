@@ -26,7 +26,7 @@ class BTError(Exception):
 
 
 def push_targets() -> None:
-    for t in config.udata.targets:
+    for t in config.targets:
         display.push(config.get_target(t))
 
 

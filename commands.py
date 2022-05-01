@@ -57,17 +57,17 @@ def get_amount() -> int | None:
 
 def get_target() -> dict | None:
     """Get target input from user."""
-    display.message(f"({', '.join([t.name for t in config.udata.targets])})")
+    display.message(f"({', '.join([t.name for t in config.targets])})")
     display.refresh()
     target = input("Target: ").lower().strip()
 
     if target in ("q", "quit"):
         raise main.BTError("Input aborted by user.")
     if target == "help":
-        display.message(f"({', '.join([t.name for t in config.udata.targets])})")
+        display.message(f"({', '.join([t.name for t in config.targets])})")
         return
 
-    if target not in [t["name"] for t in config.udata.targets]:
+    if target not in [t["name"] for t in config.targets]:
         display.message("Invalid target given. Enter 'help' to see targets.")
         return
 
@@ -196,13 +196,13 @@ class AddTargetCommand(kelevsma.Command):
 
     def execute(self, name, amount) -> None:
         self.target = {"name": name, "amount": amount}
-        config.udata.add_target(**self.target)
+        config.add_target(**self.target)
 
     def undo(self) -> None:
-        config.udata.remove_target(self.target["name"])
+        config.remove_target(self.target["name"])
 
     def redo(self) -> None:
-        config.udata.add_target(**self.target)
+        config.add_target(**self.target)
 
 
 class AddGroupCommand(kelevsma.Command):
@@ -217,13 +217,13 @@ class AddGroupCommand(kelevsma.Command):
     def execute(self, name:str, targets:list[str]) -> None:
         self.name = name
         self.targets = targets
-        config.udata.add_group(name, targets)
+        config.add_group(name, targets)
     
     def undo(self) -> None:
-        config.udata.remove_group(self.name)
+        config.remove_group(self.name)
 
     def redo(self) -> None:
-        config.udata.remove_group(self.name, self.targets)
+        config.remove_group(self.name, self.targets)
 
 
 class AddCommand(kelevsma.ForkCommand):
@@ -275,13 +275,13 @@ class RemoveTargetCommand(kelevsma.Command):
             display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
             return
 
-        config.udata.remove_target(target)
+        config.remove_target(target)
 
     def undo(self):
-        config.udata.add_target(self.target)
+        config.add_target(self.target)
 
     def redo(self):
-        config.udata.remove_target(self.target["name"])
+        config.remove_target(self.target["name"])
 
 
 class RemoveGroupCommand(kelevsma.Command):
@@ -292,14 +292,14 @@ class RemoveGroupCommand(kelevsma.Command):
 
     def execute(self, name:str) -> None:
         self.name = name 
-        self.targets = config.udata.groups.get(name)
-        config.udata.remove_group(name)
+        self.targets = config.groups.get(name)
+        config.remove_group(name)
     
     def undo(self):
-        config.udata.add_group(self.name, self.targets)
+        config.add_group(self.name, self.targets)
 
     def redo(self):
-        config.udata.remove_group(self.name)
+        config.remove_group(self.name)
 
 
 class RemoveCommand(kelevsma.ForkCommand):
@@ -354,18 +354,18 @@ class EditTargetCommand(kelevsma.Command):
         if amount:
             setattr(self.new_target, "amount", amount)
         
-        config.udata.remove_target(self.old_target)
-        config.udata.add_target(self.new_target)
+        config.remove_target(self.old_target)
+        config.add_target(self.new_target)
         
         display.deselect()
 
     def undo(self) -> None:
-        config.udata.remove_target(self.new_target)
-        config.udata.add_target(self.old_target)
+        config.remove_target(self.new_target)
+        config.add_target(self.old_target)
 
     def redo(self) -> None:
-        config.udata.remove_target(self.old_target)
-        config.udata.add_target(self.new_target)
+        config.remove_target(self.old_target)
+        config.add_target(self.new_target)
 
 
 class EditCommand(kelevsma.ContextualCommand):
