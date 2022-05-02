@@ -109,9 +109,8 @@ input_functions = {
         }
 
 
-class ListCommand(kelevsma.Command):
-    """Display a list of entries filtered by type, month, and target."""
-    names = ("list",)
+class ListEntriesCommand(kelevsma.Command):
+    """Set the entry filter state (tframe, category, and target)."""
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
@@ -127,8 +126,7 @@ class ListCommand(kelevsma.Command):
 
 
 class ListTargetsCommand(kelevsma.Command):
-    """Display a list of the targets."""
-    names = ("targets",)
+    """Set the target filter state."""
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
@@ -138,6 +136,18 @@ class ListTargetsCommand(kelevsma.Command):
     def execute(self, year, month) -> None:
         date = config.TimeFrame(year, month)
         config.target_filter_state.set(date=date)
+
+
+class ListCommand(kelevsma.ForkCommand):
+    """List either the entries or targets."""
+    names = ("list", "ls")
+    forks = {
+        "entries": ListEntriesCommand,
+        "entry": ListEntriesCommand,
+        "targets": ListTargetsCommand,
+        "target": ListTargetsCommand,
+    }
+    default = "entries"
 
 
 class AddEntryTodayCommand(kelevsma.Command):
@@ -205,27 +215,6 @@ class AddTargetCommand(kelevsma.Command):
         config.add_target(**self.target)
 
 
-class AddGroupCommand(kelevsma.Command):
-    """Remove a target group by it's name."""
-    name: str
-    targets: list
-    params = {
-        "name": VTarget(req=True, invert=True),
-        "targets": VTarget(req=True, plural=True),
-    }
-
-    def execute(self, name:str, targets:list[str]) -> None:
-        self.name = name
-        self.targets = targets
-        config.add_group(name, targets)
-    
-    def undo(self) -> None:
-        config.remove_group(self.name)
-
-    def redo(self) -> None:
-        config.remove_group(self.name, self.targets)
-
-
 class AddCommand(kelevsma.ForkCommand):
     """Add an entry or target."""    
     names = ("add",)
@@ -233,7 +222,6 @@ class AddCommand(kelevsma.ForkCommand):
         "entry": AddEntryCommand,
         "today": AddEntryTodayCommand,
         "target": AddTargetCommand,
-        "group": AddGroupCommand,
     }
     default = "entry"
 
@@ -265,41 +253,23 @@ class RemoveTargetCommand(kelevsma.Command):
     """Remove a target by its name."""
     target: dict
     params = {
-        "target": VTarget(req=True),
-    }
-
-    def execute(self, target:str) -> None:
-        self.target = config.get_target(target).targets[0]
-        uses = db.target_instances(target)
-        if uses:
-            display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
-            return
-
-        config.remove_target(target)
-
-    def undo(self):
-        config.add_target(self.target)
-
-    def redo(self):
-        config.remove_target(self.target["name"])
-
-
-class RemoveGroupCommand(kelevsma.Command):
-    """Remove a target group by it's name."""
-    params = {
         "name": VTarget(req=True),
     }
 
     def execute(self, name:str) -> None:
-        self.name = name 
-        self.targets = config.groups.get(name)
-        config.remove_group(name)
-    
+        self.target = config.get_target(name).__dict__
+        uses = db.target_instances(name)
+        if uses:
+            display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
+            return
+
+        config.remove_target(name)
+
     def undo(self):
-        config.add_group(self.name, self.targets)
+        config.add_target(**self.target)
 
     def redo(self):
-        config.remove_group(self.name)
+        config.remove_target(self.target["name"])
 
 
 class RemoveCommand(kelevsma.ForkCommand):
@@ -308,7 +278,6 @@ class RemoveCommand(kelevsma.ForkCommand):
     forks = {
         "entry": RemoveEntryCommand,
         "target": RemoveTargetCommand,
-        "group": RemoveGroupCommand,
     }
     default = "entry"
     
@@ -346,26 +315,26 @@ class EditTargetCommand(kelevsma.Command):
     }
 
     def execute(self, id:int, name:str, amount:int) -> None:
-        self.old_target: entry.Target = display.select(id)
-
+        self.old_target = display.select(id).__dict__
         self.new_target = copy.copy(self.old_target)
+
         if name:
-            setattr(self.new_target, "name", name)
+            self.new_target["name"] = name
         if amount:
-            setattr(self.new_target, "amount", amount)
+            self.new_target["amount"] = amount
         
-        config.remove_target(self.old_target)
-        config.add_target(self.new_target)
+        config.remove_target(self.old_target["name"])
+        config.add_target(**self.new_target)
         
         display.deselect()
 
     def undo(self) -> None:
-        config.remove_target(self.new_target)
-        config.add_target(self.old_target)
+        config.remove_target(self.new_target["name"])
+        config.add_target(**self.old_target)
 
     def redo(self) -> None:
-        config.remove_target(self.old_target)
-        config.add_target(self.new_target)
+        config.remove_target(self.old_target["name"])
+        config.add_target(**self.new_target)
 
 
 class EditCommand(kelevsma.ContextualCommand):

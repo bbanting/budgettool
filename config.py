@@ -48,23 +48,28 @@ class ConfigError(Exception):
     pass
 
 
-class TargetWrapper:
-    """Transient wrapper for targets and target groups."""
+class Target:
+    """Wrapper class for targets."""
     name: str
-    targets: list
+    amount: int
+    tframe: TimeFrame
 
-    @property
-    def amount(self) -> int:
-        return sum([t["amount"] for t in self.targets])
-
-    def __init__(self, name:str, targets:list) -> None:
+    def __init__(self, name:str, amount:int) -> None:
         self.name = name
-        self.targets = targets
-        self.date = target_filter_state.date
+        self.amount = amount
+        self.tframe = target_filter_state.tframe
+    
+    def current(self) -> int:
+        """Return the amount sum for entries with this 
+        target in the specified timeframe.
+        """
+        return db.sum_target(self.name, self.tframe)
 
     def __str__(self) -> str:
-        current = entry.cents_to_dollars(sum([db.sum_target(t["name"], self.date) for t in self.targets]))
-        goal = entry.cents_to_dollars(sum([t.amount for t in self.targets]))
+        current = entry.cents_to_dollars(self.current())
+        goal = entry.cents_to_dollars(self.amount)
+        if self.tframe.month == 0:
+            goal *= 12
         return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 
@@ -88,7 +93,7 @@ def check_file(filename) -> None:
         quit()
     except FileNotFoundError:
         with open(filename, "w") as fp:
-            cfg = {"targets": [], "groups": []}
+            cfg = {"targets": []}
             json.dump(cfg, fp)
 
 
@@ -103,7 +108,6 @@ def to_dict() -> dict:
     """Returns a dictionary representation of the config."""
     return {
         "targets": targets, 
-        "groups": groups
         }
 
 
@@ -112,41 +116,23 @@ def add_target(name:str, amount:int) -> None:
     targets.append({"name": name, "amount": amount})
     overwrite()
 
+
 def remove_target(name:str) -> None:
     """Removes a target from the config."""
     for t in targets:
         if t["name"] != name:
             continue
-        groups.remove(t)
-        break
-    overwrite()
-
-def add_group(name:str, targets:list[str]) -> None:
-    """Add a target group to the config file."""
-    groups.append({"name": name, "targets": targets})
-    overwrite()
-
-def remove_group(name:str) -> None:
-    """Remove a target group from the config file."""
-    for g in groups:
-        if g["name"] != name:
-            continue
-        groups.remove(g)
+        targets.remove(t)
         break
     overwrite()
 
 
-def get_target(name:str) -> TargetWrapper | None:
+def get_target(name:str) -> Target | None:
     """Return a TargetWrapper if name refers to a target or group."""
     for t in targets:
         if t["name"] != name:
             continue
-        return TargetWrapper(name, [t])
-    
-    for g in groups:
-        if g["name"] != name:
-            continue
-        return TargetWrapper(name, g["targets"])
+        return Target(**t)
 
 
 check_file(FILENAME)
@@ -154,14 +140,12 @@ with open(FILENAME, "r") as fp:
     data = json.load(fp)
 try:
     targets = data["targets"]
-    groups = data["groups"]
 except KeyError:
     print("Error loading config file.")
     quit()
 
 
 targets: list[dict]
-groups: list[dict]
 
-entry_filter_state = StateObject(date=TimeFrame(), category="", target=None)
-target_filter_state = StateObject(date=TimeFrame(), category="")
+entry_filter_state = StateObject(tframe=TimeFrame(), category="", target=[])
+target_filter_state = StateObject(tframe=TimeFrame(), category="")

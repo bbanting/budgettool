@@ -45,7 +45,7 @@ def push_entries() -> None:
         display.push(entry)
     display.push_f("", f"TOTAL: {total_str}", summary)
 
-def get_filter_summary(n:int, date:TimeFrame, category:str, target:Target) -> str:
+def get_filter_summary(n:int, date:TimeFrame, category:str, target) -> str:
     date = f"{date.month.name} {date.year}"
     category = f" of type {category}" if category else ""
     target = f" at target '{target}'" if target else ""
@@ -56,8 +56,10 @@ def register_commands(controller: command.CommandController):
     controller.register(command.UndoCommand)
     controller.register(command.RedoCommand)
     controller.register(command.HelpCommand, "help")
-    controller.register(commands.ListCommand, "entries")
     controller.register(commands.QuitCommand)
+    controller.register(commands.ListCommand)
+    controller.register(commands.ListEntriesCommand, "entries")
+    controller.register(commands.ListTargetsCommand, "targets")
     controller.register(commands.RemoveCommand)
     controller.register(commands.RemoveEntryCommand, "entries")
     controller.register(commands.RemoveTargetCommand, "targets")
@@ -69,7 +71,6 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.EditEntryCommand, "entries")
     controller.register(commands.EditTargetCommand, "targets")
     controller.register(commands.ChangePageCommand)
-    controller.register(commands.ListTargetsCommand, "targets")
 
 
 def main():
