@@ -128,7 +128,7 @@ def remove_target(name:str) -> None:
 
 
 def get_target(name:str) -> Target | None:
-    """Return a TargetWrapper if name refers to a target or group."""
+    """Return a Target if name refers to a target."""
     for t in targets:
         if t["name"] != name:
             continue
@@ -147,5 +147,5 @@ except KeyError:
 
 targets: list[dict]
 
-entry_filter_state = StateObject(tframe=TimeFrame(), category="", target=[])
+entry_filter_state = StateObject(tframe=TimeFrame(), category="", targets=[])
 target_filter_state = StateObject(tframe=TimeFrame(), category="")

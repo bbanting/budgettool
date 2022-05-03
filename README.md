@@ -11,10 +11,9 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [x] Turn ListCommand into a fork command
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make a Printable class with len attribute
-- [ ] List multiple targets at once
+- [x] List multiple targets at once
 - [ ] Show target progress after listing entries
 
 ## Notes

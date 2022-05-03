@@ -8,7 +8,7 @@ import kelevsma.display as display
 import config
 
 
-def make_select_query(date:config.TimeFrame, category:str, target:str) -> str:
+def make_select_query(date:config.TimeFrame, category:str, targets:list) -> str:
     """Construct a query to select entries in the database."""
     if date.month == 0:
         date = f"{date.year}-%"
@@ -22,12 +22,9 @@ def make_select_query(date:config.TimeFrame, category:str, target:str) -> str:
     elif category == "income":
         query += " AND amount >= 0"
 
-    if target:
-        if group := config.get_target(target):
-            targets = [f"'{t}'" for t in group]
-            query += f" AND target in ({', '.join(targets)})"
-        else:
-            query += f" AND target = '{target}'"
+    if targets:
+        targets_str = [f"'{t}'" for t in targets]
+        query += f" AND target in ({', '.join(targets_str)})"
 
     return query
 
@@ -75,9 +72,9 @@ def run_query(query:str) -> sqlite3.Cursor | None:
         return cursor
 
 
-def select_entries(date:config.TimeFrame, category:str, target:str) -> list[entry.Entry]:
+def select_entries(date:config.TimeFrame, category:str, targets:list) -> list[entry.Entry]:
     cursor = connection.cursor()
-    query = make_select_query(date, category, target)
+    query = make_select_query(date, category, targets)
     try:
         cursor.execute(query)
         entries = cursor.fetchall()

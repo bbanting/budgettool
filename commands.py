@@ -115,13 +115,13 @@ class ListEntriesCommand(kelevsma.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(default=""),
-        "target": VTarget(),
+        "target": VTarget(plural=True),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
-    def execute(self, year, month, category, target):
+    def execute(self, year, month, category, targets):
         date = config.TimeFrame(year, month)
-        config.entry_filter_state.set(date=date, category=category, target=target)
+        config.entry_filter_state.set(date=date, category=category, targets=targets)
         display.change_page(1)
 
 

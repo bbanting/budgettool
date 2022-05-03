@@ -33,23 +33,23 @@ def push_targets() -> None:
 def push_entries() -> None:
     """Push the current entries to the display."""
     s = config.entry_filter_state
-    entries = db.select_entries(s.date, s.category, s.target)
+    entries = db.select_entries(s.date, s.category, s.targets)
     total = cents_to_dollars(sum(entries))
     total_str = f"${abs(total):.2f}"
     if total > 0: total_str = "+" + total_str
     if total < 0: total_str = "-" + total_str
-    summary = get_filter_summary(len(entries), s.date, s.category, s.target)
+    summary = get_filter_summary(len(entries), s.date, s.category, s.targets)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: 
         display.push(entry)
     display.push_f("", f"TOTAL: {total_str}", summary)
 
-def get_filter_summary(n:int, date:TimeFrame, category:str, target) -> str:
+def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
     date = f"{date.month.name} {date.year}"
     category = f" of type {category}" if category else ""
-    target = f" at target '{target}'" if target else ""
-    return f"{n} entries{category} from {date}{target}."
+    targets = f" at target '{targets}'" if targets else ""
+    return f"{n} entries{category} from {date}{targets}."
 
 
 def register_commands(controller: command.CommandController):
