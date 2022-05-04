@@ -115,7 +115,7 @@ class ListEntriesCommand(kelevsma.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
         "category": VType(default=""),
-        "target": VTarget(plural=True),
+        "targets": VTarget(plural=True, default=[]),
         }
     help_text = "If no year or month are specified it will default to the current year and month."
     
@@ -165,7 +165,7 @@ class AddEntryTodayCommand(kelevsma.Command):
         db.insert_entry(self.entry)
 
         date = date.strftime("%b %d")
-        amount = self.entry.in_dollars()
+        amount = entry.dollar_str(self.entry.amount)
         display.message(f"Entry added: {date} - {amount} - {note}")
 
     def undo(self) -> None:
@@ -186,7 +186,7 @@ class AddEntryCommand(kelevsma.Command):
         db.insert_entry(self.entry)
 
         date = date.strftime("%b %d")
-        amount = self.entry.in_dollars()
+        amount = entry.dollar_str(self.entry.amount)
         display.message(f"Entry added: {date} - {amount} - {note}")
         
     def undo(self):

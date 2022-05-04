@@ -59,17 +59,21 @@ class Target:
         self.amount = amount
         self.tframe = target_filter_state.tframe
     
-    def current(self) -> int:
+    def current_total(self) -> int:
         """Return the amount sum for entries with this 
         target in the specified timeframe.
         """
         return db.sum_target(self.name, self.tframe)
 
-    def __str__(self) -> str:
-        current = entry.cents_to_dollars(self.current())
-        goal = entry.cents_to_dollars(self.amount)
+    def goal(self) -> int:
+        """Return the goal with respect to current timeframe."""
         if self.tframe.month == 0:
-            goal *= 12
+            return self.amount * 12
+        return self.amount
+
+    def __str__(self) -> str:
+        current = entry.cents_to_dollars(self.current_total())
+        goal = entry.cents_to_dollars(self.goal())
         return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 

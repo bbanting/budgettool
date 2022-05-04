@@ -13,6 +13,7 @@ import kelevsma.display as display
 import commands
 import config
 import db
+import entry
 
 from entry import cents_to_dollars
 from kelevsma.command import CommandError
@@ -43,13 +44,26 @@ def push_entries() -> None:
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: 
         display.push(entry)
-    display.push_f("", f"TOTAL: {total_str}", summary)
+    display.push_f("")
+    display.push_f(get_target_summary(s.targets)) if s.targets else ...
+    display.push_f(f"TOTAL: {total_str}")
+    display.push_f(summary)
 
 def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
-    date = f"{date.month.name} {date.year}"
+    """Return a summary of the entry filter results."""
+    date = f"{date.month.name} of {date.year}"
     category = f" of type {category}" if category else ""
-    targets = f" at target '{targets}'" if targets else ""
-    return f"{n} entries{category} from {date}{targets}."
+    target_str = "targets" if len(targets) > 1 else "target"
+    targets = f" for {target_str} '{', '.join(targets)}'" if targets else ""
+    entry_str = "entries" if n > 1 else "entry"
+    return f"{n} {entry_str}{category} from {date}{targets}."
+
+def get_target_summary(targets:list[str]) -> str:
+    """Return summary of targets in current filter."""
+    targets = [config.get_target(t) for t in targets]
+    current = sum([t.current_total() for t in targets])
+    goal = sum([t.goal() for t in targets])
+    return f"Goal progress: {entry.dollar_str(current)}/{entry.dollar_str(goal)}"
 
 
 def register_commands(controller: command.CommandController):

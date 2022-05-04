@@ -114,6 +114,8 @@ def sum_target(target:str, date:config.TimeFrame) -> int:
         display.error(f"Database error")
     else:
         return sum_amount[0]
+    
+    return 0
 
 
 def target_instances(target_name:str) -> int:

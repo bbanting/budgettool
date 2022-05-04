@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from colorama import Style
 
 import config
-import db
 
 
 class EntryError(Exception):
@@ -49,17 +48,9 @@ class Entry:
             values = (self.id,) + values
         return values
 
-    def in_dollars(self) -> str:
-        """Formats the amount for display."""
-        amount = cents_to_dollars(self.amount)
-        if amount >= 0:
-            return f"+${amount:.2f}"
-        else:
-            return f"-${abs(amount):.2f}"      
-    
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{config.DATEW}} {self.in_dollars():{config.AMOUNTW}} {Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
+        return f"{date:{config.DATEW}} {dollar_str(self.amount):{config.AMOUNTW}} {Style.DIM}({self.target}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):
@@ -70,6 +61,15 @@ class Entry:
 
     def __radd__(self, other) -> int:
         return self.__add__(other)
+
+
+def dollar_str(amount:int) -> str:
+    """Formats a cent amount for display in dollars."""
+    amount = cents_to_dollars(amount)
+    if amount >= 0:
+        return f"+${amount:.2f}"
+    else:
+        return f"-${abs(amount):.2f}"      
 
 
 def cents_to_dollars(cent_amount:int) -> float:

@@ -41,7 +41,6 @@ class VTarget(Validator):
             
         ret_val = [Result.ok(value), Result.err()]
         targets = [t["name"] for t in config.targets]
-        targets += [g["name"] for g in config.groups]
         if value not in targets:
             ret_val.reverse()
 
