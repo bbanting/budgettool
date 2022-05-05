@@ -35,18 +35,13 @@ def push_entries() -> None:
     """Push the current entries to the display."""
     s = config.entry_filter_state
     entries = db.select_entries(s.date, s.category, s.targets)
-    total = cents_to_dollars(sum(entries))
-    total_str = f"${abs(total):.2f}"
-    if total > 0: total_str = "+" + total_str
-    if total < 0: total_str = "-" + total_str
     summary = get_filter_summary(len(entries), s.date, s.category, s.targets)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: 
         display.push(entry)
     display.push_f("")
-    display.push_f(get_target_summary(s.targets)) if s.targets else ...
-    display.push_f(f"TOTAL: {total_str}")
+    display.push_f(get_target_summary(s.targets))
     display.push_f(summary)
 
 def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
@@ -55,15 +50,17 @@ def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str
     category = f" of type {category}" if category else ""
     target_str = "targets" if len(targets) > 1 else "target"
     targets = f" for {target_str} '{', '.join(targets)}'" if targets else ""
-    entry_str = "entries" if n > 1 else "entry"
+    entry_str = "entry" if n == 1 else "entries"
     return f"{n} {entry_str}{category} from {date}{targets}."
 
 def get_target_summary(targets:list[str]) -> str:
     """Return summary of targets in current filter."""
+    if not targets:
+        targets = [t["name"] for t in config.targets]
     targets = [config.get_target(t) for t in targets]
     current = sum([t.current_total() for t in targets])
     goal = sum([t.goal() for t in targets])
-    return f"Goal progress: {entry.dollar_str(current)}/{entry.dollar_str(goal)}"
+    return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"
 
 
 def register_commands(controller: command.CommandController):

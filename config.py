@@ -11,7 +11,7 @@ import logging
 # Constants
 FILENAME = "config.json"
 TODAY = datetime.date.today()
-KEYWORDS = ("income", "expense", "all", "target", "help", "q", "quit") 
+KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries")
 
 # Widths for display columns
 DATEW = 8

@@ -113,10 +113,9 @@ def sum_target(target:str, date:config.TimeFrame) -> int:
     except sqlite3.Error as e:
         display.error(f"Database error")
     else:
-        return sum_amount[0]
+        logging.info(sum_amount)
+        return sum_amount[0] if sum_amount[0] else 0
     
-    return 0
-
 
 def target_instances(target_name:str) -> int:
     """Return the number of times a target is used in the database."""
