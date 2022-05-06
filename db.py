@@ -113,7 +113,6 @@ def sum_target(target:str, date:config.TimeFrame) -> int:
     except sqlite3.Error as e:
         display.error(f"Database error")
     else:
-        logging.info(sum_amount)
         return sum_amount[0] if sum_amount[0] else 0
     
 

@@ -35,6 +35,7 @@ class Month(enum.IntEnum):
 KEYWORDS += tuple(Month.__members__)
 
 
+@dataclasses.dataclass
 class TimeFrame:
     """Represents a timeframe within which to filter entries."""
     year: int
@@ -49,7 +50,7 @@ class ConfigError(Exception):
 
 
 class Target:
-    """Wrapper class for targets."""
+    """Wrapper class for printing targets."""
     name: str
     amount: int
     tframe: TimeFrame
@@ -85,6 +86,9 @@ class StateObject:
     
     def set(self, **kwargs) -> None:
         self.__init__(**kwargs)
+
+    def __repr__(self) -> str:
+        return f"StateObject({self.__dict__})"
 
 
 def check_file(filename) -> None:

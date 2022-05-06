@@ -13,7 +13,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make a Printable class with len attribute
-- [x] All targets summarized if none specified
 - [ ] Include command names in KEYWORDS
 
 ## Notes

@@ -34,8 +34,8 @@ def push_targets() -> None:
 def push_entries() -> None:
     """Push the current entries to the display."""
     s = config.entry_filter_state
-    entries = db.select_entries(s.date, s.category, s.targets)
-    summary = get_filter_summary(len(entries), s.date, s.category, s.targets)
+    entries = db.select_entries(s.tframe, s.category, s.targets)
+    summary = get_filter_summary(len(entries), s.tframe, s.category, s.targets)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     for entry in entries: 
