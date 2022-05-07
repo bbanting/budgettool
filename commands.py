@@ -347,6 +347,12 @@ class EditCommand(kelevsma.ContextualCommand):
     }
 
 
+class SetTargetCommand(kelevsma.Command):
+    """Set the amount for a target; either the default or for a
+    specified month.
+    """
+
+
 class ChangePageCommand(kelevsma.Command):
     """Change to another page of the current entry list."""
     names = ("page",)

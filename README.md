@@ -13,7 +13,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make a Printable class with len attribute
-- [ ] Include command names in KEYWORDS
+- [ ] SetCommand for target amounts. Default and per month
+- [ ] Make dedicated rename target command for clarity
+- [ ] Make StateObject less bad
 
 ## Notes
 

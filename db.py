@@ -8,7 +8,7 @@ import kelevsma.display as display
 import config
 
 
-def make_select_query(date:config.TimeFrame, category:str, targets:list) -> str:
+def make_select_entry_query(date:config.TimeFrame, category:str, targets:list) -> str:
     """Construct a query to select entries in the database."""
     if date.month == 0:
         date = f"{date.year}-%"
@@ -74,7 +74,7 @@ def run_query(query:str) -> sqlite3.Cursor | None:
 
 def select_entries(date:config.TimeFrame, category:str, targets:list) -> list[entry.Entry]:
     cursor = connection.cursor()
-    query = make_select_query(date, category, targets)
+    query = make_select_entry_query(date, category, targets)
     try:
         cursor.execute(query)
         entries = cursor.fetchall()
@@ -129,7 +129,50 @@ def target_instances(target_name:str) -> int:
         return len(entries)
 
 
-table_query = """
+def set_monthly_target(target_name:str, amount:int) -> None:
+    """Set the target amount for the specified month."""
+
+
+def get_monthly_target_amount(target_name:str, month:int) -> int:
+    """Returns a monthly target from the database.
+    If no monthly target exists with the input parameters, a new one is
+    created based on the default for that target and returned.
+    """
+    query = f"""
+    SELECT amount 
+    FROM monthlytarget 
+    WHERE name = '{target_name}' AND month = {month}
+    """
+    cursor = connection.cursor()
+    try:
+        cursor.execute(query)
+        amount = cursor.fetchone()
+    except sqlite3.Error:
+        display.error(f"Database error")
+        return
+    
+    if not amount:
+        default = config.get_target(target_name).amount
+        insert_query = f"""
+        INSERT INTO monthlytargets (name, amount, month) 
+        VALUES ('{target_name}', {default}, {month})
+        """
+        run_query(insert_query)
+        return get_monthly_target_amount(target_name, month)
+    
+    return amount
+
+
+
+monthlytarget_table_query = """
+CREATE TABLE IF NOT EXISTS monthlytarget (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+);"""
+
+entries_table_query = """
 CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
@@ -146,4 +189,5 @@ except sqlite3.Error:
     quit()
 
 # run_query("DROP TABLE entries;")
-run_query(table_query)
+run_query(monthlytarget_table_query)
+run_query(entries_table_query)

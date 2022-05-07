@@ -15,7 +15,6 @@ import config
 import db
 import entry
 
-from entry import cents_to_dollars
 from kelevsma.command import CommandError
 from config import TimeFrame, DATEW, AMOUNTW
 
@@ -28,7 +27,7 @@ class BTError(Exception):
 
 def push_targets() -> None:
     for t in config.targets:
-        display.push(config.get_target(t))
+        display.push(config.Target(**t))
 
 
 def push_entries() -> None:

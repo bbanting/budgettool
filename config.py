@@ -2,10 +2,11 @@ from __future__ import annotations
 import json
 import datetime
 import enum
-import dataclasses
+import logging
+from dataclasses import dataclass
+
 import entry
 import db
-import logging
 
 
 # Constants
@@ -35,7 +36,7 @@ class Month(enum.IntEnum):
 KEYWORDS += tuple(Month.__members__)
 
 
-@dataclasses.dataclass
+@dataclass(slots=True)
 class TimeFrame:
     """Represents a timeframe within which to filter entries."""
     year: int
@@ -50,16 +51,16 @@ class ConfigError(Exception):
 
 
 class Target:
-    """Wrapper class for printing targets."""
+    """Class for printing targets."""
     name: str
     amount: int
     tframe: TimeFrame
 
-    def __init__(self, name:str, amount:int) -> None:
+    def __init__(self, name:str) -> None:
         self.name = name
-        self.amount = amount
         self.tframe = target_filter_state.tframe
-    
+        self.amount = db.get_monthly_target_amount(self.name, self.tframe.month.value)
+
     def current_total(self) -> int:
         """Return the amount sum for entries with this 
         target in the specified timeframe.
@@ -121,7 +122,7 @@ def to_dict() -> dict:
 
 def add_target(name:str, amount:int) -> None:
     """Adds a new target to the config file."""
-    targets.append({"name": name, "amount": amount})
+    targets.append({"name": name, "default_amount": amount})
     overwrite()
 
 
