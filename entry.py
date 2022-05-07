@@ -43,7 +43,7 @@ class Entry:
     def to_tuple(self) -> tuple:
         """Return a tuple representation for the database."""
         date = self.date.isoformat()
-        values = (date, self.amount, self.target.name, self.note)
+        values = (date, self.amount, self.target, self.note)
         if self.id:
             values = (self.id,) + values
         return values

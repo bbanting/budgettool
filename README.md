@@ -15,7 +15,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Make a Printable class with len attribute
 - [ ] SetCommand for target amounts. Default and per month
 - [ ] Make dedicated rename target command for clarity
-- [ ] Make StateObject less bad
+- [x] Make StateObject less bad
+- [ ] Move targets from json to the db?
 
 ## Notes
 

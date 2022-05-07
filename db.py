@@ -140,7 +140,7 @@ def get_monthly_target_amount(target_name:str, month:int) -> int:
     """
     query = f"""
     SELECT amount 
-    FROM monthlytarget 
+    FROM monthlytargets 
     WHERE name = '{target_name}' AND month = {month}
     """
     cursor = connection.cursor()
@@ -152,7 +152,7 @@ def get_monthly_target_amount(target_name:str, month:int) -> int:
         return
     
     if not amount:
-        default = config.get_target(target_name).amount
+        default = config.get_target(target_name).default_amount
         insert_query = f"""
         INSERT INTO monthlytargets (name, amount, month) 
         VALUES ('{target_name}', {default}, {month})
@@ -160,16 +160,16 @@ def get_monthly_target_amount(target_name:str, month:int) -> int:
         run_query(insert_query)
         return get_monthly_target_amount(target_name, month)
     
-    return amount
+    return amount[0]
 
 
 
 monthlytarget_table_query = """
-CREATE TABLE IF NOT EXISTS monthlytarget (
+CREATE TABLE IF NOT EXISTS monthlytargets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    month INTEGER NOT NULL,
+    month INTEGER NOT NULL
 );"""
 
 entries_table_query = """

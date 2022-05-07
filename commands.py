@@ -57,7 +57,7 @@ def get_amount() -> int | None:
 
 def get_target() -> dict | None:
     """Get target input from user."""
-    display.message(f"({', '.join([t.name for t in config.targets])})")
+    display.message(f"({', '.join([t['name'] for t in config.targets])})")
     display.refresh()
     target = input("Target: ").lower().strip()
 
@@ -121,8 +121,8 @@ class ListEntriesCommand(kelevsma.Command):
     
     def execute(self, year, month, category, targets):
         tframe = config.TimeFrame(year, month)
-        config.entry_filter_state.set(tframe=tframe, category=category, targets=targets)
-        config.target_filter_state.set(tframe=tframe)
+        config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
+        config.target_filter_state.__init__(tframe=tframe)
         display.change_page(1)
 
 
@@ -135,7 +135,7 @@ class ListTargetsCommand(kelevsma.Command):
 
     def execute(self, year, month) -> None:
         tframe = config.TimeFrame(year, month)
-        config.target_filter_state.set(tframe=tframe)
+        config.target_filter_state.__init__(tframe=tframe)
         display.change_page(1)
 
 
@@ -188,7 +188,7 @@ class AddEntryCommand(kelevsma.Command):
 
         date = date.strftime("%b %d")
         amount = entry.dollar_str(self.entry.amount)
-        display.message(f"Entry added: {date} - {amount} - {note}")
+        display.message(f"Entry added: {date}, {amount}, {note}")
         
     def undo(self):
         db.delete_entry(self.entry)

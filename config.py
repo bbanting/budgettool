@@ -53,13 +53,13 @@ class ConfigError(Exception):
 class Target:
     """Class for printing targets."""
     name: str
-    amount: int
+    default_amount: int
     tframe: TimeFrame
 
-    def __init__(self, name:str) -> None:
+    def __init__(self, name:str, default_amount:int) -> None:
         self.name = name
         self.tframe = target_filter_state.tframe
-        self.amount = db.get_monthly_target_amount(self.name, self.tframe.month.value)
+        self.default_amount = default_amount
 
     def current_total(self) -> int:
         """Return the amount sum for entries with this 
@@ -70,8 +70,9 @@ class Target:
     def goal(self) -> int:
         """Return the goal with respect to current timeframe."""
         if self.tframe.month == 0:
-            return self.amount * 12
-        return self.amount
+            goals = [db.get_monthly_target_amount(self.name, x) for x in range(1, 13)]
+            return sum(goals)
+        return db.get_monthly_target_amount(self.name, self.tframe.month.value)
 
     def __str__(self) -> str:
         current = entry.cents_to_dollars(self.current_total())
@@ -79,17 +80,19 @@ class Target:
         return f"{self.name}: {current:.2f}/{goal:.2f}"
 
 
-class StateObject:
-    """Convenience class for state storage."""
-    def __init__(self, **kwargs) -> None:
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-    
-    def set(self, **kwargs) -> None:
-        self.__init__(**kwargs)
+@dataclass(slots=True)
+class TargetFilterState:
+    """Convenience class for storing target filter state."""
+    tframe: TimeFrame
+    category: str = ""
 
-    def __repr__(self) -> str:
-        return f"StateObject({self.__dict__})"
+
+@dataclass(slots=True)
+class EntryFilterState:
+    """Convenience class for storing target filter state."""
+    tframe: TimeFrame
+    category: str
+    targets: list
 
 
 def check_file(filename) -> None:
@@ -156,5 +159,5 @@ except KeyError:
 
 targets: list[dict]
 
-entry_filter_state = StateObject(tframe=TimeFrame(), category="", targets=[])
-target_filter_state = StateObject(tframe=TimeFrame(), category="")
+entry_filter_state = EntryFilterState(tframe=TimeFrame(), category="", targets=[])
+target_filter_state = TargetFilterState(tframe=TimeFrame(), category="")
