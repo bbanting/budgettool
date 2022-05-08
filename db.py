@@ -3,61 +3,8 @@ from __future__ import annotations
 import sqlite3
 import logging
 
-import entry
 import kelevsma.display as display
 import config
-
-
-def make_select_entry_query(date:config.TimeFrame, category:str, targets:list) -> str:
-    """Construct a query to select entries in the database."""
-    if date.month == 0:
-        date = f"{date.year}-%"
-    else:
-        date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
-
-    query = f"SELECT * FROM entries WHERE date LIKE '{date}'"
-
-    if category == "expense":
-        query += " AND amount < 0"
-    elif category == "income":
-        query += " AND amount >= 0"
-
-    if targets:
-        targets_str = [f"'{t}'" for t in targets]
-        query += f" AND target in ({', '.join(targets_str)})"
-
-    return query
-
-
-def make_insert_query(entry:entry.Entry) -> str:
-    """Construct a query to insert an entry into the database."""
-    fields = "(date, amount, target, note)"
-    if entry.id:
-        fields = "(id, date, amount, target, note)"
-    values = entry.to_tuple()
-    
-    return f"INSERT INTO entries {fields} VALUES {values}"
-
-
-def make_delete_query(entry:entry.Entry) -> str:
-    """Construct a query to delete an entry from the database."""
-    return f"DELETE FROM entries where id = {entry.id}"
-
-
-def make_update_query(new_entry:entry.Entry) -> str:
-    """Construct a query to overwrite an entry in the database. The
-    new entry has the same id and the entry it's replacing.
-    """
-    new_entry = new_entry.to_tuple()
-    query = \
-    """
-    UPDATE entries 
-    SET date = '{}', amount = {}, target = '{}', note = '{}'
-    WHERE id = {id}
-    """
-    query = query.format(id=new_entry[0], *new_entry[1:])
-
-    return query
 
 
 def run_query(query:str) -> sqlite3.Cursor | None:
@@ -72,34 +19,76 @@ def run_query(query:str) -> sqlite3.Cursor | None:
         return cursor
 
 
-def select_entries(date:config.TimeFrame, category:str, targets:list) -> list[entry.Entry]:
+def run_select_query(query:str) -> list[tuple|None]:
+    """Run an SQL SELECT Query."""
     cursor = connection.cursor()
-    query = make_select_entry_query(date, category, targets)
     try:
         cursor.execute(query)
-        entries = cursor.fetchall()
+        items = cursor.fetchall()
     except sqlite3.Error as e:
+        logging.info(e)
         display.error(f"Database error")
     else:
-        return [entry.Entry.from_tuple(e) for e in entries]
+        return items
 
 
-def insert_entry(entry:entry.Entry) -> None:
-    """Insert an entry into the database."""
-    query = make_insert_query(entry)
-    run_query(query)
+def make_select_query_entry(date:config.TimeFrame, category:str, targets:list) -> str:
+    """Construct a query to select entries in the database."""
+    if date.month == 0:
+        date = f"{date.year}-%"
+    else:
+        date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
+
+    query = f"""
+    SELECT e.id, e.date, e.amount, targets.name, e.note 
+    FROM entries AS e
+    INNER JOIN targets ON e.target = targets.id
+    WHERE date LIKE '{date}'"""
+
+    if category == "expense":
+        query += " AND amount < 0"
+    elif category == "income":
+        query += " AND amount >= 0"
+
+    if targets:
+        targets_str = [f"'{t}'" for t in targets]
+        query += f" AND target in ({', '.join(targets_str)})"
+
+    return query
 
 
-def delete_entry(entry:entry.Entry) -> None:
-    """Delete an entry from the database."""
-    query = make_delete_query(entry)
-    run_query(query)
+def make_insert_query_entry(entry_values:tuple) -> str:
+    """Construct a query to insert an entry into the database."""
+    fields = "(date, amount, target, note)"
+    if entry_values.id:
+        fields = "(id, date, amount, target, note)"
+    
+    return f"INSERT INTO entries {fields} VALUES {entry_values}"
 
 
-def update_entry(entry:entry.Entry) -> None:
-    """Update an entry in the database."""
-    query = make_update_query(entry)
-    run_query(query)
+def make_delete_query_entry(entry_id:int) -> str:
+    """Construct a query to delete an entry from the database."""
+    return f"DELETE FROM entries where id = {entry_id}"
+
+
+def make_update_query_entry(new_entry_values:tuple) -> str:
+    """Construct a query to overwrite an entry in the database. The
+    new entry has the same id and the entry it's replacing.
+    """
+    new_entry_values = new_entry_values.to_tuple()
+    query = \
+    """
+    UPDATE entries 
+    SET date = '{}', amount = {}, target = '{}', note = '{}'
+    WHERE id = {id}
+    """
+    query = query.format(id=new_entry_values[0], *new_entry_values[1:])
+
+    return query
+
+
+def make_select_query_target() -> str:
+    return "SELECT name, default_amt FROM targets"
 
 
 def sum_target(target:str, date:config.TimeFrame) -> int:
@@ -146,7 +135,7 @@ def get_monthly_target_amount(target_name:str, month:int) -> int:
     cursor = connection.cursor()
     try:
         cursor.execute(query)
-        amount = cursor.fetchone()
+        amount = cursor.fetchone()[0]
     except sqlite3.Error:
         display.error(f"Database error")
         return
@@ -160,16 +149,23 @@ def get_monthly_target_amount(target_name:str, month:int) -> int:
         run_query(insert_query)
         return get_monthly_target_amount(target_name, month)
     
-    return amount[0]
+    return amount
 
 
+targets_table_query = """
+CREATE TABLE IF NOT EXISTS targets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    default_amt INTEGER NOT NULL
+);"""
 
-monthlytarget_table_query = """
+monthlytargets_table_query = """
 CREATE TABLE IF NOT EXISTS monthlytargets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    target INTEGER NOT NULL,
     amount INTEGER NOT NULL,
-    month INTEGER NOT NULL
+    month INTEGER NOT NULL,
+    FOREIGN KEY (target) REFERENCES targets (id)
 );"""
 
 entries_table_query = """
@@ -177,8 +173,9 @@ CREATE TABLE IF NOT EXISTS entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    target TEXT NOT NULL,
-    note TEXT
+    target INTEGER NOT NULL,
+    note TEXT,
+    FOREIGN KEY (target) REFERENCES targets (id)
 );"""
 
 
@@ -189,5 +186,6 @@ except sqlite3.Error:
     quit()
 
 # run_query("DROP TABLE entries;")
-run_query(monthlytarget_table_query)
+run_query(targets_table_query)
+run_query(monthlytargets_table_query)
 run_query(entries_table_query)

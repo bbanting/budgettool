@@ -7,10 +7,7 @@ from dataclasses import dataclass
 from colorama import Style
 
 import config
-
-
-class EntryError(Exception):
-    pass
+import db
 
 
 @dataclass
@@ -82,3 +79,28 @@ def cents_to_dollars(cent_amount:int) -> float:
 def dollars_to_cents(dollar_amount:str) -> int:
     """Convert a string dollar ammount to cents for storage."""
     return int(float(dollar_amount) * 100)
+
+
+def insert(entry:Entry) -> None:
+    """Insert an entry into the database."""
+    query = db.make_insert_query_entry(entry.to_tuple())
+    db.run_query(query)
+
+
+def delete(entry:Entry) -> None:
+    """Delete an entry from the database."""
+    query = db.make_delete_query_entry(entry.id)
+    db.run_query(query)
+
+
+def update(entry:Entry) -> None:
+    """Update an entry in the database."""
+    query = db.make_update_query_entry(entry.to_tuple())
+    db.run_query(query)
+
+
+def select(date:config.TimeFrame, category:str, targets:list) -> list[Entry]:
+    """Select entries from the database."""
+    query = db.make_select_query_entry(date, category, targets)
+    entry_tuples = db.run_select_query(query)
+    return [Entry.from_tuple(e) for e in entry_tuples]

@@ -12,7 +12,7 @@ import kelevsma.command as command
 import kelevsma.display as display
 import commands
 import config
-import db
+import target
 import entry
 
 from kelevsma.command import CommandError
@@ -26,14 +26,14 @@ class BTError(Exception):
 
 
 def push_targets() -> None:
-    for t in config.targets:
-        display.push(config.Target(**t))
+    display.push(*target.select())
 
 
 def push_entries() -> None:
     """Push the current entries to the display."""
+    global entry # I don't understand why this is necessary
     s = config.entry_filter_state
-    entries = db.select_entries(s.tframe, s.category, s.targets)
+    entries = entry.select(s.tframe, s.category, s.targets)
     summary = get_filter_summary(len(entries), s.tframe, s.category, s.targets)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
@@ -42,6 +42,7 @@ def push_entries() -> None:
     display.push_f("")
     display.push_f(get_target_summary(s.targets))
     display.push_f(summary)
+
 
 def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
     """Return a summary of the entry filter results."""
@@ -52,11 +53,11 @@ def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str
     entry_str = "entry" if n == 1 else "entries"
     return f"{n} {entry_str}{category} from {date}{targets}."
 
+
 def get_target_summary(targets:list[str]) -> str:
     """Return summary of targets in current filter."""
     if not targets:
-        targets = [t["name"] for t in config.targets]
-    targets = [config.get_target(t) for t in targets]
+        targets = target.select()
     current = sum([t.current_total() for t in targets])
     goal = sum([t.goal() for t in targets])
     return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"
