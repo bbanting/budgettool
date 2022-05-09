@@ -26,7 +26,6 @@ def run_select_query(query:str) -> list[tuple|None]:
         cursor.execute(query)
         items = cursor.fetchall()
     except sqlite3.Error as e:
-        logging.info(e)
         display.error(f"Database error")
     else:
         return items
@@ -87,8 +86,42 @@ def make_update_query_entry(new_entry_values:tuple) -> str:
     return query
 
 
-def make_select_query_target() -> str:
-    return "SELECT name, default_amt FROM targets"
+def make_select_query_target(name:str) -> str:
+    """Construct a query to select targets."""
+    query = "SELECT * FROM targets"
+    if name:
+        query += f" WHERE name = '{name}'"
+    return query
+
+
+def make_insert_query_target(id:int, name:str, default_amt:int) -> str:
+    """Construct a query to insert a target."""
+    fields = "(name, default_amt)"
+    values = (name, default_amt)
+    if id:
+        fields = "(id, name, default_amt)"
+        values = (id, name, default_amt)
+    query = f"""
+    INSERT INTO targets {fields}
+    VALUES {values}
+    """
+    return query
+
+
+def make_delete_query_target(name:str) -> str:
+    """Construct a query to delete a target."""
+    query = f"DELETE FROM targets WHERE name = {name}"
+    return query
+
+
+def make_update_query_target(name:str, default_amt:int) -> str:
+    """Construct a query to overwrite a target in the database."""
+    query = f"""
+    UPDATE targets 
+    SET default_amount = {default_amt}
+    WHERE name = '{name}'
+    """
+    return query
 
 
 def sum_target(target:str, date:config.TimeFrame) -> int:
@@ -105,17 +138,10 @@ def sum_target(target:str, date:config.TimeFrame) -> int:
         return sum_amount[0] if sum_amount[0] else 0
     
 
-def target_instances(target_name:str) -> int:
+def target_times_used(target_name:str) -> int:
     """Return the number of times a target is used in the database."""
     query = f"SELECT * FROM entries WHERE target = '{target_name}'"
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query)
-        entries = cursor.fetchall()
-    except sqlite3.Error as e:
-        display.error(f"Database error")
-    else:
-        return len(entries)
+    return len(run_select_query(query))
 
 
 def set_monthly_target(target_name:str, amount:int) -> None:

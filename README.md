@@ -17,10 +17,10 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Make dedicated rename target command for clarity
 - [ ] If there are no targets, prompt user to make first one
 
-target instance is created when entry is created or when amount is set
 
 ## Notes
 
 - LineBuffer.true_height needs to account for numbering too
 - Currently, if page numbers get too many digits long, they will overflow
 - Should I make the argument order strict? What is the best compromise there?
+- target instance is created when first entry is created or when amount is set

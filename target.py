@@ -2,12 +2,17 @@ import config
 import entry
 import db
 
-class Target:
-    """Class for printing targets."""
-    name: str
 
-    def __init__(self, name:str) -> None:
+class Target:
+    """Class for manipulating and printing targets."""
+    id: int
+    name: str
+    default_amt: int
+
+    def __init__(self, id:int, name:str, default_amt:int) -> None:
+        self.id = id
         self.name = name
+        self.default_amt = default_amt
 
     def current_total(self) -> int:
         """Return the amount sum for entries with this 
@@ -33,30 +38,31 @@ def get_target_names() -> list[str]:
     return [t[0] for t in target_tuples]
 
 
-def insert(name:str, amount:int) -> None:
+def insert(target:Target) -> None:
     """Adds a new target to the database."""
-    targets.append({"name": name, "default_amount": amount})
+    query = db.make_insert_query_target(**target.__dict__)
+    db.run_query(query)
 
 
 def delete(name:str) -> None:
     """Removes a target from the database."""
-    for t in targets:
-        if t["name"] != name:
-            continue
-        targets.remove(t)
-        break
+    query = db.make_delete_query_target(name)
+    db.run_query(query)
 
 
-def update(name:str) -> Target | None:
+def update(name:str, amount:int) -> None:
     """Update a target."""
-    for t in targets:
-        if t["name"] != name:
-            continue
-        return Target(**t)
+    query = db.make_update_query_target(name, amount)
+    db.run_query(query)
 
 
-def select() -> list[Target]:
-    """Return the list of targets."""
-    query = db.make_select_query_target()
+def select(name:str="") -> list[Target]:
+    """Return the whole list of targets as Target objects."""
+    query = db.make_select_query_target(name)
     target_tuples = db.run_select_query(query)
     return [Target(*t) for t in target_tuples]
+
+
+def select_one(name:str) -> Target:
+    """Return a single target from the database."""
+    return select(name)[0]

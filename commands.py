@@ -201,21 +201,20 @@ class AddEntryCommand(kelevsma.Command):
 
 class AddTargetCommand(kelevsma.Command):
     """Add a new target."""
-    target: dict
     params = {
         "name": VTarget(req=True, invert=True),
         "amount": VAmount(req=True),
     }
 
     def execute(self, name, amount) -> None:
-        self.target = {"name": name, "amount": amount}
-        config.add_target(**self.target)
+        self.target = target.Target(0, name, amount)
+        target.insert(self.target)
 
     def undo(self) -> None:
-        config.remove_target(self.target["name"])
+        target.delete(self.target.name)
 
     def redo(self) -> None:
-        config.add_target(**self.target)
+        target.insert(self.target)
 
 
 class AddCommand(kelevsma.ForkCommand):
@@ -260,19 +259,19 @@ class RemoveTargetCommand(kelevsma.Command):
     }
 
     def execute(self, name:str) -> None:
-        self.target = config.get_target(name).__dict__
-        uses = db.target_instances(name)
+        uses = db.target_times_used(name)
         if uses:
             display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
             return
 
-        config.remove_target(name)
+        self.target = target.select_one(name)
+        target.delete(self.target.name)
 
     def undo(self):
-        config.add_target(**self.target)
+        target.insert(self.target)
 
     def redo(self):
-        config.remove_target(self.target["name"])
+        target.delete(self.target.name)
 
 
 class RemoveCommand(kelevsma.ForkCommand):
