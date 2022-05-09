@@ -55,7 +55,7 @@ class EntryFilterState:
     """Convenience class for storing target filter state."""
     tframe: TimeFrame
     category: str
-    targets: list
+    targets: list[str]
 
 
 entry_filter_state = EntryFilterState(tframe=TimeFrame(), category="", targets=[])

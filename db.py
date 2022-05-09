@@ -122,50 +122,76 @@ def set_monthly_target(target_name:str, amount:int) -> None:
     """Set the target amount for the specified month."""
 
 
-def get_monthly_target_amount(target_name:str, month:int) -> int:
-    """Returns a monthly target from the database.
-    If no monthly target exists with the input parameters, a new one is
-    created based on the default for that target and returned.
+# def get_target_goal_monthly(target_name:str, tframe:config.TimeFrame) -> int:
+#     """Returns a monthly target from the database.
+#     If no monthly target exists with the input parameters, a new one is
+#     created based on the default for that target and returned.
+#     """
+#     query = f"""
+#     SELECT SUM(amount) 
+#     FROM monthlytargets 
+#     WHERE name = '{target_name}' AND year = {tframe.year}
+#     """
+#     if tframe.month != 0:
+#         query += f" AND month = {tframe.month.value}"
+
+#     amount = run_select_query(query)[0][0]
+#     if not amount:
+#         default = config.get_target(target_name).default_amount
+#         insert_query = f"""
+#         INSERT INTO monthlytargets (name, amount, month) 
+#         VALUES ('{target_name}', {default}, {month})
+#         """
+#         run_query(insert_query)
+#         return get_target_goal_monthly(target_name, month)
+    
+#     return amount
+
+
+def get_target_default(name:str) -> int:
+    """Get the default goal for a target."""
+    query = f"SELECT default FROM targets WHERE name = '{name}'"
+    return run_select_query(query)[0][0]
+
+
+def get_target_goal(target_name:str, tframe:config.TimeFrame) -> int:
+    """Returns a target instance from the database.
+    If no target instance exists with the input parameters, the 
+    default for that target is returned.
     """
+    expected_n_values = 12
     query = f"""
     SELECT amount 
-    FROM monthlytargets 
-    WHERE name = '{target_name}' AND month = {month}
+    FROM target_instances
+    WHERE name = '{target_name}' AND year = {tframe.year}
     """
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query)
-        amount = cursor.fetchone()[0]
-    except sqlite3.Error:
-        display.error(f"Database error")
-        return
+    if tframe.month != 0:
+        expected_n_values = 1
+        query += f" AND month = {tframe.month.value}"
+
+    result = run_select_query(query)
+    if diff := (expected_n_values - len(result)):
+        default = get_target_default(target_name)
+        return sum([x[0][0] for x in result]) + (default * diff)
     
-    if not amount:
-        default = config.get_target(target_name).default_amount
-        insert_query = f"""
-        INSERT INTO monthlytargets (name, amount, month) 
-        VALUES ('{target_name}', {default}, {month})
-        """
-        run_query(insert_query)
-        return get_monthly_target_amount(target_name, month)
-    
-    return amount
+    return sum([x[0][0] for x in result])
 
 
-targets_table_query = """
+target_table_query = """
 CREATE TABLE IF NOT EXISTS targets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     default_amt INTEGER NOT NULL
 );"""
 
-monthlytargets_table_query = """
-CREATE TABLE IF NOT EXISTS monthlytargets (
+target_instances_table_query = """
+CREATE TABLE IF NOT EXISTS target_instances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     target INTEGER NOT NULL,
     amount INTEGER NOT NULL,
+    year INTEGER NOT NULL,
     month INTEGER NOT NULL,
-    FOREIGN KEY (target) REFERENCES targets (id)
+    FOREIGN KEY (target) REFERENCES target (id)
 );"""
 
 entries_table_query = """
@@ -185,7 +211,6 @@ except sqlite3.Error:
     display.error("Database connection error.")
     quit()
 
-# run_query("DROP TABLE entries;")
-run_query(targets_table_query)
-run_query(monthlytargets_table_query)
+run_query(target_table_query)
+run_query(target_instances_table_query)
 run_query(entries_table_query)

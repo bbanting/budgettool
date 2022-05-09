@@ -15,8 +15,9 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Make a Printable class with len attribute
 - [ ] SetCommand for target amounts. Default and per month
 - [ ] Make dedicated rename target command for clarity
-- [x] Move targets from json to the db?
 - [ ] If there are no targets, prompt user to make first one
+
+target instance is created when entry is created or when amount is set
 
 ## Notes
 

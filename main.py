@@ -34,17 +34,15 @@ def push_entries() -> None:
     global entry # I don't understand why this is necessary
     s = config.entry_filter_state
     entries = entry.select(s.tframe, s.category, s.targets)
-    summary = get_filter_summary(len(entries), s.tframe, s.category, s.targets)
+    entry_summary = get_entry_summary(len(entries), s.tframe, s.category, s.targets)
+    target_progress = get_target_progress(s.targets)
 
     display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
-    for entry in entries: 
-        display.push(entry)
-    display.push_f("")
-    display.push_f(get_target_summary(s.targets))
-    display.push_f(summary)
+    display.push(*entries)
+    display.push_f("", target_progress, entry_summary)
 
 
-def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
+def get_entry_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
     """Return a summary of the entry filter results."""
     date = f"{date.month.name} of {date.year}"
     category = f" of type {category}" if category else ""
@@ -54,7 +52,7 @@ def get_filter_summary(n:int, date:TimeFrame, category:str, targets:list) -> str
     return f"{n} {entry_str}{category} from {date}{targets}."
 
 
-def get_target_summary(targets:list[str]) -> str:
+def get_target_progress(targets:list[str]) -> str:
     """Return summary of targets in current filter."""
     if not targets:
         targets = target.select()

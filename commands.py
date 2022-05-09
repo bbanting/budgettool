@@ -7,6 +7,7 @@ import config
 import kelevsma.display as display
 import main
 import entry
+import target
 import db
 
 from config import TODAY
@@ -57,21 +58,22 @@ def get_amount() -> int | None:
 
 def get_target() -> dict | None:
     """Get target input from user."""
-    display.message(f"({', '.join([t['name'] for t in config.targets])})")
+    target_names = target.get_target_names()
+    display.message(f"({', '.join(target_names)})")
     display.refresh()
-    target = input("Target: ").lower().strip()
+    t_input = input("Target: ").lower().strip()
 
-    if target in ("q", "quit"):
+    if t_input in ("q", "quit"):
         raise main.BTError("Input aborted by user.")
-    if target == "help":
-        display.message(f"({', '.join([t.name for t in config.targets])})")
+    if t_input == "help":
+        display.message(f"({', '.join(target_names)})")
         return
 
-    if target not in [t["name"] for t in config.targets]:
+    if t_input not in [t["name"] for t in config.targets]:
         display.message("Invalid target given. Enter 'help' to see targets.")
         return
 
-    return target
+    return t_input
             
 
 def get_note() -> str:

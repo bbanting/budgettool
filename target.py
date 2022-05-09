@@ -5,13 +5,9 @@ import db
 class Target:
     """Class for printing targets."""
     name: str
-    default_amount: int
-    tframe: config.TimeFrame
 
-    def __init__(self, name:str, default_amount:int) -> None:
+    def __init__(self, name:str) -> None:
         self.name = name
-        self.tframe = config.target_filter_state.tframe
-        self.default_amount = default_amount
 
     def current_total(self) -> int:
         """Return the amount sum for entries with this 
@@ -21,15 +17,20 @@ class Target:
 
     def goal(self) -> int:
         """Return the goal with respect to current timeframe."""
-        if self.tframe.month == 0:
-            goals = [db.get_monthly_target_amount(self.name, x) for x in range(1, 13)]
-            return sum(goals)
-        return db.get_monthly_target_amount(self.name, self.tframe.month.value)
+        tframe = config.target_filter_state.tframe
+        return db.get_target_goal(self.name, tframe)
 
     def __str__(self) -> str:
         current = entry.cents_to_dollars(self.current_total())
         goal = entry.cents_to_dollars(self.goal())
         return f"{self.name}: {current:.2f}/{goal:.2f}"
+
+
+def get_target_names() -> list[str]:
+    """Return a list of the target names."""
+    query = db.make_select_query_target()
+    target_tuples = db.run_select_query(query)
+    return [t[0] for t in target_tuples]
 
 
 def insert(name:str, amount:int) -> None:
