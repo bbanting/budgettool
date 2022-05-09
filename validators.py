@@ -55,9 +55,9 @@ class VAmount(Validator):
             return Result.err()
         
         amount = entry.dollars_to_cents(value)
-        if amount >= 100000000:
+        if not -100000000 < amount < 100000000:
             return Result.err()
-        return Result.ok()
+        return Result.ok(amount)
 
 
 class VType(Validator):

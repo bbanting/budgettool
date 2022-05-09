@@ -8,6 +8,7 @@ from colorama import Style
 
 import config
 import db
+import target
 
 from config import DATEW, AMOUNTW
 
@@ -43,16 +44,17 @@ class Entry:
     def to_tuple(self) -> tuple:
         """Return a tuple representation for the database."""
         date = self.date.isoformat()
-        values = (date, self.amount, self.target, self.note)
+        targ_id = target.select_one(self.target).id
+        values = (date, self.amount, targ_id, self.note)
         if self.id:
             values = (self.id,) + values
         return values
 
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{DATEW}} \
-        {dollar_str(self.amount):{AMOUNTW}} \
-        {Style.DIM}({self.target}){Style.NORMAL} {self.note}"
+        return f"{date:{DATEW}}" \
+        f"{dollar_str(self.amount):{AMOUNTW}}" \
+        f"{Style.DIM}({self.target}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):
@@ -88,8 +90,8 @@ def dollars_to_cents(dollar_amount:str) -> int:
 
 def insert(entry:Entry) -> None:
     """Insert an entry into the database."""
-    query = db.make_insert_query_entry(entry.to_tuple())
-    db.run_query(query)
+    query = db.make_insert_query_entry(entry)
+    cur = db.run_query(query)
 
 
 def delete(entry:Entry) -> None:

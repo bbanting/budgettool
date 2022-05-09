@@ -6,6 +6,7 @@ import logging
 import kelevsma.display as display
 import config
 import target
+import entry
 
 
 def run_query(query:str) -> sqlite3.Cursor | None:
@@ -58,13 +59,13 @@ def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list)
     return query
 
 
-def make_insert_query_entry(entry_values:tuple) -> str:
+def make_insert_query_entry(entry:entry.Entry) -> str:
     """Construct a query to insert an entry into the database."""
     fields = "(date, amount, target, note)"
-    if entry_values.id:
+    if entry.id:
         fields = "(id, date, amount, target, note)"
     
-    return f"INSERT INTO entries {fields} VALUES {entry_values}"
+    return f"INSERT INTO entries {fields} VALUES {entry.to_tuple()}"
 
 
 def make_delete_query_entry(entry_id:int) -> str:

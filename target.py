@@ -62,7 +62,7 @@ def select(name:str="") -> list[Target]:
 
 def select_one(name:str) -> Target:
     """Return a single target from the database."""
-    return Target(*select(name)[0])
+    return select(name)[0]
 
 
 def get_target_names() -> list[str]:

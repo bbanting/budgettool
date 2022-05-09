@@ -165,17 +165,17 @@ class AddEntryTodayCommand(kelevsma.Command):
         date = datetime.date.today()
         note = " ".join(note)
         self.entry = Entry(0, date, amount, target, note)
-        db.insert_entry(self.entry)
+        entry.insert(self.entry)
 
         date = date.strftime("%b %d")
         amount = entry.dollar_str(self.entry.amount)
         display.message(f"Entry added: {date} - {amount} - {note}")
 
     def undo(self) -> None:
-        db.delete_entry(self.entry)
+        entry.delete(self.entry)
 
     def redo(self) -> None:
-        db.insert_entry(self.entry)
+        entry.insert(self.entry)
 
 
 class AddEntryCommand(kelevsma.Command):
@@ -186,17 +186,17 @@ class AddEntryCommand(kelevsma.Command):
         except main.BTError:
             return # Exit the command
         self.entry = Entry(0, date, amount, target, note)
-        db.insert_entry(self.entry)
+        entry.insert(self.entry)
 
         date = date.strftime("%b %d")
         amount = entry.dollar_str(self.entry.amount)
         display.message(f"Entry added: {date}, {amount}, {note}")
         
     def undo(self):
-        db.delete_entry(self.entry)
+        entry.delete(self.entry)
 
     def redo(self):
-        db.insert_entry(self.entry)
+        entry.insert(self.entry)
 
 
 class AddTargetCommand(kelevsma.Command):
@@ -241,14 +241,14 @@ class RemoveEntryCommand(kelevsma.Command):
             display.refresh()
             ans = input("(Y/n) Are you sure you want to delete this entry? ").lower()
         if ans in ("yes", "y"):
-            db.delete_entry(self.entry)
+            entry.delete(self.entry)
         display.deselect()
 
     def undo(self):
-        db.insert_entry(self.entry)
+        entry.insert(self.entry)
 
     def redo(self):
-        db.delete_entry(self.entry)
+        entry.delete(self.entry)
 
 
 class RemoveTargetCommand(kelevsma.Command):
