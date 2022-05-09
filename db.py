@@ -5,6 +5,7 @@ import logging
 
 import kelevsma.display as display
 import config
+import target
 
 
 def run_query(query:str) -> sqlite3.Cursor | None:
@@ -26,23 +27,24 @@ def run_select_query(query:str) -> list[tuple|None]:
         cursor.execute(query)
         items = cursor.fetchall()
     except sqlite3.Error as e:
+        logging.info(e)
         display.error(f"Database error")
     else:
         return items
 
 
-def make_select_query_entry(date:config.TimeFrame, category:str, targets:list) -> str:
+def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list) -> str:
     """Construct a query to select entries in the database."""
-    if date.month == 0:
-        date = f"{date.year}-%"
+    if tframe.month == 0:
+        tframe_str = tframe.iso_format(month=False)
     else:
-        date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
+        tframe_str = tframe.iso_format()
 
     query = f"""
     SELECT e.id, e.date, e.amount, targets.name, e.note 
     FROM entries AS e
     INNER JOIN targets ON e.target = targets.id
-    WHERE date LIKE '{date}'"""
+    WHERE date LIKE '{tframe_str}'"""
 
     if category == "expense":
         query += " AND amount < 0"
@@ -75,8 +77,7 @@ def make_update_query_entry(new_entry_values:tuple) -> str:
     new entry has the same id and the entry it's replacing.
     """
     new_entry_values = new_entry_values.to_tuple()
-    query = \
-    """
+    query = """
     UPDATE entries 
     SET date = '{}', amount = {}, target = '{}', note = '{}'
     WHERE id = {id}
@@ -124,18 +125,16 @@ def make_update_query_target(name:str, default_amt:int) -> str:
     return query
 
 
-def sum_target(target:str, date:config.TimeFrame) -> int:
+def sum_target(target:str, tframe:config.TimeFrame) -> int:
     """Sum entries with a particular target in a time period."""
-    date = f"{date.year}-{str(date.month.value).zfill(2)}-%"
-    query = f"SELECT SUM(amount) FROM entries WHERE date LIKE '{date}' AND target = '{target}'"
-    try:
-        cursor = connection.cursor()
-        cursor.execute(query)
-        sum_amount = cursor.fetchone()
-    except sqlite3.Error as e:
-        display.error(f"Database error")
-    else:
-        return sum_amount[0] if sum_amount[0] else 0
+    tframe_str = tframe.iso_format()
+    query = f"""
+    SELECT SUM(amount) 
+    FROM entries 
+    WHERE date LIKE '{tframe_str}' AND target = {target.id}
+    """
+    sum_amount = run_select_query(query)[0][0]
+    return sum_amount if sum_amount else 0
     
 
 def target_times_used(target_name:str) -> int:
@@ -176,11 +175,11 @@ def set_monthly_target(target_name:str, amount:int) -> None:
 
 def get_target_default(name:str) -> int:
     """Get the default goal for a target."""
-    query = f"SELECT default FROM targets WHERE name = '{name}'"
+    query = f"SELECT default_amt FROM targets WHERE name = '{name}'"
     return run_select_query(query)[0][0]
 
 
-def get_target_goal(target_name:str, tframe:config.TimeFrame) -> int:
+def get_target_goal(target:target.Target, tframe:config.TimeFrame) -> int:
     """Returns a target instance from the database.
     If no target instance exists with the input parameters, the 
     default for that target is returned.
@@ -189,7 +188,7 @@ def get_target_goal(target_name:str, tframe:config.TimeFrame) -> int:
     query = f"""
     SELECT amount 
     FROM target_instances
-    WHERE name = '{target_name}' AND year = {tframe.year}
+    WHERE target = '{target.id}' AND year = {tframe.year}
     """
     if tframe.month != 0:
         expected_n_values = 1
@@ -197,8 +196,7 @@ def get_target_goal(target_name:str, tframe:config.TimeFrame) -> int:
 
     result = run_select_query(query)
     if diff := (expected_n_values - len(result)):
-        default = get_target_default(target_name)
-        return sum([x[0][0] for x in result]) + (default * diff)
+        return sum([x[0][0] for x in result]) + (target.default_amt * diff)
     
     return sum([x[0][0] for x in result])
 

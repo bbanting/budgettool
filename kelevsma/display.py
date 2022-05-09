@@ -128,7 +128,7 @@ class LineBuffer:
         empty_space = self.body_space - filled_lines
         count = self.body_space
         for _ in range(empty_space):
-            num = str(count).zfill(2) if self.numbered else ""
+            num = f"{count:02}" if self.numbered else ""
             print(Style.DIM + num)
             count -= 1
 
@@ -146,7 +146,7 @@ class LineBuffer:
         for line in self.body[-index:]:
             to_print = str(line)
             if self.numbered:
-                num = str(count).zfill(2)
+                num = f"{count:02}"
                 to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
             if self.truncate:
                 to_print = to_print[:t_width()]

@@ -69,7 +69,7 @@ def get_target() -> dict | None:
         display.message(f"({', '.join(target_names)})")
         return
 
-    if t_input not in [t["name"] for t in config.targets]:
+    if t_input not in target_names:
         display.message("Invalid target given. Enter 'help' to see targets.")
         return
 

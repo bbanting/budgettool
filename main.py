@@ -16,7 +16,7 @@ import target
 import entry
 
 from kelevsma.command import CommandError
-from config import TimeFrame, DATEW, AMOUNTW
+from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
@@ -26,6 +26,7 @@ class BTError(Exception):
 
 
 def push_targets() -> None:
+    display.push_h(f"{'NAME':{NAMEW}}{'PROGRESS'}")
     display.push(*target.select())
 
 

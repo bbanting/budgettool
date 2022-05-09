@@ -9,10 +9,13 @@ from colorama import Style
 import config
 import db
 
+from config import DATEW, AMOUNTW
+
 
 @dataclass
 class Entry:
     """Represent one entry in the budget."""
+    __slots__ = ("id", "date", "amount", "target", "note")
     def __init__(self, id:int, date:date, amount:int, target:str, note:str):
         self.id = id
         self.date = date
@@ -47,7 +50,9 @@ class Entry:
 
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{config.DATEW}} {dollar_str(self.amount):{config.AMOUNTW}} {Style.DIM}({self.target}){Style.NORMAL} {self.note}"
+        return f"{date:{DATEW}} \
+        {dollar_str(self.amount):{AMOUNTW}} \
+        {Style.DIM}({self.target}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):

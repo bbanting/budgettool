@@ -14,6 +14,7 @@ KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries")
 # Widths for display columns
 DATEW = 8
 AMOUNTW = 12
+NAMEW = 12  # For target names
 
 
 class Month(enum.IntEnum):
@@ -41,6 +42,12 @@ class TimeFrame:
     def __init__(self, year:int=TODAY.year, month:int=TODAY.month):
         self.year = year
         self.month = Month(month)
+
+    def iso_format(self, *, month:bool=True) -> str:
+        """Return date in iso format for querying db."""
+        if month:
+            return f"{self.year}-{self.month.value:02}-%"
+        return f"{self.year}-%"
 
 
 @dataclass(slots=True)

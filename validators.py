@@ -1,5 +1,5 @@
-import config
 import entry
+import target
 from config import KEYWORDS, Month
 from kelevsma.validator import Validator, Result
 
@@ -40,8 +40,7 @@ class VTarget(Validator):
             return Result.err()
             
         ret_val = [Result.ok(value), Result.err()]
-        targets = [t["name"] for t in config.targets]
-        if value not in targets:
+        if value not in target.get_target_names():
             ret_val.reverse()
 
         return ret_val[self.invert]
@@ -54,8 +53,11 @@ class VAmount(Validator):
             return Result.err()
         if not value[1:].isnumeric() or int(value) == 0:
             return Result.err()
-
-        return Result.ok(entry.dollars_to_cents(value))
+        
+        amount = entry.dollars_to_cents(value)
+        if amount >= 100000000:
+            return Result.err()
+        return Result.ok()
 
 
 class VType(Validator):
