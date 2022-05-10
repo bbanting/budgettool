@@ -320,43 +320,11 @@ class EditEntryCommand(kelevsma.Command):
         db.update_entry(self.new_entry)
 
 
-class EditTargetCommand(kelevsma.Command):
-    """Edit a target; requires a line # and a field."""
-    params = {
-        "id": VID(req=True),
-        "name": VTarget(),
-        "amount": VAmount(),
-    }
-
-    def execute(self, id:int, name:str, amount:int) -> None:
-        self.old_target = display.select(id).__dict__
-        self.new_target = copy.copy(self.old_target)
-
-        if name:
-            self.new_target["name"] = name
-        if amount:
-            self.new_target["amount"] = amount
-        
-        config.remove_target(self.old_target["name"])
-        config.add_target(**self.new_target)
-        
-        display.deselect()
-
-    def undo(self) -> None:
-        config.remove_target(self.new_target["name"])
-        config.add_target(**self.old_target)
-
-    def redo(self) -> None:
-        config.remove_target(self.old_target["name"])
-        config.add_target(**self.new_target)
-
-
 class EditCommand(kelevsma.ContextualCommand):
     """Edit either an entry or a target."""
     names = ("edit",)
     forks = {
         "entries": EditEntryCommand,
-        "targets": EditTargetCommand,
     }
 
 
@@ -364,6 +332,44 @@ class SetTargetCommand(kelevsma.Command):
     """Set the amount for a target; either the default or for a
     specified month.
     """
+    names = ("set",)
+    params = {
+        "name": VTarget(req=True),
+        "amount": VAmount(req=True, allow_zero=True),
+        "year": VYear(default=TODAY.year),
+        "month": VMonth(default=TODAY.month),
+        "default": VLit("default", lower=True)
+    }
+
+    def execute(self, name, amount, year, month, default) -> None:
+        pass
+
+    def default_branch(self, amount) -> None:
+        pass
+
+    def tframe_branch(self, amount, year, month) -> None:
+        pass
+
+
+class RenameTargetCommand(kelevsma.Command):
+    """Rename a target."""
+    names = ("rename",)
+    params = {
+        "current_name": VTarget(req=True),
+        "new_name": VTarget(req=True, invert=True),
+    }
+
+    def execute(self, current_name, new_name) -> None:
+        self.old_target = target.select_one(current_name)
+        self.new_target = copy.copy(self.old_target)
+        self.new_target.name = new_name
+        target.update(self.old_target, self.new_target.name)
+
+    def undo(self) -> None:
+        target.update(self.new_target, self.old_target.name)
+
+    def redo(self) -> None:
+        target.update(self.old_target, self.new_target.name)
 
 
 class ChangePageCommand(kelevsma.Command):

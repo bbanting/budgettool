@@ -116,12 +116,18 @@ def make_delete_query_target(target_id:int) -> str:
     return query
 
 
-def make_update_query_target(name:str, default_amt:int) -> str:
+def make_update_query_target(id:int, name:str, default_amt:int) -> str:
     """Construct a query to overwrite a target in the database."""
+    new_values = []
+    if name:
+        new_values.append(f"{name=}")
+    if default_amt is not None:
+        new_values.append(f"{default_amt=}")
+
     query = f"""
     UPDATE targets 
-    SET default_amount = {default_amt}
-    WHERE name = '{name}'
+    SET {', '.join(new_values)}
+    WHERE id = {id}
     """
     return query
 

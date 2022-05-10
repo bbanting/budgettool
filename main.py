@@ -79,7 +79,7 @@ def register_commands(controller: command.CommandController):
     controller.register(commands.AddEntryTodayCommand, "entries")
     controller.register(commands.EditCommand)
     controller.register(commands.EditEntryCommand, "entries")
-    controller.register(commands.EditTargetCommand, "targets")
+    controller.register(commands.RenameTargetCommand, "targets")
     controller.register(commands.ChangePageCommand)
 
 

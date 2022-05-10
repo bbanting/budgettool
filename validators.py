@@ -48,12 +48,16 @@ class VTarget(Validator):
 
 class VAmount(Validator):
     """Capture a positive or negative amount."""
-    def validate(self, value:str, allow_zero:bool=False) -> Result:
+    def __init__(self, allow_zero:bool=False, *args, **kwargs) -> None:
+        self.allow_zero = allow_zero
+        super().__init__(*args, **kwargs)
+        
+    def validate(self, value:str) -> Result:
         if not value.startswith(("-", "+")):
             return Result.err()
         if not value[1:].isnumeric():
             return Result.err()
-        if not allow_zero and int(value) == 0:
+        if not self.allow_zero and int(value) == 0:
             return Result.err()
         
         amount = entry.dollars_to_cents(value)

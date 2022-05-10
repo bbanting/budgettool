@@ -1,3 +1,4 @@
+from email.policy import default
 import config
 import entry
 import db
@@ -32,7 +33,11 @@ class Target:
         name = self.name[:NAMEW]
         current = entry.cents_to_dollars(self.current_total())
         goal = entry.cents_to_dollars(self.goal())
-        return f"{name:{NAMEW}}{current:.2f}/{goal:.2f}"
+        string =  f"{name:{NAMEW}}{current:.2f} / {goal:.2f}"
+        default = entry.cents_to_dollars(self.default_amt)
+        if goal != default:
+            string += f" (default: {default})"
+        return string
 
 
 def insert(target:Target) -> None:
@@ -47,9 +52,9 @@ def delete(target:Target) -> None:
     db.run_query(query)
 
 
-def update(name:str, amount:int) -> None:
+def update(target:Target, name:str=None, default_amt:int=None) -> None:
     """Update a target."""
-    query = db.make_update_query_target(name, amount)
+    query = db.make_update_query_target(target.id, name, default_amt)
     db.run_query(query)
 
 

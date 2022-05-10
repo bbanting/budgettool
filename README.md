@@ -14,8 +14,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make a Printable class with len attribute
 - [ ] SetCommand for target amounts. Default and per month
-- [ ] Make dedicated rename target command for clarity
-- [ ] If there are no targets, prompt user to make first one
+- [x] Make dedicated rename target command for clarity
 - [ ] Fix help command
 
 
@@ -25,3 +24,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - Currently, if page numbers get too many digits long, they will overflow
 - Should I make the argument order strict? What is the best compromise there?
 - target instance is created when first entry is created or when amount is set
+- Make command params dependant on others
+- Use validators in ForkCommand?
+- Should page number ordering be reversed?
