@@ -110,9 +110,9 @@ def make_insert_query_target(id:int, name:str, default_amt:int) -> str:
     return query
 
 
-def make_delete_query_target(name:str) -> str:
+def make_delete_query_target(target_id:int) -> str:
     """Construct a query to delete a target."""
-    query = f"DELETE FROM targets WHERE name = {name}"
+    query = f"DELETE FROM targets WHERE id = {target_id}"
     return query
 
 
@@ -136,42 +136,10 @@ def sum_target(target:str, tframe:config.TimeFrame) -> int:
     """
     sum_amount = run_select_query(query)[0][0]
     return sum_amount if sum_amount else 0
-    
-
-def target_times_used(target_name:str) -> int:
-    """Return the number of times a target is used in the database."""
-    query = f"SELECT * FROM entries WHERE target = '{target_name}'"
-    return len(run_select_query(query))
 
 
 def set_monthly_target(target_name:str, amount:int) -> None:
     """Set the target amount for the specified month."""
-
-
-# def get_target_goal_monthly(target_name:str, tframe:config.TimeFrame) -> int:
-#     """Returns a monthly target from the database.
-#     If no monthly target exists with the input parameters, a new one is
-#     created based on the default for that target and returned.
-#     """
-#     query = f"""
-#     SELECT SUM(amount) 
-#     FROM monthlytargets 
-#     WHERE name = '{target_name}' AND year = {tframe.year}
-#     """
-#     if tframe.month != 0:
-#         query += f" AND month = {tframe.month.value}"
-
-#     amount = run_select_query(query)[0][0]
-#     if not amount:
-#         default = config.get_target(target_name).default_amount
-#         insert_query = f"""
-#         INSERT INTO monthlytargets (name, amount, month) 
-#         VALUES ('{target_name}', {default}, {month})
-#         """
-#         run_query(insert_query)
-#         return get_target_goal_monthly(target_name, month)
-    
-#     return amount
 
 
 def get_target_default(name:str) -> int:
@@ -239,3 +207,7 @@ except sqlite3.Error:
 run_query(target_table_query)
 run_query(target_instances_table_query)
 run_query(entries_table_query)
+
+# logging.info(run_select_query("SELECT * FROM target_instances"))
+# logging.info(run_select_query("SELECT * FROM targets"))
+# logging.info(run_select_query("SELECT * FROM entries"))

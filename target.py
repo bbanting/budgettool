@@ -41,9 +41,9 @@ def insert(target:Target) -> None:
     db.run_query(query)
 
 
-def delete(name:str) -> None:
+def delete(target:Target) -> None:
     """Removes a target from the database."""
-    query = db.make_delete_query_target(name)
+    query = db.make_delete_query_target(target.id)
     db.run_query(query)
 
 
@@ -68,3 +68,9 @@ def select_one(name:str) -> Target:
 def get_target_names() -> list[str]:
     """Return a list of the target names."""
     return [t.name for t in select()]
+
+
+def times_used(target:Target) -> int:
+    """Return the number of times a target is used in the database."""
+    query = f"SELECT * FROM entries WHERE target = {target.id}"
+    return len(db.run_select_query(query))

@@ -16,6 +16,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] SetCommand for target amounts. Default and per month
 - [ ] Make dedicated rename target command for clarity
 - [ ] If there are no targets, prompt user to make first one
+- [ ] Fix help command
 
 
 ## Notes

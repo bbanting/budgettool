@@ -104,11 +104,16 @@ def get_input(*getters) -> tuple:
 
 
 input_functions = {
+        "date":     get_date,
         "amount":   get_amount, 
         "target":     get_target,
         "note":     get_note,
-        "date":     get_date,
         }
+
+
+def targets_exist() -> bool:
+    """Check if user has created any targets."""
+    return bool(len(target.select()))
 
 
 class ListEntriesCommand(kelevsma.Command):
@@ -162,6 +167,10 @@ class AddEntryTodayCommand(kelevsma.Command):
     }
 
     def execute(self, amount, target, note) -> None:
+        if not targets_exist():
+            display.message("No targets to add entries to. Make a target with 'add target [name] [amount]'.")
+            return
+
         date = datetime.date.today()
         note = " ".join(note)
         self.entry = Entry(0, date, amount, target, note)
@@ -181,8 +190,12 @@ class AddEntryTodayCommand(kelevsma.Command):
 class AddEntryCommand(kelevsma.Command):
     """Add an entry, entering input through a series of prompts."""
     def execute(self) -> None:
+        if not targets_exist():
+            display.message("No targets to add entries to. Make a target with 'add target [name] [amount]'.")
+            return
+
         try:
-            date, amount, target, note = get_input(get_date, get_amount, get_target, get_note)
+            date, amount, target, note = get_input(*list(input_functions.values()))
         except main.BTError:
             return # Exit the command
         self.entry = Entry(0, date, amount, target, note)
@@ -253,25 +266,24 @@ class RemoveEntryCommand(kelevsma.Command):
 
 class RemoveTargetCommand(kelevsma.Command):
     """Remove a target by its name."""
-    target: dict
     params = {
         "name": VTarget(req=True),
     }
 
     def execute(self, name:str) -> None:
-        uses = db.target_times_used(name)
+        self.target = target.select_one(name)
+        uses = target.times_used(self.target)
         if uses:
-            display.message(f"Cannot delete: in use by {uses} entr{'y' if uses<2 else 'ies'}.")
+            display.message(f"Cannot delete {name}; in use by {uses} entr{'y' if uses<2 else 'ies'}.")
             return
 
-        self.target = target.select_one(name)
-        target.delete(self.target.name)
+        target.delete(self.target)
 
     def undo(self):
         target.insert(self.target)
 
     def redo(self):
-        target.delete(self.target.name)
+        target.delete(self.target)
 
 
 class RemoveCommand(kelevsma.ForkCommand):
