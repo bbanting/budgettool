@@ -62,25 +62,24 @@ def get_target_progress(targets:list[str]) -> str:
     return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"
 
 
-def register_commands(controller: command.CommandController):
-    controller.register(command.UndoCommand)
-    controller.register(command.RedoCommand)
-    controller.register(command.HelpCommand, "help")
-    controller.register(commands.QuitCommand)
-    controller.register(commands.ListCommand)
-    controller.register(commands.ListEntriesCommand, "entries")
-    controller.register(commands.ListTargetsCommand, "targets")
-    controller.register(commands.RemoveCommand)
-    controller.register(commands.RemoveEntryCommand, "entries")
-    controller.register(commands.RemoveTargetCommand, "targets")
-    controller.register(commands.AddCommand)
-    controller.register(commands.AddEntryCommand, "entries")
-    controller.register(commands.AddTargetCommand, "targets")
-    controller.register(commands.AddEntryTodayCommand, "entries")
-    controller.register(commands.EditCommand)
-    controller.register(commands.EditEntryCommand, "entries")
-    controller.register(commands.RenameTargetCommand, "targets")
-    controller.register(commands.ChangePageCommand)
+def register_commands(con: command.CommandController):
+    con.register(command.UndoCommand)
+    con.register(command.RedoCommand)
+    con.register(command.HelpCommand, "help")
+    con.register(commands.QuitCommand)
+    con.register(commands.ListCommand)
+    con.register(commands.ListEntriesCommand, "entries")
+    con.register(commands.ListTargetsCommand, "targets")
+    con.register(commands.RemoveCommand)
+    con.register(commands.RemoveEntryCommand, "entries")
+    con.register(commands.RemoveTargetCommand, "targets")
+    con.register(commands.AddCommand)
+    con.register(commands.AddEntryCommand, "entries")
+    con.register(commands.AddTargetCommand, "targets")
+    con.register(commands.AddEntryTodayCommand, "entries")
+    con.register(commands.EditEntryCommand, "entries")
+    con.register(commands.RenameTargetCommand, "targets")
+    con.register(commands.ChangePageCommand)
 
 
 def main():

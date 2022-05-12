@@ -298,6 +298,7 @@ class RemoveCommand(kelevsma.ForkCommand):
 
 class EditEntryCommand(kelevsma.Command):
     """Edit an entry; requires a line # and a field."""
+    names = ("edit",)
     params = {
         "id": VID(req=True),
         "field": VLit(input_functions, lower=True, req=True),
@@ -318,14 +319,6 @@ class EditEntryCommand(kelevsma.Command):
     
     def redo(self) -> None:
         db.update_entry(self.new_entry)
-
-
-class EditCommand(kelevsma.ContextualCommand):
-    """Edit either an entry or a target."""
-    names = ("edit",)
-    forks = {
-        "entries": EditEntryCommand,
-    }
 
 
 class SetTargetCommand(kelevsma.Command):

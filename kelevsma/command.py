@@ -113,6 +113,14 @@ class Command(metaclass=abc.ABCMeta):
         if args: # Should be empty if successful
             raise CommandError(f"Invalid input: {', '.join(args)}")
 
+    @property
+    def description(self) -> str:
+        """This attribute is meant to be understandable for end users.
+        By default, the docstring is returned but is meant to be overwritten
+        if it contains technical language.
+        """
+        return self.__doc__
+
     @abc.abstractmethod
     def execute(self) -> None:
         """
@@ -172,37 +180,39 @@ class HelpCommand(Command):
     """A command to give information on how to use other commands."""
     names = ("help",)
 
-    def __init__(self, args: list[str]):
+    def __init__(self, args:list[str]) -> None:
         # Overriding __init__ is necessary because the validator for "command"
         # in params depends on the prior instantiation of CommandController
+        # and it's assignment to the controller attribute
         HelpCommand.params = {"command": VLit(self.controller.command_register)}
         super().__init__(args)
         
-    def execute(self, command: str):
+    def execute(self, command:str):
         command = self.controller.command_register.get(command)
         if not command:
-            print(self.get_general_help())
+            display.push(self.get_general_help())
             return
 
         if issubclass(command, ForkCommand):
-            print(f"'{command.names[0]}' is a compound command:")
+            display.push(f"'{command.names[0]}' is a compound command:")
             self.fork_execute(command)
             return
 
-        print(self.get_names(command))
+        display.push(self.get_names(command))
         if self.get_format:
-            print(self.get_format(command))
-        print("\t" + command.__doc__)
+            display.push(self.get_format(command))
+        display.push("\t" + command.__doc__)
         if self.get_help_note(command):
-            print("\t" + self.get_help_note(command))
+            display.push("\t" + self.get_help_note(command))
 
-    def fork_execute(self, command: Command) -> None:
-        print("\t" + command.__doc__)
-        print(f"\t{self.get_help_note(command)}")
+    def fork_execute(self, command:Command) -> None:
+        display.push("\t" + command.__doc__)
+        display.push(f"\t{self.get_help_note(command)}")
         for i, (k, v) in enumerate(command.forks.items()):
             v.names = (f"{command.names[0]} {k}",)
             number = f"{i+1}. "
-            print(f"{number:>8}{self.get_names(v)}")
+            display.push(f"{number:>8}{self.get_names(v)}")
+
             if self.get_format(v):
                 print(f"\t{self.get_format(v)}")
             print("\t" + v.__doc__)
@@ -210,29 +220,32 @@ class HelpCommand(Command):
                 print(f"\t{self.get_help_note(v)}")
 
     def get_general_help(self) -> str:
+        """Return general help for when a command isn't specified."""
         message = "Enter \"help <command>\" for specific command details."
         prev = None
-        for k, v in self.controller.command_register.items():
-            if v == prev:
+        for name, command in self.controller.command_register.items():
+            if command == prev:
                 continue
-            message += f"\n{k:.<15}{v.__doc__}"
-            prev = self.controller.command_register[k]
+            message += f"\n{name:.<15}{command.description}"
+            prev = self.controller.command_register[name]
         return message
 
     def get_names(self, command: Command) -> str:
         name_suffix = "" if len(command.names)<=1 else "S"
         return f"COMMAND NAME{name_suffix}: {', '.join(command.names)}"
     
-    def get_format(self, command: Command) -> str:
+    def get_format(self, command:Command) -> str:
+        """Return the expected format for the command."""
         if not command.params:
             return ""
         param_format = []
-        for k, v in command.params.items():
-            req = "*" if v.required else ""
-            param_format.append(f"<{req}{k}>")
+        for param, validator in command.params.items():
+            req = "*" if validator.required else ""
+            param_format.append(f"<{req}{param}>")
         return f"FORMAT: \"{command.names[0]} {' '.join(param_format)}\""
 
-    def get_help_note(self, command: Command) -> str:
+    def get_help_note(self, command:Command) -> str:
+        """Return the additional help text attached to the command."""
         if command.help_text:
             return f"{command.help_text}"
         return ""
