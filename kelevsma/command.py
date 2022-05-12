@@ -59,12 +59,12 @@ class CommandController:
         if not args or not args[0]:
             raise CommandError("Try 'help' if you're having trouble.")
         
-        # Get the command
+        # Get the command class
         command_cls = self.get_command(args)
         if not command_cls:
             raise CommandError("Command not found.")
 
-        # Execute the command
+        # Instantiate and execute the command
         try:
             command = command_cls(args)
         except CommandError as e:
@@ -158,6 +158,26 @@ class ContextualCommand(ForkCommand):
     def fork(cls, args:list[str]) -> Command | None:
         """Return the selected fork based on the screen."""
         return cls.forks.get(display.get_screen().name)
+
+
+class SporkCommand:
+    """A new fork command that uses Validator instead of just a first 
+    arg literal. The first branch whose validator returns a truthy value
+    is executed.
+    """
+    names: tuple[str] = ()
+    forks: dict[Validator, Command] = {}
+    default: Command = None
+    controller: CommandController
+    help_text: str = ""
+
+    @classmethod
+    def fork(cls, args:list[str]) -> Command | None:
+        for validator, command in cls.params.items():
+            if validator(args):
+                return command
+        else:
+            return cls.default
 
 
 class UndoCommand(Command):
