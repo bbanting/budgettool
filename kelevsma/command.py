@@ -3,6 +3,9 @@ from typing import Any
 import inspect
 import abc
 import logging
+from dataclasses import dataclass
+
+from colorama import Style
 
 import kelevsma.display as display
 from .validator import Validator, ValidatorError, VLit
@@ -98,7 +101,8 @@ class Command(metaclass=abc.ABCMeta):
     params: dict[str, Validator] = {}
     data: dict[str, Any]
     controller: CommandController
-    help_text: str = ""
+    description: str
+    examples: tuple[Example]
     screen: str
     
     def __init__(self, args:list[str]) -> None:
@@ -135,7 +139,8 @@ class ForkCommand:
     forks: dict[str, Command] = {}
     default: str | None = None
     controller: CommandController
-    help_text: str = ""
+    description: str
+    examples: tuple[Example]
 
     @classmethod
     def fork(cls, args:list[str]) -> Command | None:
@@ -162,7 +167,8 @@ class SporkCommand:
     forks: dict[Validator, Command] = {}
     default: Command = None
     controller: CommandController
-    help_text: str = ""
+    description: str
+    examples: tuple[Example]
 
     @classmethod
     def fork(cls, args:list[str]) -> Command | None:
@@ -200,39 +206,27 @@ class HelpCommand(Command):
         HelpCommand.params = {"command": VLit(self.controller.command_register)}
         super().__init__(args)
         
-    def execute(self, command:str):
+    def execute(self, command:str) -> None:
         command = self.controller.command_register.get(command)
         if not command:
-            self.get_general_help()
+            self.show_general_help()
             return
 
-        if issubclass(command, ForkCommand):
-            display.push(f"'{command.names[0]}' is a compound command:")
-            self.fork_execute(command)
-            return
-
+        # Print names
         display.push(self.get_names(command))
-        if self.get_format:
-            display.push(self.get_format(command))
-        display.push("\t" + command.__doc__)
-        if self.get_help_note(command):
-            display.push("\t" + self.get_help_note(command))
+        
+        # Print description
+        desc = getattr(command, "description", command.__doc__)
+        display.push(f"{Style.BRIGHT}DESCRIPTION: {Style.NORMAL}{desc}")
 
-    def fork_execute(self, command:Command) -> None:
-        display.push("\t" + command.__doc__)
-        display.push(f"\t{self.get_help_note(command)}")
-        for i, (k, v) in enumerate(command.forks.items()):
-            v.names = (f"{command.names[0]} {k}",)
-            number = f"{i+1}. "
-            display.push(f"{number:>8}{self.get_names(v)}")
+        # Print examples
+        if examples := getattr(command, "examples", ""):
+            display.push(f"{Style.BRIGHT}EXAMPLES:")
+            for e in examples:
+                display.push(f"    {e.text}")
+                display.push(f"\t{Style.DIM}{e.subtext}")
 
-            if self.get_format(v):
-                print(f"\t{self.get_format(v)}")
-            print("\t" + v.__doc__)
-            if self.get_help_note(v):
-                print(f"\t{self.get_help_note(v)}")
-
-    def get_general_help(self) -> str:
+    def show_general_help(self) -> str:
         """Return general help for when a command isn't specified."""
         display.message("Enter \"help <command>\" for specific command details.")
         lines = []
@@ -247,20 +241,11 @@ class HelpCommand(Command):
 
     def get_names(self, command: Command) -> str:
         name_suffix = "" if len(command.names)<=1 else "S"
-        return f"COMMAND NAME{name_suffix}: {', '.join(command.names)}"
-    
-    def get_format(self, command:Command) -> str:
-        """Return the expected format for the command."""
-        if not command.params:
-            return ""
-        param_format = []
-        for param, validator in command.params.items():
-            req = "*" if validator.required else ""
-            param_format.append(f"<{req}{param}>")
-        return f"FORMAT: \"{command.names[0]} {' '.join(param_format)}\""
+        return f"{Style.BRIGHT}COMMAND NAME{name_suffix}: {Style.NORMAL}{', '.join(command.names)}"
 
-    def get_help_note(self, command:Command) -> str:
-        """Return the additional help text attached to the command."""
-        if command.help_text:
-            return f"{command.help_text}"
-        return ""
+
+@dataclass(slots=True)
+class Example:
+    """A command usage example."""
+    text: str
+    subtext: str

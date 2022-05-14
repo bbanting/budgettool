@@ -12,6 +12,7 @@ import db
 
 from config import TODAY
 from entry import Entry, cents_to_dollars
+from kelevsma.command import Example
 from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
 
@@ -106,7 +107,7 @@ def get_input(*getters) -> tuple:
 input_functions = {
         "date":     get_date,
         "amount":   get_amount, 
-        "target":     get_target,
+        "target":   get_target,
         "note":     get_note,
         }
 
@@ -123,8 +124,7 @@ class ListEntriesCommand(kelevsma.Command):
         "month": VMonth(default=TODAY.month),
         "category": VType(default=""),
         "targets": VTarget(plural=True, default=[]),
-        }
-    help_text = "If no year or month are specified it will default to the current year and month."
+    }
     
     def execute(self, year, month, category, targets):
         tframe = config.TimeFrame(year, month)
@@ -156,6 +156,11 @@ class ListCommand(kelevsma.ForkCommand):
         "target": ListTargetsCommand,
     }
     default = "entries"
+    examples = (
+        Example("list march 2022 income other", "List the positive entries for March of 2022 at target 'other.'"),
+        Example("list all", "List all entries from current year."),
+        Example("list targets", "List all targets.")
+    )
 
 
 class AddEntryTodayCommand(kelevsma.Command):
@@ -366,7 +371,7 @@ class RenameTargetCommand(kelevsma.Command):
 
 
 class ChangePageCommand(kelevsma.Command):
-    """Change to another page of the current entry list."""
+    """Change to another page of the current screen."""
     names = ("page",)
     params = {
         "number": VBool(str.isdigit, req=True)
