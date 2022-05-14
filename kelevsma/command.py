@@ -113,13 +113,6 @@ class Command(metaclass=abc.ABCMeta):
         if args: # Should be empty if successful
             raise CommandError(f"Invalid input: {', '.join(args)}")
 
-    @property
-    def description(self) -> str:
-        """This attribute is meant to be understandable for end users.
-        By default, the docstring is returned but is meant to be overwritten
-        if it contains technical language.
-        """
-        return self.__doc__
 
     @abc.abstractmethod
     def execute(self) -> None:
@@ -210,7 +203,7 @@ class HelpCommand(Command):
     def execute(self, command:str):
         command = self.controller.command_register.get(command)
         if not command:
-            display.push(self.get_general_help())
+            self.get_general_help()
             return
 
         if issubclass(command, ForkCommand):
@@ -241,14 +234,16 @@ class HelpCommand(Command):
 
     def get_general_help(self) -> str:
         """Return general help for when a command isn't specified."""
-        message = "Enter \"help <command>\" for specific command details."
+        display.message("Enter \"help <command>\" for specific command details.")
+        lines = []
         prev = None
         for name, command in self.controller.command_register.items():
             if command == prev:
                 continue
-            message += f"\n{name:.<15}{command.description}"
+            desc = getattr(command, "description", command.__doc__)
+            lines.append(f"{name:.<15}{desc}")
             prev = self.controller.command_register[name]
-        return message
+        display.push(*lines)
 
     def get_names(self, command: Command) -> str:
         name_suffix = "" if len(command.names)<=1 else "S"
