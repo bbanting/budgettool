@@ -1,7 +1,8 @@
 import os
 import logging
 
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Any, Callable, Iterable
 
 import colorama
 from colorama import Fore, Back, Style
@@ -13,6 +14,50 @@ colorama.init(autoreset=True)
 
 class DisplayError(Exception):
     pass
+
+
+@dataclass(slots=True)
+class Line:
+    """Represents a single line to be printed. Holds a reference to the
+    original object the text is derived from."""
+    ref_obj: Any
+    text: str
+
+    def __str__(self) -> str:
+        return self.text
+
+
+class LineGroup():
+    """A group of lines for printing."""
+    __slots__ = ("lines",)
+    lines: list[Line]
+
+    def __init__(self, objects:Iterable[Any]) -> None:
+        width = t_width() # Account for page numbers
+        for o in objects:
+            ostring = str(o)
+            lines = []
+            while len(ostring) > width or not len(lines):
+                lines.append(Line(o, ostring[:width]))
+                ostring = ostring[width:]
+            for l in lines:
+                self.lines.append(l)
+    
+    def append(self, obj:Any) -> None:
+        width = t_width()
+        ostring = str(obj)
+        lines = []
+        while len(ostring) > width or not len(lines):
+            lines.append(Line(obj, ostring[:width]))
+            ostring = ostring[width:]
+        for l in lines:
+            self.lines.append(l)
+
+    def __str__(self) -> str:
+        return "\n".join([l.text for l in self.lines])
+
+    def __len__(self) -> int:
+        return len(self.lines)        
 
 
 class LineBuffer:
@@ -88,7 +133,8 @@ class LineBuffer:
         """Return an item by line number from the current page."""
         start = -(self.page * self.body_space)
         end = start + self.body_space
-        if end > -1: end = None
+        if end > -1:
+            end = None
         items = self.body[start:end][::-1]
         if index > len(items) or index < 1:
             raise DisplayError("Invalid line selection.")
@@ -182,7 +228,7 @@ class LineBuffer:
 
             return rng, prefix, suffix
         
-    def _print_page_numbers(self, div_char:str="-",) -> None:
+    def _print_page_numbers(self) -> None:
         """Print the divider bar with page numbers."""
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
         div_char = " "
@@ -329,7 +375,7 @@ controller = ScreenController()
 if __name__ == "__main__":
     add_screen("main", offset=1, numbered=True)
     add_screen("notmain", offset=1, numbered=False)
-    switch_screen("notmain")
+    # switch_screen("notmain")
     for n in range(80):
         push(f"Old MacDonald had a farm {n+1}")
     change_page(4)

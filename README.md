@@ -14,7 +14,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make a Printable class with len attribute
 - [ ] SetCommand for target amounts. Default and per month
-- [x] Fix help command
+- [ ] Make examples for all commands
 
 
 ## Notes

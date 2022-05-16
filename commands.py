@@ -157,8 +157,8 @@ class ListCommand(kelevsma.ForkCommand):
     }
     default = "entries"
     examples = (
-        Example("list march 2022 income other", "List the positive entries for March of 2022 at target 'other.'"),
-        Example("list all", "List all entries from current year."),
+        Example("list march 2022 other", "List the entries for March of 2022 at target 'other.'"),
+        Example("list all income", "List all positive entries from current year."),
         Example("list targets", "List all targets.")
     )
 
