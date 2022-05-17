@@ -1,5 +1,6 @@
 import os
 import logging
+import collections
 
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
@@ -27,86 +28,111 @@ class Line:
         return self.text
 
 
-class LineGroup():
+class LineGroup(collections.UserList):
     """A group of lines for printing."""
-    __slots__ = ("lines",)
-    lines: list[Line]
 
-    def __init__(self, objects:Iterable[Any]) -> None:
-        width = t_width() # Account for page numbers
-        for o in objects:
-            ostring = str(o)
-            lines = []
-            while len(ostring) > width or not len(lines):
-                lines.append(Line(o, ostring[:width]))
-                ostring = ostring[width:]
-            for l in lines:
-                self.lines.append(l)
+    def __init__(self, trunc:bool=False, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.trunc = trunc
     
     def append(self, obj:Any) -> None:
         width = t_width()
+        if self.number:
+            width -= 3
+
+        # For truncated line output
+        if self.trunc:
+            self.data.append(Line(obj, str(obj)[:width]))
+            return
+
+        # For full output
         ostring = str(obj)
         lines = []
         while len(ostring) > width or not len(lines):
             lines.append(Line(obj, ostring[:width]))
             ostring = ostring[width:]
         for l in lines:
-            self.lines.append(l)
+            self.data.append(l)
 
     def __str__(self) -> str:
+        # Print a style?
         return "\n".join([l.text for l in self.lines])
 
-    def __len__(self) -> int:
-        return len(self.lines)        
 
-
-class LineBuffer:
-    """A buffer of lines to print."""
-    def __init__(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
-        # Attributes
-        self.name = name
-        self.numbered = numbered
-        self.truncate = truncate
-        self.offset= abs(offset)
-        self.refresh_func= refresh_func
-
-        # Sub-buffers & state
-        self.body= []
-        self.header= []
-        self.footer= []
-
+class BodyLines(LineGroup):
+    """A special LineGroup for the body."""
+    def __init__(self, number:bool=True, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._page = 1
-        self.printed = False
         self.highlight = 0
-        self.message = ""
-    
-    @property
-    def body_space(self) -> int:
-        """Return the height in lines of the available space for the body."""
-        page_nums = 2
-        header_footer = len(self.header) + len(self.footer)
-        height = t_height() - self.offset - page_nums - header_footer
-        if height < 1: 
-            raise DisplayError("Terminal window is too short.")
-        return height
+        self.number = number
 
     @property
     def page(self) -> int:
+        """Get the current page."""
         if 0 < self._page <= self.n_pages:
            return self._page
         elif self._page > self.n_pages:
             return self.n_pages
 
     @property
-    def n_pages(self) -> int:
+    def n_pages(self, space:int) -> int:
         """Return the total number of pages."""
-        lines = self.true_lines()
-        pages = lines / self.body_space
+        pages = len(self) / space
         if pages.is_integer():
             pages = int(pages)
         else:
             pages = int(pages + 1)
         return pages if pages else 1
+
+    def print(self, space:int) -> None:
+        lines = []
+        index = self.page * space
+
+        # Append lines
+        # Prepend numbers and highlight where necessary
+        for line in self[-index:]:
+            to_print = line
+            if self.number:
+                to_print = f"{Style.DIM}{space:02} {Style.NORMAL}{to_print}"
+            if space+1 == self.highlight:
+                to_print = f"{Fore.CYAN}{to_print}"
+            
+            lines.append(to_print)
+            space -= 1
+
+        # Append empty space
+        while space > 0:
+            lines.append(f"{Style.DIM}{space:02}" if self.numbered else "")
+            space -= 1
+        
+        # Print the lines
+        for l in lines:
+            print(l)
+
+
+class Screen:
+    """A buffer of lines to print."""
+    def __init__(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
+        # Attributes
+        self.name = name
+        self.offset = abs(offset) + 2 # Factoring in message bar and page nums
+        self.refresh_func = refresh_func
+
+        # Sub-buffers & state
+        self.body = BodyLines(trunc=truncate, number=numbered)
+        self.header = LineGroup(trunc=True)
+        self.footer = LineGroup()
+        self.message = ""
+        self.printed = False
+    
+    @property
+    def body_space(self) -> int:
+        """Return the height in lines of the available space for the body."""
+        height = t_height() - self.offset - len(self.header) - len(self.footer)
+        if height < 1: 
+            raise DisplayError("Terminal window is too short.")
+        return height
 
     def change_page(self, page: int) -> None:
         """Change which page to display."""
@@ -142,67 +168,18 @@ class LineBuffer:
         self.highlight = index
         return items[index-1]
 
-    def true_lines(self) -> int:
-        """The number of total effective lines in the body.
-        This function is not useful right now but may be in the future.
-        """
-        if self.truncate:
-            return len(self.body)
-        width = t_width()
-        count = 0
-        for line in self.body:
-            result = len(str(line)) / width
-            if result.is_integer():
-                count += int(result)
-            count += int(result + 1)
-        return count
-
     def _print_header(self) -> None:
         """Print the header."""
-        for line in self.header:
-            style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
-            lpadding = " " * 3
-            line = line[:(t_width()-len(lpadding))]
-            rpadding = " " * (t_width() - len(lpadding + line))
-            print(f"{style}{lpadding}{line}{rpadding}")
-
-    def _print_filler(self) -> None:
-        """Print the space between the last body line and the header."""
-        if not self.page == self.n_pages:
-            return
-        filled_lines = self.true_lines() - (self.body_space * (self.page - 1))
-        empty_space = self.body_space - filled_lines
-        count = self.body_space
-        for _ in range(empty_space):
-            num = f"{count:02}" if self.numbered else ""
-            print(Style.DIM + num)
-            count -= 1
+        style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
+        # for line in self.header:
+        #     lpadding = (" " * 3) if self.numbered else ""
+        #     line = line[:(t_width()-len(lpadding))]
+        #     rpadding = " " * (t_width() - len(lpadding + line))
+        print(f"{style}{self.header}")
 
     def _print_footer(self) -> None:
         """Print the footer."""
-        for line in self.footer:
-            print(line[:t_width()])
-
-    def _print_body(self) -> None:
-        """Print the body."""
-        index = self.page * self.body_space
-        count = self.body_space
-        if self.page == self.n_pages:
-            count = len(self.body) - ((self.n_pages-1) * self.body_space)
-        for line in self.body[-index:]:
-            to_print = str(line)
-            if self.numbered:
-                num = f"{count:02}"
-                to_print = f"{Style.DIM}{num} {Style.NORMAL}{to_print}"
-            if self.truncate:
-                to_print = to_print[:t_width()]
-            if count+1 == self.highlight:
-                to_print = Fore.CYAN + to_print
-            count -= 1
-            
-            print(to_print)
-            if count == 0:
-                break
+        print(self.footer)
     
     def _get_page_range(self) -> tuple[range, str]:
         """Return the range of pages to be displayed and the markings
@@ -251,7 +228,6 @@ class LineBuffer:
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
         self._print_header()
-        self._print_filler()
         self._print_body()
         self._print_footer()
         self._print_page_numbers()
@@ -261,15 +237,15 @@ class LineBuffer:
 
 class ScreenController:
     """A class to switch to and from multiple buffers."""
-    _active: LineBuffer
-    _screens: dict[str, LineBuffer]
+    _active: Screen
+    _screens: dict[str, Screen]
 
     def __init__(self):
         self._screens = {}
 
     def add(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
         """Add a screen to the list."""
-        self._screens.update({name: LineBuffer(name, numbered, truncate, offset, refresh_func)})
+        self._screens.update({name: Screen(name, numbered, truncate, offset, refresh_func)})
         if len(self._screens) == 1:
             self._active = self._screens[name]
 
@@ -352,7 +328,7 @@ def switch_screen(name:str) -> None:
     controller.switch_to(name)
 
 
-def get_screen(name:str = None) -> LineBuffer:
+def get_screen(name:str = None) -> Screen:
     """Get the active screen."""
     if not controller._screens:
         raise DisplayError("No screens have been created.")
