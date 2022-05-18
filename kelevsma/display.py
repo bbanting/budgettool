@@ -54,9 +54,13 @@ class LineGroup(collections.UserList):
         for l in lines:
             self.data.append(l)
 
+    def print(self) -> None:
+        if self:
+            print(self)
+
     def __str__(self) -> str:
         # Print a style?
-        return "\n".join([l.text for l in self.lines])
+        return "\n".join([l.text for l in self])
 
 
 class BodyLines(LineGroup):
@@ -68,6 +72,10 @@ class BodyLines(LineGroup):
         self.number = number
 
     @property
+    def space(self) -> int:
+        return get_screen().body_space
+
+    @property
     def page(self) -> int:
         """Get the current page."""
         if 0 < self._page <= self.n_pages:
@@ -76,8 +84,9 @@ class BodyLines(LineGroup):
             return self.n_pages
 
     @property
-    def n_pages(self, space:int) -> int:
+    def n_pages(self) -> int:
         """Return the total number of pages."""
+        space = self.space
         pages = len(self) / space
         if pages.is_integer():
             pages = int(pages)
@@ -85,26 +94,52 @@ class BodyLines(LineGroup):
             pages = int(pages + 1)
         return pages if pages else 1
 
-    def print(self, space:int) -> None:
+    def get_current_range(self) -> tuple[int]:
+        """Return the start and end indices of the current page."""
+        start = -(self.page * self.space)
+        end = start + self.space if start + self.space else None
+        return (start, end)
+
+    def change_page(self, page: int) -> None:
+        """Change which page to display."""
+        if page != self.page:
+            self.highlight = 0
+        if page < 1:
+            return
+        self._page = page
+
+    def select(self, index: int) -> Any:
+        """Return an item by line number from the current page."""
+        start, end = self.get_current_range()
+        items = list(self)[start:end][::-1]
+        if index > len(items) or index < 1:
+            raise DisplayError("Invalid line selection.")
+
+        self.highlight = index + 1
+        return items[index-1]
+
+    def print(self) -> None:
+        space = self.space
         lines = []
-        index = self.page * space
+        start, end = self.get_current_range()
 
         # Append lines
         # Prepend numbers and highlight where necessary
-        for line in self[-index:]:
+        count = 1
+        for line in list(self)[start:end]:
             to_print = line
             if self.number:
-                to_print = f"{Style.DIM}{space:02} {Style.NORMAL}{to_print}"
+                to_print = f"{Style.DIM}{count:02} {Style.NORMAL}{to_print}"
             if space+1 == self.highlight:
                 to_print = f"{Fore.CYAN}{to_print}"
             
             lines.append(to_print)
-            space -= 1
+            count += 1
 
         # Append empty space
-        while space > 0:
-            lines.append(f"{Style.DIM}{space:02}" if self.numbered else "")
-            space -= 1
+        while count <= space:
+            lines.insert(0, f"{Style.DIM}{count:02}" if self.number else "")
+            count += 1
         
         # Print the lines
         for l in lines:
@@ -133,14 +168,6 @@ class Screen:
         if height < 1: 
             raise DisplayError("Terminal window is too short.")
         return height
-
-    def change_page(self, page: int) -> None:
-        """Change which page to display."""
-        if page != self.page:
-            self.highlight = 0
-        if page < 1:
-            return
-        self._page = page
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
@@ -154,19 +181,6 @@ class Screen:
         self.body.clear()
         self.header.clear()
         self.footer.clear()
-
-    def select(self, index: int) -> Any:
-        """Return an item by line number from the current page."""
-        start = -(self.page * self.body_space)
-        end = start + self.body_space
-        if end > -1:
-            end = None
-        items = self.body[start:end][::-1]
-        if index > len(items) or index < 1:
-            raise DisplayError("Invalid line selection.")
-
-        self.highlight = index
-        return items[index-1]
 
     def _print_header(self) -> None:
         """Print the header."""
@@ -187,10 +201,10 @@ class Screen:
         max_pages_displayed = t_width() // 8
         prefix, suffix = "   ", "   "
 
-        if self.n_pages <= max_pages_displayed:
-            return range(1, self.n_pages+1), prefix, suffix
+        if self.body.n_pages <= max_pages_displayed:
+            return range(1, self.body.n_pages+1), prefix, suffix
 
-        page_sets = self.n_pages / max_pages_displayed
+        page_sets = self.body.n_pages / max_pages_displayed
         if page_sets.is_integer():
             page_sets = int(page_sets)
         else:
@@ -198,7 +212,7 @@ class Screen:
         
         for x in range(1, page_sets+1):
             rng = range(max_pages_displayed*(x-1)+1, max_pages_displayed*x+1)
-            if self.page not in rng:
+            if self.body.page not in rng:
                 continue
             if x < page_sets: suffix = ">>|"
             if x > 1: prefix = "|<<"
@@ -209,14 +223,14 @@ class Screen:
         """Print the divider bar with page numbers."""
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
         div_char = " "
-        if self.n_pages < 2:
+        if self.body.n_pages < 2:
             print(f"{style}{div_char*t_width()}", end="\n")
             return
 
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
-        nums = "".join([f" {n} " if n != self.page else f"|{n}|" for n in page_range])
+        nums = "".join([f" {n} " if n != self.body.page else f"|{n}|" for n in page_range])
         trailing = t_width()-(leading+len(nums))
         print(f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}")
 
@@ -227,9 +241,9 @@ class Screen:
 
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
-        self._print_header()
-        self._print_body()
-        self._print_footer()
+        self.header.print()
+        self.body.print()
+        self.footer.print()
         self._print_page_numbers()
         self._print_message_bar()
         self.printed = True
@@ -243,11 +257,11 @@ class ScreenController:
     def __init__(self):
         self._screens = {}
 
-    def add(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
+    def add(self, screen:Screen) -> None:
         """Add a screen to the list."""
-        self._screens.update({name: Screen(name, numbered, truncate, offset, refresh_func)})
+        self._screens.update({screen.name: screen})
         if len(self._screens) == 1:
-            self._active = self._screens[name]
+            self._active = screen
 
     def switch_to(self, name:str) -> None:
         """Switch the active screen."""
@@ -295,7 +309,7 @@ def message(text:str) -> None:
 
 def select(index) -> Any:
     """Return an item by line number from the current view in screen."""
-    return get_screen().select(index)
+    return get_screen().body.select(index)
 
 
 def deselect() -> None:
@@ -305,7 +319,7 @@ def deselect() -> None:
 
 def change_page(number:int) -> None:
     "Change the page of the active screen."
-    get_screen().change_page(number)
+    get_screen().body.change_page(number)
 
 
 def error(error) -> None:
@@ -314,9 +328,9 @@ def error(error) -> None:
     message(str(error))
 
 
-def add_screen(name:str, *, numbered:bool=False, truncate:bool=True, offset:int=0, refresh_func=None) -> None:
+def add_screen(name:str, *, numbered:bool=False, truncate:bool=False, offset:int=0, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
-    controller.add(name, numbered, truncate, offset, refresh_func)
+    controller.add(Screen(name, numbered, truncate, offset, refresh_func))
 
 
 def switch_screen(name:str) -> None:
@@ -350,12 +364,12 @@ controller = ScreenController()
 
 if __name__ == "__main__":
     add_screen("main", offset=1, numbered=True)
-    add_screen("notmain", offset=1, numbered=False)
+    # add_screen("notmain", offset=1, numbered=False)
     # switch_screen("notmain")
     for n in range(80):
         push(f"Old MacDonald had a farm {n+1}")
-    change_page(4)
-    select(3)
+    change_page(1)
+    logging.info(select(3))
     refresh()
     print("> ")
     
