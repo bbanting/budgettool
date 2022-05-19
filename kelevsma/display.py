@@ -46,12 +46,18 @@ class LineGroup(collections.UserList):
             return
 
         # For full output
-        ostring = str(obj)
+        src_string = str(obj)
         lines = []
-        while len(ostring) > width or not len(lines):
-            lines.append(Line(obj, ostring[:width]))
-            ostring = ostring[width:]
-        for l in lines:
+        first_line = True
+        while src_string:
+            if first_line:
+                lines.append(Line(obj, src_string[:width]))
+                src_string = src_string[width:]
+                first_line = False
+                continue
+            lines.append(Line(obj, f"    {src_string[:width-4]}"))
+            src_string = src_string[width-4:]
+        for l in lines[::-1]:
             self.data.append(l)
 
     def print(self) -> None:
@@ -78,16 +84,16 @@ class BodyLines(LineGroup):
     @property
     def page(self) -> int:
         """Get the current page."""
-        if 0 < self._page <= self.n_pages:
+        n_pages = self.n_pages
+        if 0 < self._page <= n_pages:
            return self._page
-        elif self._page > self.n_pages:
-            return self.n_pages
+        elif self._page > n_pages:
+            return n_pages
 
     @property
     def n_pages(self) -> int:
         """Return the total number of pages."""
-        space = self.space
-        pages = len(self) / space
+        pages = len(self) / self.space
         if pages.is_integer():
             pages = int(pages)
         else:
@@ -119,26 +125,25 @@ class BodyLines(LineGroup):
         return items[index-1]
 
     def print(self) -> None:
-        space = self.space
         lines = []
         start, end = self.get_current_range()
 
         # Append lines
         # Prepend numbers and highlight where necessary
         count = 1
-        for line in list(self)[start:end]:
+        for line in reversed(list(self)[start:end]):
             to_print = line
             if self.number:
                 to_print = f"{Style.DIM}{count:02} {Style.NORMAL}{to_print}"
-            if space+1 == self.highlight:
+            if count+1 == self.highlight:
                 to_print = f"{Fore.CYAN}{to_print}"
             
             lines.append(to_print)
             count += 1
 
         # Append empty space
-        while count <= space:
-            lines.insert(0, f"{Style.DIM}{count:02}" if self.number else "")
+        while count <= self.space:
+            lines.append(f"{Style.DIM}{count:02}" if self.number else "")
             count += 1
         
         # Print the lines
@@ -367,8 +372,10 @@ if __name__ == "__main__":
     # add_screen("notmain", offset=1, numbered=False)
     # switch_screen("notmain")
     for n in range(80):
+        if n % 4 == 0:
+            push(f"Old MacDonald had {'a'*250}")
         push(f"Old MacDonald had a farm {n+1}")
-    change_page(1)
+    change_page(11)
     logging.info(select(3))
     refresh()
     print("> ")
