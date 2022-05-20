@@ -3,7 +3,7 @@ import logging
 import collections
 
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 
 import colorama
 from colorama import Fore, Back, Style
@@ -31,11 +31,16 @@ class Line:
 class LineGroup(collections.UserList):
     """A group of lines for printing."""
 
-    def __init__(self, trunc:bool=False, *args, **kwargs) -> None:
+    def __init__(self, number:bool=False, trunc:bool=False, bold:bool=False, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.number = number
         self.trunc = trunc
+        self.bold = bold
     
     def append(self, obj:Any) -> None:
+        """Append an object as a Line. If not truncated, split into
+        multiple Line objects as necessary.
+        """
         width = t_width()
         if self.number:
             width -= 3
@@ -61,21 +66,22 @@ class LineGroup(collections.UserList):
             self.data.append(l)
 
     def print(self) -> None:
+        """Print all lines if any exist."""
         if self:
             print(self)
 
     def __str__(self) -> str:
-        # Print a style?
-        return "\n".join([l.text for l in self])
+        bold = Style.BRIGHT if self.bold else ""
+        return "\n".join([f"{bold}{l.text}" for l in self])
 
 
 class BodyLines(LineGroup):
-    """A special LineGroup for the body."""
+    """A special LineGroup for the screen body."""
     def __init__(self, number:bool=True, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._page = 1
-        self.highlight = 0
         self.number = number
+        self._page = 1
+        self.selected = None
 
     @property
     def space(self) -> int:
@@ -109,7 +115,7 @@ class BodyLines(LineGroup):
     def change_page(self, page: int) -> None:
         """Change which page to display."""
         if page != self.page:
-            self.highlight = 0
+            self.selected = 0
         if page < 1:
             return
         self._page = page
@@ -121,21 +127,22 @@ class BodyLines(LineGroup):
         if index > len(items) or index < 1:
             raise DisplayError("Invalid line selection.")
 
-        self.highlight = index + 1
-        return items[index-1]
+        self.selected = items[index-1].ref_obj
+        return self.selected
 
     def print(self) -> None:
         lines = []
         start, end = self.get_current_range()
+        raw_lines = list(reversed(self.data[start:end]))
 
         # Append lines
-        # Prepend numbers and highlight where necessary
+        # Prepend numbers and highlight if selected
         count = 1
-        for line in reversed(list(self)[start:end]):
+        for line in raw_lines:
             to_print = line
             if self.number:
                 to_print = f"{Style.DIM}{count:02} {Style.NORMAL}{to_print}"
-            if count+1 == self.highlight:
+            if line.ref_obj is self.selected:
                 to_print = f"{Fore.CYAN}{to_print}"
             
             lines.append(to_print)
@@ -161,7 +168,7 @@ class Screen:
 
         # Sub-buffers & state
         self.body = BodyLines(trunc=truncate, number=numbered)
-        self.header = LineGroup(trunc=True)
+        self.header = LineGroup(trunc=True, bold=True)
         self.footer = LineGroup()
         self.message = ""
         self.printed = False
@@ -186,19 +193,6 @@ class Screen:
         self.body.clear()
         self.header.clear()
         self.footer.clear()
-
-    def _print_header(self) -> None:
-        """Print the header."""
-        style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
-        # for line in self.header:
-        #     lpadding = (" " * 3) if self.numbered else ""
-        #     line = line[:(t_width()-len(lpadding))]
-        #     rpadding = " " * (t_width() - len(lpadding + line))
-        print(f"{style}{self.header}")
-
-    def _print_footer(self) -> None:
-        """Print the footer."""
-        print(self.footer)
     
     def _get_page_range(self) -> tuple[range, str]:
         """Return the range of pages to be displayed and the markings
@@ -318,8 +312,8 @@ def select(index) -> Any:
 
 
 def deselect() -> None:
-    """Remove the highlight."""
-    get_screen().highlight = 0
+    """Remove the selection."""
+    get_screen().selected = None
 
 
 def change_page(number:int) -> None:
@@ -371,12 +365,14 @@ if __name__ == "__main__":
     add_screen("main", offset=1, numbered=True)
     # add_screen("notmain", offset=1, numbered=False)
     # switch_screen("notmain")
+    push_h("   NAME     AMOUNT     NOTE")
+    push_f("FOOTER")
     for n in range(80):
         if n % 4 == 0:
             push(f"Old MacDonald had {'a'*250}")
         push(f"Old MacDonald had a farm {n+1}")
     change_page(11)
-    logging.info(select(3))
+    logging.info(select(9))
     refresh()
     print("> ")
     
