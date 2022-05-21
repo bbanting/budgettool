@@ -1,6 +1,7 @@
 import os
 import logging
 import collections
+import time
 
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -160,9 +161,11 @@ class BodyLines(LineGroup):
 
 class Screen:
     """A buffer of lines to print."""
-    def __init__(self, name:str, numbered:bool, truncate:bool, offset:int, refresh_func:Callable) -> None:
+    def __init__(self, name:str, min_body_height:int, numbered:bool, 
+    truncate:bool, offset:int, refresh_func:Callable) -> None:
         # Attributes
         self.name = name
+        self.min_body_height = min_body_height
         self.offset = abs(offset) + 2 # Factoring in message bar and page nums
         self.refresh_func = refresh_func
 
@@ -176,10 +179,19 @@ class Screen:
     @property
     def body_space(self) -> int:
         """Return the height in lines of the available space for the body."""
-        height = t_height() - self.offset - len(self.header) - len(self.footer)
-        if height < 1: 
-            raise DisplayError("Terminal window is too short.")
-        return height
+        return t_height() - sum((self.offset, len(self.header), len(self.footer)))
+
+    def check_height(self) -> None:
+        """Check to see that the terminal window is tall enough."""
+        if t_height() > sum((2, len(self.header), len(self.footer), self.min_body_height)):
+            return
+        print("Please increase the height of the terminal window.")
+        while True:
+            time.sleep(.5)
+            if t_height() < sum((2, len(self.header), len(self.footer), self.min_body_height)):
+                continue
+            clear_terminal()
+            break
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
@@ -240,11 +252,14 @@ class Screen:
 
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
+        self.check_height()
+
         self.header.print()
         self.body.print()
         self.footer.print()
         self._print_page_numbers()
         self._print_message_bar()
+
         self.printed = True
 
 
@@ -303,6 +318,7 @@ def push_f(*items:Any) -> None:
 
 
 def message(text:str) -> None:
+    """Set the message on the current screen."""
     get_screen().message = text
 
 
@@ -327,9 +343,10 @@ def error(error) -> None:
     message(str(error))
 
 
-def add_screen(name:str, *, numbered:bool=False, truncate:bool=False, offset:int=0, refresh_func=None) -> None:
+def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
+truncate:bool=False, offset:int=0, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
-    controller.add(Screen(name, numbered, truncate, offset, refresh_func))
+    controller.add(Screen(name, min_body_height, numbered, truncate, offset, refresh_func))
 
 
 def switch_screen(name:str) -> None:
@@ -362,7 +379,7 @@ controller = ScreenController()
 
 
 if __name__ == "__main__":
-    add_screen("main", offset=1, numbered=True)
+    add_screen("main", min_body_height=7, offset=1, numbered=True)
     # add_screen("notmain", offset=1, numbered=False)
     # switch_screen("notmain")
     push_h("   NAME     AMOUNT     NOTE")
@@ -372,7 +389,7 @@ if __name__ == "__main__":
             push(f"Old MacDonald had {'a'*250}")
         push(f"Old MacDonald had a farm {n+1}")
     change_page(11)
-    logging.info(select(9))
+    # logging.info(select(2))
     refresh()
     print("> ")
     

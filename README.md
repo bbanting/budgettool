@@ -14,7 +14,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Remove groups and create shortcuts "/"
 - [ ] SetCommand for target amounts. Default and per month
 - [ ] Make examples for all commands
-- [ ] Make min height and width for screen
+- [x] Make min height and width for screen
 
 
 ## Notes
