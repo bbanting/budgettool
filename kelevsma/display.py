@@ -2,13 +2,14 @@ import os
 import logging
 import collections
 import time
-
+import threading
 from dataclasses import dataclass
 from typing import Any, Callable
 
 import colorama
 from colorama import Fore, Back, Style
 
+import kelevsma.main as kelevsma
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 colorama.init(autoreset=True)
@@ -162,11 +163,11 @@ class BodyLines(LineGroup):
 class Screen:
     """A buffer of lines to print."""
     def __init__(self, name:str, min_body_height:int, numbered:bool, 
-    truncate:bool, offset:int, refresh_func:Callable) -> None:
+    truncate:bool, refresh_func:Callable) -> None:
         # Attributes
         self.name = name
         self.min_body_height = min_body_height
-        self.offset = abs(offset) + 2 # Factoring in message bar and page nums
+        self.offset = 3 # Page nums, message line, input line
         self.refresh_func = refresh_func
 
         # Sub-buffers & state
@@ -259,6 +260,7 @@ class Screen:
         self.footer.print()
         self._print_page_numbers()
         self._print_message_bar()
+        print("> ", end="")
 
         self.printed = True
 
@@ -344,9 +346,9 @@ def error(error) -> None:
 
 
 def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
-truncate:bool=False, offset:int=0, refresh_func=None) -> None:
+truncate:bool=False, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
-    controller.add(Screen(name, min_body_height, numbered, truncate, offset, refresh_func))
+    controller.add(Screen(name, min_body_height, numbered, truncate, refresh_func))
 
 
 def switch_screen(name:str) -> None:
@@ -375,13 +377,29 @@ def refresh() -> None:
     get_screen().print()
 
 
+def height_checker() -> None:
+    """Check if the screen size has changed, refresh if so."""
+    height = t_height()
+    while True:
+        if not kelevsma.running:
+            break
+        new_height = t_height()
+        if height == new_height:
+            continue
+        height = new_height
+        clear_terminal()
+        get_screen().print()
+        time.sleep(0.25)
+
+
 controller = ScreenController()
+
+hc = threading.Thread(target=height_checker)
+hc.start()
 
 
 if __name__ == "__main__":
-    add_screen("main", min_body_height=7, offset=1, numbered=True)
-    # add_screen("notmain", offset=1, numbered=False)
-    # switch_screen("notmain")
+    add_screen("main", min_body_height=5, numbered=True)
     push_h("   NAME     AMOUNT     NOTE")
     push_f("FOOTER")
     for n in range(80):
@@ -391,5 +409,4 @@ if __name__ == "__main__":
     change_page(11)
     # logging.info(select(2))
     refresh()
-    print("> ")
     

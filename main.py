@@ -38,7 +38,7 @@ def push_entries() -> None:
     entry_summary = get_entry_summary(len(entries), s.tframe, s.category, s.targets)
     target_progress = get_target_progress(s.targets)
 
-    display.push_h(f"{'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
+    display.push_h(f"   {'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
     display.push(*entries)
     display.push_f("", target_progress, entry_summary)
 
@@ -83,19 +83,24 @@ def register_commands(con: command.CommandController):
 
 
 def main():
-    display.add_screen("entries", offset=1, numbered=True, refresh_func=push_entries)
-    display.add_screen("targets", offset=1, numbered=True, refresh_func=push_targets)
-    display.add_screen("help", offset=1)
+    """Main function."""
+    # Create the screens
+    display.add_screen("entries", min_body_height=3, numbered=True, refresh_func=push_entries)
+    display.add_screen("targets", numbered=True, refresh_func=push_targets)
+    display.add_screen("help")
 
+    # Create the command controller and register commands
     controller = command.CommandController()
     register_commands(controller)
 
+    # Start by running the list command
     controller.route_command(["list"])
     display.refresh()
 
+    # Receive input and process commands
     while True:
         try:
-            user_input = shlex.split(input("> "))
+            user_input = shlex.split(input())
             controller.route_command(user_input)
         except (BTError, display.DisplayError) as e:
             display.error(e)

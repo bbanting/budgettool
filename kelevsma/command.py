@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any
+
 import inspect
 import abc
 import logging
+from typing import Any
 from dataclasses import dataclass
 
 from colorama import Style

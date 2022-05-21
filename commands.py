@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import logging
 import datetime
@@ -11,7 +13,7 @@ import target
 import db
 
 from config import TODAY
-from entry import Entry, cents_to_dollars
+from entry import Entry
 from kelevsma.command import Example
 from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
@@ -387,4 +389,4 @@ class QuitCommand(kelevsma.Command):
     names = ("q", "quit")
 
     def execute(self) -> None:
-        quit()
+        kelevsma.main.quit_program()
