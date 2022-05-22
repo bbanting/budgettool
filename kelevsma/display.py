@@ -11,6 +11,7 @@ from colorama import Fore, Back, Style
 
 import kelevsma.main as kelevsma
 
+
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 colorama.init(autoreset=True)
 
@@ -182,17 +183,11 @@ class Screen:
         """Return the height in lines of the available space for the body."""
         return t_height() - sum((self.offset, len(self.header), len(self.footer)))
 
-    def check_height(self) -> None:
+    def check_height(self) -> bool:
         """Check to see that the terminal window is tall enough."""
         if t_height() > sum((2, len(self.header), len(self.footer), self.min_body_height)):
-            return
-        print("Please increase the height of the terminal window.")
-        while True:
-            time.sleep(.5)
-            if t_height() < sum((2, len(self.header), len(self.footer), self.min_body_height)):
-                continue
-            clear_terminal()
-            break
+            return True
+        return False
     
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
@@ -253,16 +248,21 @@ class Screen:
 
     def print(self) -> None:
         """Print the contents of the buffer to the terminal."""
-        self.check_height()
+        # Check the height before printing
+        if not self.check_height():
+            print("Please increase the height of the terminal window.", end="")
+            while not self.check_height(): # Hang until hight is increased.
+                time.sleep(0.5)
+        # Print
+        else:
+            self.header.print()
+            self.body.print()
+            self.footer.print()
+            self._print_page_numbers()
+            self._print_message_bar()
+            print("> ", end="")
 
-        self.header.print()
-        self.body.print()
-        self.footer.print()
-        self._print_page_numbers()
-        self._print_message_bar()
-        print("> ", end="")
-
-        self.printed = True
+            self.printed = True
 
 
 class ScreenController:
@@ -389,24 +389,8 @@ def height_checker() -> None:
         height = new_height
         clear_terminal()
         get_screen().print()
-        time.sleep(0.25)
+        time.sleep(0.5)
 
 
 controller = ScreenController()
-
-hc = threading.Thread(target=height_checker)
-hc.start()
-
-
-if __name__ == "__main__":
-    add_screen("main", min_body_height=5, numbered=True)
-    push_h("   NAME     AMOUNT     NOTE")
-    push_f("FOOTER")
-    for n in range(80):
-        if n % 4 == 0:
-            push(f"Old MacDonald had {'a'*250}")
-        push(f"Old MacDonald had a farm {n+1}")
-    change_page(11)
-    # logging.info(select(2))
-    refresh()
-    
+threading.Thread(target=height_checker).start()
