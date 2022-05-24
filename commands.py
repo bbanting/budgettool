@@ -308,13 +308,14 @@ class EditEntryCommand(kelevsma.Command):
     names = ("edit",)
     params = {
         "id": VID(req=True),
-        "field": VLit(input_functions, lower=True, req=True),
+        "field": VLit(input_functions, req=True),
     }
 
     def execute(self, id:int, field:str) -> None:
         self.old_entry = display.select(id)
 
         self.new_entry = copy.copy(self.old_entry)
+        field = field.lower()
         new_value = input_functions[field]()
         setattr(self.new_entry, field, new_value)
 
@@ -328,27 +329,38 @@ class EditEntryCommand(kelevsma.Command):
         db.update_entry(self.new_entry)
 
 
-class SetTargetCommand(kelevsma.Command):
-    """Set the amount for a target; either the default or for a
-    specified month.
-    """
-    names = ("set",)
+class SetTargetDefaultCommand(kelevsma.Command):
+    """Set the default amount for a given target."""
+    params = {
+        "name": VTarget(req=True),
+        "default": VLit("default"),
+        "amount": VAmount(req=True, allow_zero=True),
+    }
+
+    def execute(self, name, default, amount) -> None:
+        ...
+
+class SetTargetForMonthCommand(kelevsma.Command):
+    """Set the amount for a give month for a given target."""
     params = {
         "name": VTarget(req=True),
         "amount": VAmount(req=True, allow_zero=True),
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
-        "default": VLit("default", lower=True)
     }
 
-    def execute(self, name, amount, year, month, default) -> None:
-        pass
+    def execute(self, name, amount, year, month) -> None:
+        ...
 
-    def default_branch(self, amount) -> None:
-        pass
-
-    def tframe_branch(self, amount, year, month) -> None:
-        pass
+class SetTargetCommand(kelevsma.SporkCommand):
+    """Set the amount for a target; either the default or for a
+    specified month.
+    """
+    names = ("set",)
+    forks = {
+        VLit("default"): SetTargetDefaultCommand,
+        }
+    default = SetTargetForMonthCommand
 
 
 class RenameTargetCommand(kelevsma.Command):
@@ -382,11 +394,3 @@ class ChangePageCommand(kelevsma.Command):
     def execute(self, number:str) -> None:
         number = int(number)
         display.change_page(number)
-
-
-class QuitCommand(kelevsma.Command):
-    """Quits the program."""
-    names = ("q", "quit")
-
-    def execute(self) -> None:
-        kelevsma.main.quit_program()

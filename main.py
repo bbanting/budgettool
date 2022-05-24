@@ -66,7 +66,7 @@ def register_commands(con: command.CommandController):
     con.register(command.UndoCommand)
     con.register(command.RedoCommand)
     con.register(command.HelpCommand, "help")
-    con.register(commands.QuitCommand)
+    con.register(command.QuitCommand)
     con.register(commands.ListCommand)
     con.register(commands.ListEntriesCommand, "entries")
     con.register(commands.ListTargetsCommand, "targets")
@@ -80,6 +80,9 @@ def register_commands(con: command.CommandController):
     con.register(commands.EditEntryCommand, "entries")
     con.register(commands.RenameTargetCommand, "targets")
     con.register(commands.ChangePageCommand)
+    con.register(commands.SetTargetCommand, "targets")
+    con.register(commands.SetTargetForMonthCommand, "targets")
+    con.register(commands.SetTargetDefaultCommand, "targets")
 
 
 def main():

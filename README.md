@@ -22,3 +22,5 @@ I made this because I like to code and want to improve. I can't see this being u
 - target instance is created when first entry is created or when amount is set
 - Make command params dependant on others
 - Use validators in ForkCommand?
+- Improve the interface to kelevsma
+- Set screen attr in Command class def?

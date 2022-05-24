@@ -9,7 +9,7 @@ from dataclasses import dataclass
 # Constants
 FILENAME = "config.json"
 TODAY = datetime.date.today()
-KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries")
+KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries", "default")
 
 # Widths for display columns
 DATEW = 8

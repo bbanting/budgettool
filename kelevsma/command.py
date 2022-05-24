@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from colorama import Style
 
+import kelevsma
 import kelevsma.display as display
 from .validator import Validator, ValidatorError, VLit
 
@@ -173,11 +174,10 @@ class SporkCommand:
 
     @classmethod
     def fork(cls, args:list[str]) -> Command | None:
-        for validator, command in cls.params.items():
-            if validator(args):
+        for validator, command in cls.forks.items():
+            if validator(args, rmargs=False):
                 return command
-        else:
-            return cls.default
+        return cls.default
 
 
 class UndoCommand(Command):
@@ -194,6 +194,14 @@ class RedoCommand(Command):
 
     def execute(self) -> None:
         self.controller.redo()
+
+
+class QuitCommand(kelevsma.Command):
+    """Quits the program."""
+    names = ("q", "quit")
+
+    def execute(self) -> None:
+        kelevsma.quit_program()
 
 
 class HelpCommand(Command):

@@ -251,8 +251,7 @@ class Screen:
         # Check the height before printing
         if not self.check_height():
             print("Please increase the height of the terminal window.", end="")
-            while not self.check_height(): # Hang until hight is increased.
-                time.sleep(0.5)
+            return
         # Print
         else:
             self.header.print()
@@ -381,7 +380,7 @@ def height_checker() -> None:
     """Check if the screen size has changed, refresh if so."""
     height = t_height()
     while True:
-        if not kelevsma.running:
+        if not kelevsma.is_running:
             break
         new_height = t_height()
         if height == new_height:

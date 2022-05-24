@@ -7,8 +7,9 @@ def get_input() -> str:
 
 
 def quit_program() -> None:
-    global running
-    running = False
+    """Quit the program"""
+    global is_running
+    is_running = False
     quit()
 
-running: bool = True
+is_running: bool = True

@@ -51,7 +51,7 @@ class Validator(abc.ABC):
         self.invert = invert
         self.default = default
 
-    def __call__(self, args:list) -> Any | list[Any]:
+    def __call__(self, args:list, rmargs:bool=True) -> Any | list[Any]:
         """Calls validate on a list of arguments."""
         data = []
         to_remove = []
@@ -69,7 +69,9 @@ class Validator(abc.ABC):
                 raise ValidatorError("Missing required input")
             return self.default
         
-        for x in to_remove: args.remove(x)
+        if rmargs:
+            for x in to_remove:
+                args.remove(x) 
         if self.plural:
             return data
         return data[0]
@@ -88,10 +90,9 @@ class VLit(Validator):
     If the input value matches any of the literals, it is returned.
     Otherwise, return ValidatorError.
     """
-    def __init__(self, literal, lower=False, strict=False, *args, **kwargs):
+    def __init__(self, literal, strict=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.literal = literal
-        self.lower = lower
         self.strict = strict
 
     def compare(self, lval: str, rval: str):
@@ -116,7 +117,7 @@ class VLit(Validator):
         if self.invert:
             found = not found
         if found:
-            return Result.ok(value) if not self.lower else Result.ok(value.lower())
+            return Result.ok(value)
         else:
             return Result.err()
 
