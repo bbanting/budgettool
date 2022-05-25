@@ -144,7 +144,7 @@ def sum_target(target:str, tframe:config.TimeFrame) -> int:
     return sum_amount if sum_amount else 0
 
 
-def set_monthly_target(target_name:str, amount:int) -> None:
+def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFrame) -> None:
     """Set the target amount for the specified month."""
 
 
@@ -155,9 +155,9 @@ def get_target_default(name:str) -> int:
 
 
 def get_target_goal(target:target.Target, tframe:config.TimeFrame) -> int:
-    """Returns a target instance from the database.
-    If no target instance exists with the input parameters, the 
-    default for that target is returned.
+    """Returns the sum of the amounts for a target for either one
+    month or an entire year. If target instances don't exist for
+    a particular month, the default amount is returned.
     """
     expected_n_values = 12
     query = f"""

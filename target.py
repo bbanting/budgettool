@@ -52,7 +52,7 @@ def delete(target:Target) -> None:
     db.run_query(query)
 
 
-def update(target:Target, name:str=None, default_amt:int=None) -> None:
+def update(target:Target, *, name:str=None, default_amt:int=None) -> None:
     """Update a target."""
     query = db.make_update_query_target(target.id, name, default_amt)
     db.run_query(query)

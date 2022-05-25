@@ -47,7 +47,7 @@ class VTarget(Validator):
 
 
 class VAmount(Validator):
-    """Capture a positive or negative amount."""
+    """Capture a positive or negative amount in dollars. Return in cents."""
     def __init__(self, allow_zero:bool=False, *args, **kwargs) -> None:
         self.allow_zero = allow_zero
         super().__init__(*args, **kwargs)

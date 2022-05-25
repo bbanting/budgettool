@@ -338,7 +338,17 @@ class SetTargetDefaultCommand(kelevsma.Command):
     }
 
     def execute(self, name, default, amount) -> None:
-        ...
+        self.old_target = target.select_one(name)
+        self.new_target = copy.copy(self.old_target)
+        self.new_target.default_amt = amount
+        target.update(self.old_target, default_amt=self.new_target.default_amt)
+
+    def undo(self) -> None:
+        target.update(self.new_target, default_amt=self.old_target.default_amt)
+
+    def redo(self) -> None:
+        target.update(self.old_target, default_amt=self.new_target.default_amt)
+
 
 class SetTargetForMonthCommand(kelevsma.Command):
     """Set the amount for a give month for a given target."""
@@ -351,6 +361,7 @@ class SetTargetForMonthCommand(kelevsma.Command):
 
     def execute(self, name, amount, year, month) -> None:
         ...
+
 
 class SetTargetCommand(kelevsma.SporkCommand):
     """Set the amount for a target; either the default or for a
@@ -375,13 +386,13 @@ class RenameTargetCommand(kelevsma.Command):
         self.old_target = target.select_one(current_name)
         self.new_target = copy.copy(self.old_target)
         self.new_target.name = new_name
-        target.update(self.old_target, self.new_target.name)
+        target.update(self.old_target, name=self.new_target.name)
 
     def undo(self) -> None:
-        target.update(self.new_target, self.old_target.name)
+        target.update(self.new_target, name=self.old_target.name)
 
     def redo(self) -> None:
-        target.update(self.old_target, self.new_target.name)
+        target.update(self.old_target, name=self.new_target.name)
 
 
 class ChangePageCommand(kelevsma.Command):
