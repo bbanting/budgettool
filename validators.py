@@ -6,9 +6,15 @@ from kelevsma.validator import Validator, Result
 
 class VMonth(Validator):
     """Verify that input refers to a month; if so, return it as int."""
+    def __init__(self, allow_any:bool=True, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.allow_any = allow_any
+
     def validate(self, value) -> Result:
         name = value.lower()
         for month in Month:
+            if not self.allow_any and not month.value:
+                continue
             if not month.name.lower().startswith(name): 
                 continue
             return Result.ok(month)

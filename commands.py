@@ -144,7 +144,7 @@ class ListTargetsCommand(kelevsma.Command):
 
     def execute(self, year, month) -> None:
         tframe = config.TimeFrame(year, month)
-        config.target_filter_state.__init__(tframe=tframe)
+        config.target_filter_state.tframe = tframe
         display.change_page(1)
 
 
@@ -356,11 +356,13 @@ class SetTargetForMonthCommand(kelevsma.Command):
         "name": VTarget(req=True),
         "amount": VAmount(req=True, allow_zero=True),
         "year": VYear(default=TODAY.year),
-        "month": VMonth(default=TODAY.month),
+        "month": VMonth(default=TODAY.month, allow_any=False),
     }
 
     def execute(self, name, amount, year, month) -> None:
-        ...
+        targ = target.select_one(name)
+        tframe = config.TimeFrame(year, month)
+        target.update_instance(targ, amount, tframe)
 
 
 class SetTargetCommand(kelevsma.SporkCommand):

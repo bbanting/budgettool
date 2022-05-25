@@ -145,7 +145,21 @@ def sum_target(target:str, tframe:config.TimeFrame) -> int:
 
 
 def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFrame) -> None:
-    """Set the target amount for the specified month."""
+    """Set the target amount for the specified month. Start by deleting the 
+    old target instance if it exists, and then insert a new one.
+    """
+    del_query = f"""
+    DELETE FROM target_instances
+    WHERE target = {target.id} AND year = {tframe.year} AND month = {tframe.month.value})
+    """
+
+    insert_query = f"""
+    INSERT INTO target_instances (target, amount, year, month)
+    VALUES ({target.id}, {amount}, {tframe.year}, {tframe.month.value})
+    """
+
+    run_query(del_query)
+    run_query(insert_query)
 
 
 def get_target_default(name:str) -> int:
@@ -171,9 +185,8 @@ def get_target_goal(target:target.Target, tframe:config.TimeFrame) -> int:
 
     result = run_select_query(query)
     if diff := (expected_n_values - len(result)):
-        return sum([x[0][0] for x in result]) + (target.default_amt * diff)
-    
-    return sum([x[0][0] for x in result])
+        return sum([x[0] for x in result]) + (target.default_amt * diff)
+    return sum([x[0] for x in result])
 
 
 target_table_query = """

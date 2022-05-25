@@ -196,7 +196,7 @@ class RedoCommand(Command):
         self.controller.redo()
 
 
-class QuitCommand(kelevsma.Command):
+class QuitCommand(Command):
     """Quits the program."""
     names = ("q", "quit")
 

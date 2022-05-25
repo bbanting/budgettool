@@ -7,6 +7,7 @@ A simple tool to keep track of expenses and earnings.
 from __future__ import annotations
 import shlex
 import logging
+import kelevsma
 
 import kelevsma.command as command
 import kelevsma.display as display
@@ -26,7 +27,7 @@ class BTError(Exception):
 
 
 def push_targets() -> None:
-    display.push_h(f"{'NAME':{NAMEW}}{'PROGRESS'}")
+    display.push_h(f"   {'NAME':{NAMEW}}{'PROGRESS'}")
     display.push(*target.select())
 
 

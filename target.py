@@ -1,4 +1,3 @@
-from email.policy import default
 import config
 import entry
 import db
@@ -56,6 +55,11 @@ def update(target:Target, *, name:str=None, default_amt:int=None) -> None:
     """Update a target."""
     query = db.make_update_query_target(target.id, name, default_amt)
     db.run_query(query)
+
+
+def update_instance(target:Target, amount:int, tframe:config.TimeFrame) -> None:
+    """Update the amount for a target instance."""
+    db.set_target_instance(target, amount, tframe)
 
 
 def select(name:str="") -> list[Target]:
