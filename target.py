@@ -23,9 +23,10 @@ class Target:
         tframe = config.target_filter_state.tframe
         return db.sum_target(self, tframe)
 
-    def goal(self) -> int:
+    def goal(self, tframe=None) -> int:
         """Return the goal with respect to current timeframe."""
-        tframe = config.target_filter_state.tframe
+        if not tframe:
+            tframe = config.target_filter_state.tframe
         return db.get_target_goal(self, tframe)
 
     def __str__(self) -> str:

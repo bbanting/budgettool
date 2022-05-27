@@ -19,6 +19,7 @@ import entry
 from kelevsma.command import CommandError
 from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 
+
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
 
@@ -27,8 +28,11 @@ class BTError(Exception):
 
 
 def push_targets() -> None:
+    year = config.target_filter_state.tframe.year
+    month = config.target_filter_state.tframe.month.name
     display.push_h(f"   {'NAME':{NAMEW}}{'PROGRESS'}")
     display.push(*target.select())
+    display.push_f(f"Showing targets for {month} of {year}.")
 
 
 def push_entries() -> None:

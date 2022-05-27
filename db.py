@@ -15,6 +15,7 @@ def run_query(query:str) -> sqlite3.Cursor | None:
     try:
         cursor.execute(query)
     except sqlite3.Error as e:
+        logging.info(e)
         display.error("Database error")
     else:
         connection.commit()
@@ -150,7 +151,7 @@ def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFram
     """
     del_query = f"""
     DELETE FROM target_instances
-    WHERE target = {target.id} AND year = {tframe.year} AND month = {tframe.month.value})
+    WHERE target={target.id} AND year={tframe.year} AND month={tframe.month.value}
     """
 
     insert_query = f"""
@@ -158,7 +159,8 @@ def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFram
     VALUES ({target.id}, {amount}, {tframe.year}, {tframe.month.value})
     """
 
-    run_query(del_query)
+    if not run_query(del_query): # If error in query, don't run next query
+        return
     run_query(insert_query)
 
 

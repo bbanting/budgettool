@@ -12,15 +12,14 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
-- [ ] SetCommand for target amounts. Default and per month
+- [x] SetCommand for target amounts. Default and per month
 - [ ] Make examples for all commands
-- [ ] Give info on target list output
+- [x] Give info on target list output
 
 
 ## Notes
 
 - Currently, if page numbers get too many digits long, they will overflow
-- target instance is created when first entry is created or when amount is set
 - Make command params dependant on others
 - Use validators in ForkCommand?
 - Improve the interface to kelevsma
