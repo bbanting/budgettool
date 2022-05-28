@@ -170,22 +170,29 @@ def get_target_default(name:str) -> int:
     return run_select_query(query)[0][0]
 
 
-def get_target_goal(target:target.Target, tframe:config.TimeFrame) -> int:
-    """Returns the sum of the amounts for a target for either one
-    month or an entire year. If target instances don't exist for
-    a particular month, the default amount is returned.
-    """
-    expected_n_values = 12
+def get_target_instance(target:target.Target, tframe:config.TimeFrame) -> list:
+    """Returns the amounts for the target instances."""
     query = f"""
     SELECT amount 
     FROM target_instances
     WHERE target = '{target.id}' AND year = {tframe.year}
     """
     if tframe.month != 0:
-        expected_n_values = 1
         query += f" AND month = {tframe.month.value}"
 
-    result = run_select_query(query)
+    return run_select_query(query)
+
+
+def get_target_goal(target:target.Target, tframe:config.TimeFrame) -> int:
+    """Returns the sum of the amounts for a target for either one
+    month or an entire year. If target instances don't exist for
+    a particular month, the default amount is returned.
+    """
+    expected_n_values = 12
+    if tframe.month != 0:
+        expected_n_values = 1
+
+    result = get_target_instance(target, tframe)
     if diff := (expected_n_values - len(result)):
         return sum([x[0] for x in result]) + (target.default_amt * diff)
     return sum([x[0] for x in result])

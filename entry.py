@@ -97,7 +97,7 @@ def insert(entry:Entry) -> None:
     """Insert an entry into the database."""
     query = db.make_insert_query_entry(entry)
     targ = target.select_one(entry.target)
-    if targ.goal(entry.tframe) == targ.default_amt:
+    if not targ.instance_exists(entry.tframe):
         db.set_target_instance(targ, targ.default_amt, entry.tframe)
     db.run_query(query)
 

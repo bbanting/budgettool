@@ -12,9 +12,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
-- [x] SetCommand for target amounts. Default and per month
 - [ ] Make examples for all commands
-- [x] Give info on target list output
 
 
 ## Notes

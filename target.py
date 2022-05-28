@@ -29,6 +29,12 @@ class Target:
             tframe = config.target_filter_state.tframe
         return db.get_target_goal(self, tframe)
 
+    def instance_exists(self, tframe:config.TimeFrame) -> bool:
+        """Return true if an instance exists in the db with this 
+        target and time frame.
+        """
+        return any(db.get_target_instance(self, tframe))
+
     def __str__(self) -> str:
         name = self.name[:NAMEW]
         current = entry.cents_to_dollars(self.current_total())
