@@ -27,13 +27,13 @@ class Target:
         """Return the goal with respect to current timeframe."""
         if not tframe:
             tframe = config.target_filter_state.tframe
-        return db.get_target_goal(self, tframe)
+        return db.get_target_amount(self, tframe)
 
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
         target and time frame.
         """
-        return any(db.get_target_instance(self, tframe))
+        return any(db.get_target_instance_amount(self, tframe, use_default=False))
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
@@ -54,8 +54,7 @@ def insert(target:Target) -> None:
 
 def delete(target:Target) -> None:
     """Removes a target from the database."""
-    query = db.make_delete_query_target(target.id)
-    db.run_query(query)
+    db.delete_by_id(db.TARGETS, target.id)
 
 
 def update(target:Target, *, name:str=None, default_amt:int=None) -> None:

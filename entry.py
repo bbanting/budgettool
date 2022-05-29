@@ -104,8 +104,7 @@ def insert(entry:Entry) -> None:
 
 def delete(entry:Entry) -> None:
     """Delete an entry from the database."""
-    query = db.make_delete_query_entry(entry.id)
-    db.run_query(query)
+    db.delete_by_id(db.ENTRIES, entry.id)
 
 
 def update(entry:Entry) -> None:
