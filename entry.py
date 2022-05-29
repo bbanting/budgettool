@@ -17,11 +17,11 @@ from config import DATEW, AMOUNTW
 class Entry:
     """Represent one entry in the budget."""
     __slots__ = ("id", "date", "amount", "target", "note")
-    def __init__(self, id:int, date:date, amount:int, target:str, note:str):
+    def __init__(self, id:int, date:date, amount:int, targ:str, note:str):
         self.id = id
         self.date = date
         self.amount = amount
-        self.target = target
+        self.target = target.select_one(targ)
         self.note = note
 
     @property
@@ -46,20 +46,26 @@ class Entry:
 
         return cls(id, date, amount, target, note)
 
-    def to_tuple(self) -> tuple:
-        """Return a tuple representation for the database."""
+    def fields_and_values(self) -> tuple[tuple]:
+        """Return the fields and values for an SQL insert."""
         date = self.date.isoformat()
-        targ_id = target.select_one(self.target).id
-        values = (date, self.amount, targ_id, self.note)
-        if self.id:
-            values = (self.id,) + values
-        return values
+        d = {
+            "id":       self.id,
+            "date":     date,
+            "amount":   self.amount,
+            "target":   self.target.id,
+            "note":     self.note
+        }
+        if not self.id:
+            d.pop("id")
+            
+        return (tuple(d.keys()), tuple(d.values()))
 
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
         return f"{date:{DATEW}}" \
         f"{dollar_str(self.amount):{AMOUNTW}}" \
-        f"{Style.DIM}({self.target}){Style.NORMAL} {self.note}"
+        f"{Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):
@@ -95,11 +101,11 @@ def dollars_to_cents(dollar_amount:str) -> int:
 
 def insert(entry:Entry) -> None:
     """Insert an entry into the database."""
-    query = db.make_insert_query_entry(entry)
-    targ = target.select_one(entry.target)
+    targ = entry.target
     if not targ.instance_exists(entry.tframe):
         db.set_target_instance(targ, targ.default_amt, entry.tframe)
-    db.run_query(query)
+
+    db.insert(db.ENTRIES, *entry.fields_and_values())
 
 
 def delete(entry:Entry) -> None:

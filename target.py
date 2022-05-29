@@ -27,13 +27,25 @@ class Target:
         """Return the goal with respect to current timeframe."""
         if not tframe:
             tframe = config.target_filter_state.tframe
-        return db.get_target_amount(self, tframe)
+        return db.get_target_instance_amount(self, tframe)
 
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
         target and time frame.
         """
         return any(db.get_target_instance_amount(self, tframe, use_default=False))
+
+    def fields_and_values(self) -> tuple[tuple]:
+        """Return the fields and values for an SQL insert."""
+        d = {
+            "id":           self.id,
+            "name":         self.name,
+            "default_amt":  self.default_amt,
+        }
+        if not self.id:
+            d.pop("id")
+
+        return (tuple(d.keys()), tuple(d.values()))
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
@@ -48,8 +60,7 @@ class Target:
 
 def insert(target:Target) -> None:
     """Adds a new target to the database."""
-    query = db.make_insert_query_target(target.id, target.name, target.default_amt)
-    db.run_query(query)
+    db.insert(db.TARGETS, *target.fields_and_values())
 
 
 def delete(target:Target) -> None:

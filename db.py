@@ -1,5 +1,4 @@
 from __future__ import annotations
-from msilib.schema import tables
 
 import sqlite3
 import logging
@@ -7,7 +6,6 @@ import logging
 import kelevsma.display as display
 import config
 import target
-import entry
 
 
 ENTRIES = "entries"
@@ -42,8 +40,19 @@ def run_select_query(query:str) -> list[tuple|None]:
 
 
 def delete_by_id(table_name:str, id:int) -> None:
-    """Delete a row from the database."""
+    """Delete a row from the database by its id."""
     run_query(f"DELETE FROM {table_name} where id = {id}")
+
+
+def insert(table_name:str, fields:tuple, values:tuple) -> None:
+    """Inserts a row into the database, given the table, fields, and values.
+    Assumes string values have necessary quotes around them.
+    """
+    query = f"""
+    INSERT INTO {table_name} {fields}
+    VALUES {values}
+    """
+    run_query(query)
 
 
 def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list) -> str:
@@ -71,20 +80,10 @@ def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list)
     return query
 
 
-def make_insert_query_entry(entry:entry.Entry) -> str:
-    """Construct a query to insert an entry into the database."""
-    fields = "(date, amount, target, note)"
-    if entry.id:
-        fields = "(id, date, amount, target, note)"
-    
-    return f"INSERT INTO entries {fields} VALUES {entry.to_tuple()}"
-
-
 def make_update_query_entry(new_entry_values:tuple) -> str:
     """Construct a query to overwrite an entry in the database. The
     new entry has the same id and the entry it's replacing.
     """
-    new_entry_values = new_entry_values.to_tuple()
     query = """
     UPDATE entries 
     SET date = '{}', amount = {}, target = '{}', note = '{}'
@@ -100,20 +99,6 @@ def make_select_query_target(name:str) -> str:
     query = "SELECT * FROM targets"
     if name:
         query += f" WHERE name = '{name}'"
-    return query
-
-
-def make_insert_query_target(id:int, name:str, default_amt:int) -> str:
-    """Construct a query to insert a target."""
-    fields = "(name, default_amt)"
-    values = (name, default_amt)
-    if id:
-        fields = "(id, name, default_amt)"
-        values = (id, name, default_amt)
-    query = f"""
-    INSERT INTO targets {fields}
-    VALUES {values}
-    """
     return query
 
 
@@ -189,15 +174,15 @@ def get_target_instance_amount(target:target.Target, tframe:config.TimeFrame, us
     return sum(result)
 
 
-target_table_query = """
-CREATE TABLE IF NOT EXISTS targets (
+target_table_query = f"""
+CREATE TABLE IF NOT EXISTS {TARGETS} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     default_amt INTEGER NOT NULL
 );"""
 
-target_instances_table_query = """
-CREATE TABLE IF NOT EXISTS target_instances (
+target_instances_table_query = f"""
+CREATE TABLE IF NOT EXISTS {TARGET_INSTANCES} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     target INTEGER NOT NULL,
     amount INTEGER NOT NULL,
@@ -206,8 +191,8 @@ CREATE TABLE IF NOT EXISTS target_instances (
     FOREIGN KEY (target) REFERENCES target (id)
 );"""
 
-entries_table_query = """
-CREATE TABLE IF NOT EXISTS entries (
+entries_table_query = f"""
+CREATE TABLE IF NOT EXISTS {ENTRIES} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
     amount INTEGER NOT NULL,
