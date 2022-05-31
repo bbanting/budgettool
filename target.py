@@ -65,13 +65,13 @@ def insert(target:Target) -> None:
 
 def delete(target:Target) -> None:
     """Removes a target from the database."""
-    db.delete_by_id(db.TARGETS, target.id)
+    db.delete(db.TARGETS, target.id)
 
 
-def update(target:Target, *, name:str=None, default_amt:int=None) -> None:
+def update(target:Target) -> None:
     """Update a target."""
-    query = db.make_update_query_target(target.id, name, default_amt)
-    db.run_query(query)
+    fields, values = target.fields_and_values()
+    db.update(db.TARGETS, target.id, fields[1:], values[1:])
 
 
 def update_instance(target:Target, amount:int, tframe:config.TimeFrame) -> None:

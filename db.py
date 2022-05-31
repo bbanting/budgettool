@@ -39,19 +39,30 @@ def run_select_query(query:str) -> list[tuple|None]:
         return items
 
 
-def delete_by_id(table_name:str, id:int) -> None:
+def delete(table_name:str, id:int) -> None:
     """Delete a row from the database by its id."""
     run_query(f"DELETE FROM {table_name} where id = {id}")
 
 
 def insert(table_name:str, fields:tuple, values:tuple) -> None:
-    """Inserts a row into the database, given the table, fields, and values.
-    Assumes string values have necessary quotes around them.
-    """
+    """Inserts a row into the database, given the table, fields, and values."""
     query = f"""
     INSERT INTO {table_name} {fields}
     VALUES {values}
     """
+    run_query(query)
+
+
+def update(table_name:str, id:int, fields:tuple, values:tuple) -> None:
+    """Updates a row in the database."""
+    values = [f"'{v}'" if type(v) is str else v for v in values]
+    pairs = [f"{f} = {v}" for f, v in zip(fields, values)]
+    query = f"""
+    UPDATE {table_name} 
+    SET {", ".join(pairs)}
+    WHERE id = {id}
+    """
+
     run_query(query)
 
 
@@ -80,41 +91,11 @@ def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list)
     return query
 
 
-def make_update_query_entry(new_entry_values:tuple) -> str:
-    """Construct a query to overwrite an entry in the database. The
-    new entry has the same id and the entry it's replacing.
-    """
-    query = """
-    UPDATE entries 
-    SET date = '{}', amount = {}, target = '{}', note = '{}'
-    WHERE id = {id}
-    """
-    query = query.format(id=new_entry_values[0], *new_entry_values[1:])
-
-    return query
-
-
 def make_select_query_target(name:str) -> str:
     """Construct a query to select targets."""
     query = "SELECT * FROM targets"
     if name:
         query += f" WHERE name = '{name}'"
-    return query
-
-
-def make_update_query_target(id:int, name:str, default_amt:int) -> str:
-    """Construct a query to overwrite a target in the database."""
-    new_values = []
-    if name:
-        new_values.append(f"{name=}")
-    if default_amt is not None:
-        new_values.append(f"{default_amt=}")
-
-    query = f"""
-    UPDATE targets 
-    SET {', '.join(new_values)}
-    WHERE id = {id}
-    """
     return query
 
 

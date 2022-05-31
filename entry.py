@@ -101,6 +101,7 @@ def dollars_to_cents(dollar_amount:str) -> int:
 
 def insert(entry:Entry) -> None:
     """Insert an entry into the database."""
+    # Make a target instance for this month if it doesn't exist
     targ = entry.target
     if not targ.instance_exists(entry.tframe):
         db.set_target_instance(targ, targ.default_amt, entry.tframe)
@@ -110,13 +111,13 @@ def insert(entry:Entry) -> None:
 
 def delete(entry:Entry) -> None:
     """Delete an entry from the database."""
-    db.delete_by_id(db.ENTRIES, entry.id)
+    db.delete(db.ENTRIES, entry.id)
 
 
 def update(entry:Entry) -> None:
     """Update an entry in the database."""
-    query = db.make_update_query_entry(entry.to_tuple())
-    db.run_query(query)
+    fields, values = entry.fields_and_values()
+    db.update(db.ENTRIES, entry.id, fields[1:], values[1:])
 
 
 def select(date:config.TimeFrame, category:str, targets:list) -> list[Entry]:

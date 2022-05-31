@@ -341,13 +341,13 @@ class SetTargetDefaultCommand(kelevsma.Command):
         self.old_target = target.select_one(name)
         self.new_target = copy.copy(self.old_target)
         self.new_target.default_amt = amount
-        target.update(self.old_target, default_amt=self.new_target.default_amt)
+        target.update(self.new_target)
 
     def undo(self) -> None:
-        target.update(self.new_target, default_amt=self.old_target.default_amt)
+        target.update(self.old_target)
 
     def redo(self) -> None:
-        target.update(self.old_target, default_amt=self.new_target.default_amt)
+        target.update(self.new_target)
 
 
 class SetTargetForMonthCommand(kelevsma.Command):
@@ -388,13 +388,13 @@ class RenameTargetCommand(kelevsma.Command):
         self.old_target = target.select_one(current_name)
         self.new_target = copy.copy(self.old_target)
         self.new_target.name = new_name
-        target.update(self.old_target, name=self.new_target.name)
+        target.update(self.new_target)
 
     def undo(self) -> None:
-        target.update(self.new_target, name=self.old_target.name)
+        target.update(self.old_target)
 
     def redo(self) -> None:
-        target.update(self.old_target, name=self.new_target.name)
+        target.update(self.new_target)
 
 
 class ChangePageCommand(kelevsma.Command):
