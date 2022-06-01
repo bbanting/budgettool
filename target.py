@@ -80,9 +80,8 @@ def update_instance(target:Target, amount:int, tframe:config.TimeFrame) -> None:
 
 
 def select(name:str="") -> list[Target]:
-    """Return the whole list of targets as Target objects."""
-    query = db.make_select_query_target(name)
-    target_tuples = db.run_select_query(query)
+    """Return one target or the whole list of targets as Target objects."""
+    target_tuples = db.select_targets(name)
     return [Target(*t) for t in target_tuples]
 
 

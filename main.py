@@ -62,6 +62,8 @@ def get_target_progress(targets:list[str]) -> str:
     """Return summary of targets in current filter."""
     if not targets:
         targets = target.select()
+    else:
+        targets = [target.select_one(t) for t in targets]
     current = sum([t.current_total() for t in targets])
     goal = sum([t.goal() for t in targets])
     return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"

@@ -58,7 +58,7 @@ class Entry:
         }
         if not self.id:
             d.pop("id")
-            
+
         return (tuple(d.keys()), tuple(d.values()))
 
     def __str__(self) -> str:
@@ -120,8 +120,7 @@ def update(entry:Entry) -> None:
     db.update(db.ENTRIES, entry.id, fields[1:], values[1:])
 
 
-def select(date:config.TimeFrame, category:str, targets:list) -> list[Entry]:
+def select(tframe:config.TimeFrame, category:str, targets:list) -> list[Entry]:
     """Select entries from the database."""
-    query = db.make_select_query_entry(date, category, targets)
-    entry_tuples = db.run_select_query(query)
+    entry_tuples = db.select_entries(tframe, category, targets)
     return [Entry.from_tuple(e) for e in entry_tuples]

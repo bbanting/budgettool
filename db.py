@@ -6,11 +6,18 @@ import logging
 import kelevsma.display as display
 import config
 import target
+import typing
 
 
 ENTRIES = "entries"
 TARGETS = "targets"
 TARGET_INSTANCES = "target_instances"
+
+
+def format_iter(iter:typing.Iterable) -> str:
+    """Format an iterable to be used in an SQL query."""
+    iter = [f"'{x}'" if  type(x) is str else x for x in iter]
+    return f"({', '.join(iter)})"
 
 
 def run_query(query:str) -> sqlite3.Cursor | None:
@@ -47,8 +54,8 @@ def delete(table_name:str, id:int) -> None:
 def insert(table_name:str, fields:tuple, values:tuple) -> None:
     """Inserts a row into the database, given the table, fields, and values."""
     query = f"""
-    INSERT INTO {table_name} {fields}
-    VALUES {values}
+    INSERT INTO {table_name} {format_iter(fields)}
+    VALUES {format_iter(values)}
     """
     run_query(query)
 
@@ -66,8 +73,8 @@ def update(table_name:str, id:int, fields:tuple, values:tuple) -> None:
     run_query(query)
 
 
-def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list) -> str:
-    """Construct a query to select entries in the database."""
+def select_entries(tframe:config.TimeFrame, category:str, targets:list) -> list:
+    """Select and return a list of entries from the database."""
     if tframe.month == 0:
         tframe_str = tframe.iso_format(month=False)
     else:
@@ -85,18 +92,17 @@ def make_select_query_entry(tframe:config.TimeFrame, category:str, targets:list)
         query += " AND amount >= 0"
 
     if targets:
-        targets_str = [f"'{t}'" for t in targets]
-        query += f" AND target in ({', '.join(targets_str)})"
+        query += f" AND targets.name in {format_iter(targets)}"
 
-    return query
+    return run_select_query(query)
 
 
-def make_select_query_target(name:str) -> str:
+def select_targets(name:str) -> list:
     """Construct a query to select targets."""
     query = "SELECT * FROM targets"
     if name:
         query += f" WHERE name = '{name}'"
-    return query
+    return run_select_query(query)
 
 
 def sum_target(target:str, tframe:config.TimeFrame) -> int:
