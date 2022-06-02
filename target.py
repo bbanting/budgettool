@@ -27,13 +27,13 @@ class Target:
         """Return the goal with respect to current timeframe."""
         if not tframe:
             tframe = config.target_filter_state.tframe
-        return db.get_target_instance_amount(self, tframe)
+        return db.select_target_instance_amount(self, tframe)
 
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
         target and time frame.
         """
-        return any(db.get_target_instance_amount(self, tframe, use_default=False))
+        return any(db.select_target_instance_amount(self, tframe, use_default=False))
 
     def fields_and_values(self) -> tuple[tuple]:
         """Return the fields and values for an SQL insert."""
@@ -46,6 +46,15 @@ class Target:
             d.pop("id")
 
         return (tuple(d.keys()), tuple(d.values()))
+
+    def times_used(self) -> int:
+        """Return the number of times target is used in the database."""
+        query = f"SELECT * FROM entries WHERE target = {self.id}"
+        return len(db.run_select_query(query))
+        
+    def update_instance(self, amount:int, tframe:config.TimeFrame) -> None:
+        """Update the amount for a target instance."""
+        db.set_target_instance(self.id, amount, tframe)
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
@@ -60,23 +69,18 @@ class Target:
 
 def insert(target:Target) -> None:
     """Adds a new target to the database."""
-    db.insert(db.TARGETS, *target.fields_and_values())
+    db.insert_row(db.TARGETS, *target.fields_and_values())
 
 
 def delete(target:Target) -> None:
     """Removes a target from the database."""
-    db.delete(db.TARGETS, target.id)
+    db.delete_row(db.TARGETS, target.id)
 
 
 def update(target:Target) -> None:
     """Update a target."""
     fields, values = target.fields_and_values()
-    db.update(db.TARGETS, target.id, fields[1:], values[1:])
-
-
-def update_instance(target:Target, amount:int, tframe:config.TimeFrame) -> None:
-    """Update the amount for a target instance."""
-    db.set_target_instance(target, amount, tframe)
+    db.update_row(db.TARGETS, target.id, fields[1:], values[1:])
 
 
 def select(name:str="") -> list[Target]:
@@ -93,9 +97,3 @@ def select_one(name:str) -> Target:
 def get_target_names() -> list[str]:
     """Return a list of the target names."""
     return [t.name for t in select()]
-
-
-def times_used(target:Target) -> int:
-    """Return the number of times a target is used in the database."""
-    query = f"SELECT * FROM entries WHERE target = {target.id}"
-    return len(db.run_select_query(query))

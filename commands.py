@@ -319,14 +319,14 @@ class EditEntryCommand(kelevsma.Command):
         new_value = input_functions[field]()
         setattr(self.new_entry, field, new_value)
 
-        db.update_entry(self.new_entry)
+        entry.update(self.new_entry)
         display.deselect()
     
     def undo(self) -> None:
-        db.update_entry(self.old_entry)
+        entry.update(self.old_entry)
     
     def redo(self) -> None:
-        db.update_entry(self.new_entry)
+        entry.update(self.new_entry)
 
 
 class SetTargetDefaultCommand(kelevsma.Command):

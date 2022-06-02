@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import sqlite3
 import logging
+import typing
 
 import kelevsma.display as display
 import config
 import target
-import typing
 
 
 ENTRIES = "entries"
@@ -46,12 +46,12 @@ def run_select_query(query:str) -> list[tuple|None]:
         return items
 
 
-def delete(table_name:str, id:int) -> None:
+def delete_row(table_name:str, id:int) -> None:
     """Delete a row from the database by its id."""
     run_query(f"DELETE FROM {table_name} where id = {id}")
 
 
-def insert(table_name:str, fields:tuple, values:tuple) -> None:
+def insert_row(table_name:str, fields:tuple, values:tuple) -> None:
     """Inserts a row into the database, given the table, fields, and values."""
     query = f"""
     INSERT INTO {table_name} {format_iter(fields)}
@@ -60,7 +60,7 @@ def insert(table_name:str, fields:tuple, values:tuple) -> None:
     run_query(query)
 
 
-def update(table_name:str, id:int, fields:tuple, values:tuple) -> None:
+def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> None:
     """Updates a row in the database."""
     values = [f"'{v}'" if type(v) is str else v for v in values]
     pairs = [f"{f} = {v}" for f, v in zip(fields, values)]
@@ -82,7 +82,7 @@ def select_entries(tframe:config.TimeFrame, category:str, targets:list) -> list:
 
     query = f"""
     SELECT e.id, e.date, e.amount, targets.name, e.note 
-    FROM entries AS e
+    FROM {ENTRIES} AS e
     INNER JOIN targets ON e.target = targets.id
     WHERE date LIKE '{tframe_str}'"""
 
@@ -99,7 +99,7 @@ def select_entries(tframe:config.TimeFrame, category:str, targets:list) -> list:
 
 def select_targets(name:str) -> list:
     """Construct a query to select targets."""
-    query = "SELECT * FROM targets"
+    query = f"SELECT * FROM {TARGETS}"
     if name:
         query += f" WHERE name = '{name}'"
     return run_select_query(query)
@@ -110,25 +110,25 @@ def sum_target(target:str, tframe:config.TimeFrame) -> int:
     tframe_str = tframe.iso_format()
     query = f"""
     SELECT SUM(amount) 
-    FROM entries 
+    FROM {ENTRIES} 
     WHERE date LIKE '{tframe_str}' AND target = {target.id}
     """
     sum_amount = run_select_query(query)[0][0]
     return sum_amount if sum_amount else 0
 
 
-def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFrame) -> None:
+def set_target_instance(target_id:int, amount:int, tframe:config.TimeFrame) -> None:
     """Set the target amount for the specified month. Start by deleting the 
     old target instance if it exists, and then insert a new one.
     """
     del_query = f"""
-    DELETE FROM target_instances
-    WHERE target={target.id} AND year={tframe.year} AND month={tframe.month.value}
+    DELETE FROM {TARGET_INSTANCES}
+    WHERE target={target_id} AND year={tframe.year} AND month={tframe.month.value}
     """
 
     insert_query = f"""
-    INSERT INTO target_instances (target, amount, year, month)
-    VALUES ({target.id}, {amount}, {tframe.year}, {tframe.month.value})
+    INSERT INTO {TARGET_INSTANCES} (target, amount, year, month)
+    VALUES ({target_id}, {amount}, {tframe.year}, {tframe.month.value})
     """
 
     if not run_query(del_query): # If error in query, don't run next query
@@ -136,18 +136,12 @@ def set_target_instance(target:target.Target, amount:int, tframe:config.TimeFram
     run_query(insert_query)
 
 
-def get_target_default(name:str) -> int:
-    """Get the default goal for a target."""
-    query = f"SELECT default_amt FROM targets WHERE name = '{name}'"
-    return run_select_query(query)[0][0]
-
-
-def get_target_instance_amount(target:target.Target, tframe:config.TimeFrame, use_default:bool=True) -> int:
+def select_target_instance_amount(target_id:int, tframe:config.TimeFrame, use_default:bool=True) -> int:
     """Returns the amount for a target instances or an entire year."""
     query = f"""
     SELECT amount 
-    FROM target_instances
-    WHERE target = '{target.id}' AND year = {tframe.year}
+    FROM {TARGET_INSTANCES}
+    WHERE target = {target_id} AND year = {tframe.year}
     """
     expected_n_values = 12
     if tframe.month != 0:

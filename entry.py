@@ -106,18 +106,18 @@ def insert(entry:Entry) -> None:
     if not targ.instance_exists(entry.tframe):
         db.set_target_instance(targ, targ.default_amt, entry.tframe)
 
-    db.insert(db.ENTRIES, *entry.fields_and_values())
+    db.insert_row(db.ENTRIES, *entry.fields_and_values())
 
 
 def delete(entry:Entry) -> None:
     """Delete an entry from the database."""
-    db.delete(db.ENTRIES, entry.id)
+    db.delete_row(db.ENTRIES, entry.id)
 
 
 def update(entry:Entry) -> None:
     """Update an entry in the database."""
     fields, values = entry.fields_and_values()
-    db.update(db.ENTRIES, entry.id, fields[1:], values[1:])
+    db.update_row(db.ENTRIES, entry.id, fields[1:], values[1:])
 
 
 def select(tframe:config.TimeFrame, category:str, targets:list) -> list[Entry]:
