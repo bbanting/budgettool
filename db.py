@@ -102,16 +102,17 @@ def select_targets(name:str) -> list:
     query = f"SELECT * FROM {TARGETS}"
     if name:
         query += f" WHERE name = '{name}'"
+        
     return run_select_query(query)
 
 
-def sum_target(target:str, tframe:config.TimeFrame) -> int:
+def sum_target(target_id:int, tframe:config.TimeFrame) -> int:
     """Sum entries with a particular target in a time period."""
     tframe_str = tframe.iso_format()
     query = f"""
     SELECT SUM(amount) 
     FROM {ENTRIES} 
-    WHERE date LIKE '{tframe_str}' AND target = {target.id}
+    WHERE date LIKE '{tframe_str}' AND target = {target_id}
     """
     sum_amount = run_select_query(query)[0][0]
     return sum_amount if sum_amount else 0
@@ -131,28 +132,33 @@ def set_target_instance(target_id:int, amount:int, tframe:config.TimeFrame) -> N
     VALUES ({target_id}, {amount}, {tframe.year}, {tframe.month.value})
     """
 
-    if not run_query(del_query): # If error in query, don't run next query
-        return
-    run_query(insert_query)
+    if run_query(del_query): 
+        # If first query works, run the next one
+        run_query(insert_query)
 
 
-def select_target_instance_amount(target_id:int, tframe:config.TimeFrame, use_default:bool=True) -> int:
-    """Returns the amount for a target instances or an entire year."""
+def select_target_instance(target_id:int, tframe:config.TimeFrame) -> tuple | None:
+    """Returns a single target instance or an entire year of instances."""
     query = f"""
-    SELECT amount 
+    SELECT * 
     FROM {TARGET_INSTANCES}
-    WHERE target = {target_id} AND year = {tframe.year}
+    WHERE target = {target_id} 
+        AND year = {tframe.year} 
+        AND month = {tframe.month.value}
     """
-    expected_n_values = 12
-    if tframe.month != 0:
-        query += f" AND month = {tframe.month.value}"
-        expected_n_values = 1
+    if result := run_select_query(query):
+        return result
 
-    result = [x[0] for x in run_select_query(query)]
-    diff = expected_n_values - len(result)
-    if diff and use_default:
-        return sum(result) + (target.default_amt * diff)
-    return sum(result)
+
+def select_target_instances_year(target_id:int, year:int) -> list:
+    """Select the target instances for a whole year."""
+    query = f"""
+    SELECT * 
+    FROM {TARGET_INSTANCES}
+    WHERE target = {target_id} AND year = {year}
+    """
+
+    return run_select_query(query)
 
 
 target_table_query = f"""

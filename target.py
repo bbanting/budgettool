@@ -21,19 +21,27 @@ class Target:
         target in the specified timeframe.
         """
         tframe = config.target_filter_state.tframe
-        return db.sum_target(self, tframe)
+        return db.sum_target(self.id, tframe)
 
     def goal(self, tframe=None) -> int:
         """Return the goal with respect to current timeframe."""
         if not tframe:
             tframe = config.target_filter_state.tframe
-        return db.select_target_instance_amount(self, tframe)
+        if tframe.month:
+            return db.select_target_instance(self.id, tframe)[0][2]
+        instances = db.select_target_instances_year(self.id, tframe.year)
+        instances_sum = sum([x[2] for x in instances])
+        diff = 12 - len(instances)
+
+        if not diff:
+            return instances_sum
+        return instances_sum + (diff * self.default_amt)
 
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
         target and time frame.
         """
-        return any(db.select_target_instance_amount(self, tframe, use_default=False))
+        return bool(db.select_target_instance(self.id, tframe))
 
     def fields_and_values(self) -> tuple[tuple]:
         """Return the fields and values for an SQL insert."""
