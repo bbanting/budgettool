@@ -1,3 +1,5 @@
+import logging
+
 import config
 import entry
 import db
@@ -18,7 +20,7 @@ class Target:
 
     def current_total(self) -> int:
         """Return the amount sum for entries with this 
-        target in the specified timeframe.
+        target in the current timeframe.
         """
         tframe = config.target_filter_state.tframe
         return db.sum_target(self.id, tframe)
@@ -42,6 +44,20 @@ class Target:
         target and time frame.
         """
         return bool(db.select_target_instance(self.id, tframe))
+
+    def set_instance(self, tframe:config.TimeFrame, amount:int) -> None:
+        """Set the target amount for the specified month. Start by deleting the 
+        old target instance if it exists, and then insert a new one.
+        """
+        del_fields = ("target", "year", "month")
+        del_values = (self.id, tframe.year, tframe.month.value)
+
+        ins_fields = ("target", "amount", "year", "month")
+        ins_values = (self.id, amount, tframe.year, tframe.month.value)
+        
+        if db.delete_row_by_value(db.TARGET_INSTANCES, del_fields, del_values):
+            # If first query works, run the next one
+            db.insert_row(db.TARGET_INSTANCES, ins_fields, ins_values)
 
     def fields_and_values(self) -> tuple[tuple]:
         """Return the fields and values for an SQL insert."""
@@ -82,7 +98,7 @@ def insert(target:Target) -> None:
 
 def delete(target:Target) -> None:
     """Removes a target from the database."""
-    db.delete_row(db.TARGETS, target.id)
+    db.delete_row_by_id(db.TARGETS, target.id)
 
 
 def update(target:Target) -> None:

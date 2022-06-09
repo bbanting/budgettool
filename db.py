@@ -46,21 +46,34 @@ def run_select_query(query:str) -> list[tuple|None]:
         return items
 
 
-def delete_row(table_name:str, id:int) -> None:
+def delete_row_by_id(table_name:str, id:int) -> sqlite3.Cursor | None:
     """Delete a row from the database by its id."""
-    run_query(f"DELETE FROM {table_name} where id = {id}")
+    return run_query(f"DELETE FROM {table_name} WHERE id = {id}")
 
 
-def insert_row(table_name:str, fields:tuple, values:tuple) -> None:
+def delete_row_by_value(table_name:str, fields:tuple, values:tuple) -> sqlite3.Cursor | None:
+    """Delete a row from the database by specified values."""
+    values = [f"'{v}'" if type(v) is str else v for v in values]
+    pairs = [f"{f} = {v}" for f, v in zip(fields, values)]
+    query = f"""
+    DELETE FROM {table_name}
+    WHERE {' AND '.join(pairs)}
+    """
+
+    return run_query(query)
+
+
+def insert_row(table_name:str, fields:tuple, values:tuple) -> sqlite3.Cursor | None:
     """Inserts a row into the database, given the table, fields, and values."""
     query = f"""
     INSERT INTO {table_name} {format_iter(fields)}
     VALUES {format_iter(values)}
     """
-    run_query(query)
+
+    return run_query(query)
 
 
-def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> None:
+def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> sqlite3.Cursor | None:
     """Updates a row in the database."""
     values = [f"'{v}'" if type(v) is str else v for v in values]
     pairs = [f"{f} = {v}" for f, v in zip(fields, values)]
@@ -70,7 +83,7 @@ def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> None:
     WHERE id = {id}
     """
 
-    run_query(query)
+    return run_query(query)
 
 
 def select_entries(tframe:config.TimeFrame, category:str, targets:list) -> list:
@@ -107,7 +120,7 @@ def select_targets(name:str) -> list:
 
 
 def sum_target(target_id:int, tframe:config.TimeFrame) -> int:
-    """Sum entries with a particular target in a time period."""
+    """Sum entries with a specified target in a time period."""
     tframe_str = tframe.iso_format()
     query = f"""
     SELECT SUM(amount) 
@@ -116,25 +129,6 @@ def sum_target(target_id:int, tframe:config.TimeFrame) -> int:
     """
     sum_amount = run_select_query(query)[0][0]
     return sum_amount if sum_amount else 0
-
-
-def set_target_instance(target_id:int, amount:int, tframe:config.TimeFrame) -> None:
-    """Set the target amount for the specified month. Start by deleting the 
-    old target instance if it exists, and then insert a new one.
-    """
-    del_query = f"""
-    DELETE FROM {TARGET_INSTANCES}
-    WHERE target={target_id} AND year={tframe.year} AND month={tframe.month.value}
-    """
-
-    insert_query = f"""
-    INSERT INTO {TARGET_INSTANCES} (target, amount, year, month)
-    VALUES ({target_id}, {amount}, {tframe.year}, {tframe.month.value})
-    """
-
-    if run_query(del_query): 
-        # If first query works, run the next one
-        run_query(insert_query)
 
 
 def select_target_instance(target_id:int, tframe:config.TimeFrame) -> tuple | None:

@@ -111,7 +111,7 @@ def insert(entry:Entry) -> None:
 
 def delete(entry:Entry) -> None:
     """Delete an entry from the database."""
-    db.delete_row(db.ENTRIES, entry.id)
+    db.delete_row_by_id(db.ENTRIES, entry.id)
 
 
 def update(entry:Entry) -> None:
