@@ -69,59 +69,41 @@ def get_target_progress(targets:list[str]) -> str:
     return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"
 
 
-def register_commands(con: command.CommandController):
-    con.register(command.UndoCommand)
-    con.register(command.RedoCommand)
-    con.register(command.HelpCommand, "help")
-    con.register(command.QuitCommand)
-    con.register(commands.ListCommand)
-    con.register(commands.ListEntriesCommand, "entries")
-    con.register(commands.ListTargetsCommand, "targets")
-    con.register(commands.RemoveCommand)
-    con.register(commands.RemoveEntryCommand, "entries")
-    con.register(commands.RemoveTargetCommand, "targets")
-    con.register(commands.AddCommand)
-    con.register(commands.AddEntryCommand, "entries")
-    con.register(commands.AddTargetCommand, "targets")
-    con.register(commands.AddEntryTodayCommand, "entries")
-    con.register(commands.EditEntryCommand, "entries")
-    con.register(commands.RenameTargetCommand, "targets")
-    con.register(commands.ChangePageCommand)
-    con.register(commands.SetTargetCommand, "targets")
-    con.register(commands.SetTargetForMonthCommand, "targets")
-    con.register(commands.SetTargetDefaultCommand, "targets")
+def register_commands():
+    kelevsma.register_command(command.UndoCommand)
+    kelevsma.register_command(command.RedoCommand)
+    kelevsma.register_command(command.HelpCommand, "help")
+    kelevsma.register_command(command.QuitCommand)
+    kelevsma.register_command(commands.ListCommand)
+    kelevsma.register_command(commands.ListEntriesCommand, "entries")
+    kelevsma.register_command(commands.ListTargetsCommand, "targets")
+    kelevsma.register_command(commands.RemoveCommand)
+    kelevsma.register_command(commands.RemoveEntryCommand, "entries")
+    kelevsma.register_command(commands.RemoveTargetCommand, "targets")
+    kelevsma.register_command(commands.AddCommand)
+    kelevsma.register_command(commands.AddEntryCommand, "entries")
+    kelevsma.register_command(commands.AddTargetCommand, "targets")
+    kelevsma.register_command(commands.AddEntryTodayCommand, "entries")
+    kelevsma.register_command(commands.EditEntryCommand, "entries")
+    kelevsma.register_command(commands.RenameTargetCommand, "targets")
+    kelevsma.register_command(commands.ChangePageCommand)
+    kelevsma.register_command(commands.SetTargetCommand, "targets")
+    kelevsma.register_command(commands.SetTargetForMonthCommand, "targets")
+    kelevsma.register_command(commands.SetTargetDefaultCommand, "targets")
 
 
 def main():
     """Main function."""
-    # Create the screens
-    display.add_screen("entries", min_body_height=3, numbered=True, refresh_func=push_entries)
-    display.add_screen("targets", numbered=True, refresh_func=push_targets)
-    display.add_screen("help")
+    kelevsma.add_screen("entries", min_body_height=3, numbered=True, refresh_func=push_entries)
+    kelevsma.add_screen("targets", numbered=True, refresh_func=push_targets)
+    kelevsma.add_screen("help")
 
-    # Create the command controller and register commands
-    controller = command.CommandController()
-    register_commands(controller)
+    register_commands()
 
-    # Start by running the list command
-    controller.route_command(["list"])
-    display.refresh()
-
-    # Receive input and process commands
-    while True:
-        try:
-            user_input = shlex.split(input())
-            controller.route_command(user_input)
-        except (BTError, display.DisplayError) as e:
-            display.error(e)
-        except CommandError as e:
-            display.message(str(e))
-            display.refresh()
-        except KeyboardInterrupt:
-            print("")
-            return
-        else:
-            display.refresh()
+    try:
+        kelevsma.run(["list"])
+    except BTError as e:
+        display.error(e)
 
 
 if __name__=="__main__":

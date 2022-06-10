@@ -344,8 +344,8 @@ def error(error) -> None:
     message(str(error))
 
 
-def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
-truncate:bool=False, refresh_func=None) -> None:
+def add_screen(name:str, min_body_height:int=1, numbered:bool=False, 
+            truncate:bool=False, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
     controller.add(Screen(name, min_body_height, numbered, truncate, refresh_func))
 

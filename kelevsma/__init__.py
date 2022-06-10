@@ -2,4 +2,4 @@
 
 from .command import Command, CommandError, ForkCommand, SporkCommand, ContextualCommand, CommandController
 from .validator import Validator, ValidatorError, VLit, VBool, VAny
-from .main import quit_program, is_running
+from .main import run, quit_program, is_running, add_screen, register_command
