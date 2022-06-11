@@ -13,7 +13,7 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make examples for all commands
-- [ ] Improve the interface to kelevsma
+- [x] Improve the interface to kelevsma
 
 ## Notes
 
@@ -22,4 +22,4 @@ I made this because I like to code and want to improve. I can't see this being u
 - Set screen attr in Command class def?
 - Replace target foreign key on entry with target_instance?
 - Progress bars for targets?
-- 
+- Fork commands automatically register sub-commands?

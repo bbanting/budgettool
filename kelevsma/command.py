@@ -8,9 +8,9 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-import kelevsma
-import kelevsma.display as display
+from . import display, QuitProgramException
 from .validator import Validator, ValidatorError, VLit
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,7 +52,7 @@ class CommandController:
         """Wrapper around execute methods to give the option to include
         parameters."""
         if hasattr(command, "screen"):
-            display.switch_screen(command.screen)
+            display.controller.switch_to(command.screen)
         argspec = inspect.getfullargspec(command.execute)
         # If more than just self is specified, include **data in the call
         if len(argspec.args) > 1:
@@ -203,7 +203,7 @@ class QuitCommand(Command):
     names = ("q", "quit")
 
     def execute(self) -> None:
-        raise kelevsma.QuitProgramException("User quit program.")
+        raise QuitProgramException("User quit program.")
 
 
 class HelpCommand(Command):
@@ -260,3 +260,11 @@ class Example:
     """A command usage example."""
     text: str
     subtext: str
+
+
+def register(command:Command, associated_screen:str="") -> None:
+    """Register a command to the controller."""
+    controller.register(command, associated_screen)
+
+
+controller = CommandController()

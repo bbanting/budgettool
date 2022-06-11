@@ -1,8 +1,7 @@
 import abc
 from typing import Any
 
-import kelevsma.command
-
+from . import command
 
 class ValidatorError(Exception):
     pass
@@ -105,7 +104,7 @@ class VLit(Validator):
         found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
             if not all([True if type(x) is str else False for x in self.literal]):
-                raise kelevsma.command.CommandConfigError("Literal must be str or an iterable containing only str.")
+                raise command.CommandConfigError("Literal must be str or an iterable containing only str.")
             for l in self.literal:
                 if self.compare(value, l):
                     found = True

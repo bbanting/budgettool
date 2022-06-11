@@ -4,9 +4,8 @@ import sqlite3
 import logging
 import typing
 
-import kelevsma.display as display
+import kelevsma
 import config
-import target
 
 
 ENTRIES = "entries"
@@ -26,8 +25,7 @@ def run_query(query:str) -> sqlite3.Cursor | None:
     try:
         cursor.execute(query)
     except sqlite3.Error as e:
-        logging.info(e)
-        display.error("Database error")
+        kelevsma.error("Database error")
     else:
         connection.commit()
         return cursor
@@ -40,8 +38,7 @@ def run_select_query(query:str) -> list[tuple|None]:
         cursor.execute(query)
         items = cursor.fetchall()
     except sqlite3.Error as e:
-        logging.info(e)
-        display.error(f"Database error")
+        kelevsma.error(f"Database error")
     else:
         return items
 
@@ -186,7 +183,7 @@ CREATE TABLE IF NOT EXISTS {ENTRIES} (
 try:
     connection = sqlite3.connect("records.db")
 except sqlite3.Error:
-    display.error("Database connection error.")
+    kelevsma.error("Database connection error.")
     quit()
 
 run_query(target_table_query)

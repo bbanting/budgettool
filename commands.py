@@ -130,7 +130,7 @@ class ListEntriesCommand(kelevsma.Command):
         tframe = config.TimeFrame(year, month)
         config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
         config.target_filter_state.__init__(tframe=tframe)
-        display.change_page(1)
+        kelevsma.change_page(1)
 
 
 class ListTargetsCommand(kelevsma.Command):
@@ -143,7 +143,7 @@ class ListTargetsCommand(kelevsma.Command):
     def execute(self, year, month) -> None:
         tframe = config.TimeFrame(year, month)
         config.target_filter_state.tframe = tframe
-        display.change_page(1)
+        kelevsma.change_page(1)
 
 
 class ListCommand(kelevsma.ForkCommand):

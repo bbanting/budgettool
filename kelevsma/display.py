@@ -1,3 +1,6 @@
+"""Module to handle displaying output in terminal."""
+from __future__ import annotations
+
 import os
 import logging
 import collections
@@ -77,15 +80,16 @@ class LineGroup(collections.UserList):
 
 class BodyLines(LineGroup):
     """A special LineGroup for the screen body."""
-    def __init__(self, number:bool=True, *args, **kwargs) -> None:
+    def __init__(self, parent:Screen, number:bool=True, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.parent_screen = parent
         self.number = number
         self._page = 1
         self.selected = None
 
     @property
     def space(self) -> int:
-        return get_screen().body_space
+        return self.parent_screen.body_space
 
     @property
     def page(self) -> int:
@@ -169,7 +173,7 @@ class Screen:
         self.refresh_func = refresh_func
 
         # Sub-buffers & state
-        self.body = BodyLines(trunc=truncate, number=numbered)
+        self.body = BodyLines(self, trunc=truncate, number=numbered)
         self.header = LineGroup(trunc=True, bold=True)
         self.footer = LineGroup()
         self.message = ""
@@ -275,11 +279,25 @@ class ScreenController:
         if len(self._screens) == 1:
             self._active = screen
 
-    def switch_to(self, name:str) -> None:
+    def switch_to(self, screen:Screen) -> None:
         """Switch the active screen."""
-        if name not in self._screens:
-            raise DisplayError("A screen with that name does not exist.")
-        self._active = self._screens[name]
+        screen.clear()
+        self._active = screen
+
+    def get_screen(self, name:str=None) -> Screen:
+        """Get the active screen."""
+        if not self._screens:
+            raise DisplayError("No screens have been created.")
+        if screen := self._screens.get(name):
+            return screen
+        return self._active
+
+    def refresh(self) -> None:
+        """Clear the terminal and print the current state of the screen."""
+        if self._active.refresh_func:
+            self._active.refresh_func()
+        clear_terminal()
+        self._active.print()    
 
 
 def clear_terminal() -> None:
@@ -299,80 +317,6 @@ def t_height() -> int:
     return os.get_terminal_size()[1]
 
 
-def push(*items:Any) -> None:
-    """Push an item to body."""
-    for item in items:
-        get_screen().push(item)
-
-def push_h(*items:Any) -> None:
-    """Push an item to header."""
-    for item in items:
-        get_screen().push(item, target="header")
-
-def push_f(*items:Any) -> None:
-    """Push an item to footer."""
-    for item in items:
-        get_screen().push(item, target="footer")
-
-
-def message(text:str) -> None:
-    """Set the message on the current screen."""
-    get_screen().message = text
-
-
-def select(index) -> Any:
-    """Return an item by line number from the current view in screen."""
-    return get_screen().body.select(index)
-
-
-def deselect() -> None:
-    """Remove the selection."""
-    get_screen().selected = None
-
-
-def change_page(number:int) -> None:
-    "Change the page of the active screen."
-    get_screen().body.change_page(number)
-
-
-def error(error) -> None:
-    clear_terminal()
-    get_screen().clear()
-    message(str(error))
-
-
-def add_screen(name:str, min_body_height:int=1, numbered:bool=False, 
-            truncate:bool=False, refresh_func=None) -> None:
-    """Public func to add a screen to the controller."""
-    controller.add(Screen(name, min_body_height, numbered, truncate, refresh_func))
-
-
-def switch_screen(name:str) -> None:
-    """Public func to switch the active screen."""
-    for k, v in controller._screens.items():
-        if k == name:
-            continue
-        v.clear()
-    controller.switch_to(name)
-
-
-def get_screen(name:str = None) -> Screen:
-    """Get the active screen."""
-    if not controller._screens:
-        raise DisplayError("No screens have been created.")
-    if screen := controller._screens.get(name):
-        return screen
-    return controller._active
-
-
-def refresh() -> None:
-    """Clear the terminal and print the current state of the screen."""
-    if get_screen().refresh_func:
-        get_screen().refresh_func()
-    clear_terminal()
-    get_screen().print()
-
-
 def height_checker() -> None:
     """Check if the screen size has changed, refresh if so."""
     height = t_height()
@@ -382,8 +326,64 @@ def height_checker() -> None:
             continue
         height = new_height
         clear_terminal()
-        get_screen().print()
+        controller.get_screen().print()
         time.sleep(0.5)
+
+
+def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
+            truncate:bool=False, refresh_func=None) -> Screen:
+    """Public func to add a screen to the controller."""
+    screen = Screen(name, min_body_height, numbered, truncate, refresh_func)
+    controller.add(screen)
+    return screen
+
+
+def push(*items:Any) -> None:
+    """Push an item to body."""
+    for item in items:
+        controller.get_screen().push(item)
+
+def push_h(*items:Any) -> None:
+    """Push an item to header."""
+    for item in items:
+        controller.get_screen().push(item, target="header")
+
+def push_f(*items:Any) -> None:
+    """Push an item to footer."""
+    for item in items:
+        controller.get_screen().push(item, target="footer")
+
+
+def select(index) -> Any:
+    """Return an item by line number from the current view in screen."""
+    return controller.get_screen().body.select(index)
+
+def deselect() -> None:
+    """Remove the selection."""
+    controller.get_screen().selected = None
+    
+
+def message(text:str) -> None:
+    """Set the message on the current screen. For giving info or errors
+    that won't corrupt the output.
+    """
+    controller.get_screen().message = text
+
+def error(error) -> None:
+    """Clears all output and sets the message."""
+    clear_terminal()
+    controller.get_screen().clear()
+    message(str(error))
+
+
+def change_page(number:int) -> None:
+    "Change the page of the active screen."
+    controller.get_screen().body.change_page(number)
+
+
+def refresh() -> None:
+    """Call the controller's refresh method."""
+    controller.refresh()
 
 
 controller = ScreenController()
