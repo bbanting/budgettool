@@ -4,13 +4,11 @@ import copy
 import logging
 import datetime
 
-import kelevsma
 import config
+import kelevsma
 import kelevsma.display as display
-import main
 import entry
 import target
-import db
 
 from config import TODAY
 from entry import Entry
@@ -25,7 +23,7 @@ def get_date() -> datetime.date | None:
     date = input("Date: ")
 
     if date.lower() in ("q", "quit"):
-        raise main.BTError("Input aborted by user.")
+        raise kelevsma.CommandError("Input aborted by user.")
 
     date = date.split()
 
@@ -46,7 +44,7 @@ def get_amount() -> int | None:
     amount = input("Amount: ").strip()
 
     if amount.lower() in ("q", "quit"):
-        raise main.BTError("Input aborted by user.")
+        raise kelevsma.CommandError("Input aborted by user.")
 
     if not amount.startswith(("-", "+")):
         display.message("The amount must start with + or -")
@@ -67,7 +65,7 @@ def get_target() -> dict | None:
     t_input = input("Target: ").lower().strip()
 
     if t_input in ("q", "quit"):
-        raise main.BTError("Input aborted by user.")
+        raise kelevsma.CommandError("Input aborted by user.")
     if t_input == "help":
         display.message(f"({', '.join(target_names)})")
         return
@@ -85,7 +83,7 @@ def get_note() -> str:
     note = input("Note: ")
 
     if note.lower() in ("q", "quit"):
-        raise main.BTError("Input aborted by user.")
+        raise kelevsma.CommandError("Input aborted by user.")
 
     if not note:
         return "..."
@@ -203,7 +201,7 @@ class AddEntryCommand(kelevsma.Command):
 
         try:
             date, amount, target, note = get_input(*list(input_functions.values()))
-        except main.BTError:
+        except kelevsma.CommandError:
             return # Exit the command
         self.entry = Entry(0, date, amount, target, note)
         entry.insert(self.entry)

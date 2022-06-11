@@ -5,7 +5,6 @@ A simple tool to keep track of expenses and earnings.
 """
 
 from __future__ import annotations
-import shlex
 import logging
 import kelevsma
 
@@ -16,15 +15,10 @@ import config
 import target
 import entry
 
-from kelevsma.command import CommandError
 from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
-
-
-class BTError(Exception):
-    pass
 
 
 def push_targets() -> None:
@@ -58,15 +52,15 @@ def get_entry_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
     return f"{n} {entry_str}{category} from {date}{targets}."
 
 
-def get_target_progress(targets:list[str]) -> str:
+def get_target_progress(target_names:list[str]) -> str:
     """Return summary of targets in current filter."""
-    if not targets:
-        targets = target.select()
+    if not target_names:
+        target_names = target.select()
     else:
-        targets = [target.select_one(t) for t in targets]
-    current = sum([t.current_total() for t in targets])
-    goal = sum([t.goal() for t in targets])
-    return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(targets)})"
+        target_names = [target.select_one(t) for t in target_names]
+    current = sum([t.current_total() for t in target_names])
+    goal = sum([t.goal() for t in target_names])
+    return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(target_names)})"
 
 
 def register_commands():
@@ -100,10 +94,7 @@ def main():
 
     register_commands()
 
-    try:
-        kelevsma.run(["list"])
-    except BTError as e:
-        display.error(e)
+    kelevsma.run("list")
 
 
 if __name__=="__main__":

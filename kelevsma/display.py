@@ -2,14 +2,11 @@ import os
 import logging
 import collections
 import time
-import threading
 from dataclasses import dataclass
 from typing import Any, Callable
 
 import colorama
 from colorama import Fore, Back, Style
-
-import kelevsma.main as kelevsma
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
@@ -380,8 +377,6 @@ def height_checker() -> None:
     """Check if the screen size has changed, refresh if so."""
     height = t_height()
     while True:
-        if not kelevsma.is_running:
-            break
         new_height = t_height()
         if height == new_height:
             continue
@@ -392,4 +387,3 @@ def height_checker() -> None:
 
 
 controller = ScreenController()
-threading.Thread(target=height_checker).start()

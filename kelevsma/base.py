@@ -1,52 +1,48 @@
 from __future__ import annotations
+
 import logging
 import shlex
+import threading
 
-import command
-import display
-
-
-is_running: bool
-controller = command.CommandController()
+import kelevsma.display as display
+from kelevsma.command import Command, CommandController, CommandError
 
 
-def quit_program() -> None:
-    """Quit the program"""
-    global is_running
-    is_running = False
-    quit()
+# Globals
+controller = CommandController()
 
 
-def run(init_cmd:list=[]) -> None:
+class QuitProgramException(Exception):
+    pass   
+
+
+def run(init_cmd:str="") -> None:
     """Start the program loop. If init_cmd is given, a command will be
     run before the loop begins.
     """
-    global is_running
-    is_running = True
+    height_check_thread = threading.Thread(target=display.height_checker, daemon=True)
+    height_check_thread.start()
 
     if init_cmd:
-        controller.route_command(init_cmd)
+        controller.route_command(shlex.split(init_cmd))
         display.refresh()
-
+    
     while True:
         try:
             user_input = shlex.split(input())
             controller.route_command(user_input)
         except (display.DisplayError) as e:
             display.error(e)
-        except command.CommandError as e:
+        except CommandError as e:
             display.message(str(e))
             display.refresh()
-        except KeyboardInterrupt:
-            print("")
+        except (QuitProgramException, KeyboardInterrupt):
             break
         else:
-            display.refresh()    
-
-    is_running = False
+            display.refresh()
 
 
-def register_command(command:command.Command, associated_screen:str="") -> None:
+def register_command(command:Command, associated_screen:str="") -> None:
     """Register a command to the controller."""
     controller.register(command, associated_screen)
 

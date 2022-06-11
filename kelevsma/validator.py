@@ -105,7 +105,7 @@ class VLit(Validator):
         found = False
         if hasattr(self.literal, "__iter__") and type(self.literal) != str:
             if not all([True if type(x) is str else False for x in self.literal]):
-                raise kelevsma.command.ParseError("Literal must be str or an iterable containing only str.")
+                raise kelevsma.command.CommandConfigError("Literal must be str or an iterable containing only str.")
             for l in self.literal:
                 if self.compare(value, l):
                     found = True

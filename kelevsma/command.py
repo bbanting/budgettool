@@ -15,10 +15,12 @@ from .validator import Validator, ValidatorError, VLit
 logging.basicConfig(level=logging.INFO)
 
 
-class ParseError(Exception):
+class CommandConfigError(Exception):
+    """Used for invalid command configuration."""
     pass
 
 class CommandError(Exception):
+    """Used for invalid command input."""
     pass
 
 
@@ -33,7 +35,7 @@ class CommandController:
         command.controller = self
         for n in command.names:
             if type(n) != str:
-                raise ParseError("Invalid command name format.")
+                raise CommandConfigError("Invalid command name format.")
             self.command_register.update({n: command})
         if associated_screen:
             command.screen = associated_screen
@@ -201,7 +203,7 @@ class QuitCommand(Command):
     names = ("q", "quit")
 
     def execute(self) -> None:
-        kelevsma.quit_program()
+        raise kelevsma.QuitProgramException("User quit program.")
 
 
 class HelpCommand(Command):

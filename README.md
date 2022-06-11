@@ -13,12 +13,13 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make examples for all commands
+- [ ] Improve the interface to kelevsma
 
 ## Notes
 
 - Currently, if page numbers get too many digits long, they will overflow
 - Make command params dependant on others
-- Improve the interface to kelevsma
 - Set screen attr in Command class def?
 - Replace target foreign key on entry with target_instance?
 - Progress bars for targets?
+- 
