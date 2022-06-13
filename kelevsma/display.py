@@ -284,13 +284,16 @@ class ScreenController:
         screen.clear()
         self._active = screen
 
-    def get_screen(self, name:str=None) -> Screen:
+    def get_screen(self, name:str="") -> Screen:
         """Get the active screen."""
         if not self._screens:
             raise DisplayError("No screens have been created.")
+        if not name:
+            return self._active
         if screen := self._screens.get(name):
             return screen
-        return self._active
+        else:
+            raise DisplayError(f"A screen with the name '{name}' does not exist.")
 
     def refresh(self) -> None:
         """Clear the terminal and print the current state of the screen."""
@@ -331,11 +334,10 @@ def height_checker() -> None:
 
 
 def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
-            truncate:bool=False, refresh_func=None) -> Screen:
+            truncate:bool=False, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
     screen = Screen(name, min_body_height, numbered, truncate, refresh_func)
     controller.add(screen)
-    return screen
 
 
 def push(*items:Any) -> None:

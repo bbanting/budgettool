@@ -10,6 +10,7 @@ import kelevsma.display as display
 import entry
 import target
 
+from main import HELP, ENTRIES, TARGETS
 from config import TODAY
 from entry import Entry
 from kelevsma.command import Example
@@ -125,7 +126,8 @@ class ListEntriesCommand(kelevsma.Command):
         "category": VType(default=""),
         "targets": VTarget(plural=True, default=[]),
     }
-    
+    screen = ENTRIES
+
     def execute(self, year, month, category, targets):
         tframe = config.TimeFrame(year, month)
         config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
@@ -139,6 +141,7 @@ class ListTargetsCommand(kelevsma.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
     }
+    screen = TARGETS
 
     def execute(self, year, month) -> None:
         tframe = config.TimeFrame(year, month)
@@ -155,7 +158,7 @@ class ListCommand(kelevsma.ForkCommand):
         "targets": ListTargetsCommand,
         "target": ListTargetsCommand,
     }
-    default = "entries"
+    default = ENTRIES
     examples = (
         Example("list march 2022 other", "List the entries for March of 2022 at target 'other.'"),
         Example("list all income", "List all positive entries from current year."),
@@ -170,6 +173,7 @@ class AddEntryTodayCommand(kelevsma.Command):
         "target": VTarget(),
         "note": VAny(plural=True),
     }
+    screen = ENTRIES
 
     def execute(self, amount, target, note) -> None:
         if not targets_exist():
@@ -194,6 +198,8 @@ class AddEntryTodayCommand(kelevsma.Command):
 
 class AddEntryCommand(kelevsma.Command):
     """Add an entry, entering input through a series of prompts."""
+    screen = ENTRIES
+
     def execute(self) -> None:
         if not targets_exist():
             display.message("No targets to add entries to. Make a target with 'add target [name] [amount]'.")
@@ -223,6 +229,7 @@ class AddTargetCommand(kelevsma.Command):
         "name": VTarget(req=True, invert=True),
         "amount": VAmount(req=True),
     }
+    screen = TARGETS
 
     def execute(self, name, amount) -> None:
         self.target = target.Target(0, name, amount)
@@ -251,6 +258,7 @@ class RemoveEntryCommand(kelevsma.Command):
     params = {
         "id": VID(req=True),
     }
+    screen = ENTRIES
 
     def execute(self, id):
         self.entry = display.select(id)
@@ -274,6 +282,7 @@ class RemoveTargetCommand(kelevsma.Command):
     params = {
         "name": VTarget(req=True),
     }
+    screen = TARGETS
 
     def execute(self, name:str) -> None:
         self.target = target.select_one(name)
@@ -308,6 +317,7 @@ class EditEntryCommand(kelevsma.Command):
         "id": VID(req=True),
         "field": VLit(input_functions, req=True),
     }
+    screen = ENTRIES
 
     def execute(self, id:int, field:str) -> None:
         self.old_entry = display.select(id)
@@ -334,6 +344,7 @@ class SetTargetDefaultCommand(kelevsma.Command):
         "default": VLit("default"),
         "amount": VAmount(req=True, allow_zero=True),
     }
+    screen = TARGETS
 
     def execute(self, name, default, amount) -> None:
         self.old_target = target.select_one(name)
@@ -356,6 +367,7 @@ class SetTargetForMonthCommand(kelevsma.Command):
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month, allow_any=False),
     }
+    screen = TARGETS
 
     def execute(self, name, amount, year, month) -> None:
         targ = target.select_one(name)
@@ -368,6 +380,7 @@ class SetTargetCommand(kelevsma.SporkCommand):
     specified month.
     """
     names = ("set",)
+    screen = TARGETS
     forks = {
         VLit("default"): SetTargetDefaultCommand,
         }
@@ -381,6 +394,7 @@ class RenameTargetCommand(kelevsma.Command):
         "current_name": VTarget(req=True),
         "new_name": VTarget(req=True, invert=True),
     }
+    screen = TARGETS
 
     def execute(self, current_name, new_name) -> None:
         self.old_target = target.select_one(current_name)

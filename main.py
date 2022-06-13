@@ -20,6 +20,12 @@ from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
 
+# Screen names
+HELP = "help"
+ENTRIES = "entries"
+TARGETS = "targets"
+
+
 def push_targets() -> None:
     year = config.target_filter_state.tframe.year
     month = config.target_filter_state.tframe.month.name
@@ -64,30 +70,22 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def main():
     """Main function."""
-    ENTRIES = kelevsma.add_screen("entries", min_body_height=3, numbered=True, refresh_func=push_entries)
-    TARGETS = kelevsma.add_screen("targets", numbered=True, refresh_func=push_targets)
-    HELP = kelevsma.add_screen("help")
+    kelevsma.add_screen(ENTRIES, min_body_height=3, numbered=True, refresh_func=push_entries)
+    kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
+    kelevsma.add_screen(HELP)
 
     kelevsma.register(command.UndoCommand)
     kelevsma.register(command.RedoCommand)
-    kelevsma.register(command.HelpCommand, HELP)
+    kelevsma.register(command.HelpCommand)
     kelevsma.register(command.QuitCommand)
     kelevsma.register(commands.ListCommand)
-    kelevsma.register(commands.ListEntriesCommand, ENTRIES)
-    kelevsma.register(commands.ListTargetsCommand, TARGETS)
     kelevsma.register(commands.RemoveCommand)
-    kelevsma.register(commands.RemoveEntryCommand, ENTRIES)
-    kelevsma.register(commands.RemoveTargetCommand, TARGETS)
     kelevsma.register(commands.AddCommand)
-    kelevsma.register(commands.AddEntryCommand, ENTRIES)
-    kelevsma.register(commands.AddTargetCommand, TARGETS)
-    kelevsma.register(commands.AddEntryTodayCommand, ENTRIES)
-    kelevsma.register(commands.EditEntryCommand, ENTRIES)
-    kelevsma.register(commands.RenameTargetCommand, TARGETS)
+    kelevsma.register(commands.AddEntryTodayCommand)
+    kelevsma.register(commands.EditEntryCommand)
+    kelevsma.register(commands.RenameTargetCommand)
     kelevsma.register(commands.ChangePageCommand)
-    kelevsma.register(commands.SetTargetCommand, TARGETS)
-    kelevsma.register(commands.SetTargetForMonthCommand, TARGETS)
-    kelevsma.register(commands.SetTargetDefaultCommand, TARGETS)
+    kelevsma.register(commands.SetTargetCommand)
 
     kelevsma.run("list")
 

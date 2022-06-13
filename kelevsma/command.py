@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-from . import display, QuitProgramException
+from . import display#, QuitProgramException
 from .validator import Validator, ValidatorError, VLit
 
 
@@ -30,15 +30,21 @@ class CommandController:
         self.undo_stack = []
         self.redo_stack = []
 
-    def register(self, command:Command, associated_screen:str="") -> None:
+    def register(self, command:Command) -> None:
         """Attach the controller to the command and append command to commands list"""
         command.controller = self
+        # Update command register with names
         for n in command.names:
             if type(n) != str:
                 raise CommandConfigError("Invalid command name format.")
             self.command_register.update({n: command})
-        if associated_screen:
-            command.screen = associated_screen
+        # Replace the screen str with the actual Screen object
+        if hasattr(command, "screen") and type(command.screen) is str:
+            command.screen = display.controller.get_screen(command.screen)
+        # Check for forks and recursively register if necessary
+        if hasattr(command, "forks"):
+            for cmd in command.forks.values():
+                self.register(cmd)
 
     def get_command(self, args) -> Command | None:
         """Return the command function."""
@@ -159,7 +165,7 @@ class ContextualCommand(ForkCommand):
     @classmethod
     def fork(cls, args:list[str]) -> Command | None:
         """Return the selected fork based on the screen."""
-        return cls.forks.get(display.get_screen().name)
+        return cls.forks.get(display.controller.get_screen().name)
 
 
 class SporkCommand:
@@ -209,6 +215,7 @@ class QuitCommand(Command):
 class HelpCommand(Command):
     """A command to give information on how to use other commands."""
     names = ("help",)
+    screen = "help"
 
     def __init__(self, args:list[str]) -> None:
         # Overriding __init__ is necessary because the validator for "command"
@@ -262,9 +269,9 @@ class Example:
     subtext: str
 
 
-def register(command:Command, associated_screen:str="") -> None:
+def register(command:Command) -> None:
     """Register a command to the controller."""
-    controller.register(command, associated_screen)
+    controller.register(command)
 
 
 controller = CommandController()
