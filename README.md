@@ -13,7 +13,6 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Search descriptions
 - [ ] Remove groups and create shortcuts "/"
 - [ ] Make examples for all commands
-- [x] Fork commands automatically register sub-commands
 
 ## Notes
 
@@ -22,4 +21,3 @@ I made this because I like to code and want to improve. I can't see this being u
 - Set screen attr in Command class def?
 - Replace target foreign key on entry with target_instance?
 - Progress bars for targets?
-- Coupling with HelpCommand and main.py; help screen default?

@@ -7,11 +7,6 @@ import shlex
 import threading
 
 from . import command, display
-from .command import CommandError
-
-
-class QuitProgramException(Exception):
-    pass   
 
 
 def run(init_cmd:str="") -> None:
@@ -31,10 +26,17 @@ def run(init_cmd:str="") -> None:
             command.controller.route_command(user_input)
         except (display.DisplayError) as e:
             display.error(e)
-        except CommandError as e:
+        except command.CommandError as e:
             display.message(str(e))
             display.refresh()
-        except (QuitProgramException, KeyboardInterrupt):
+        except (command.QuitProgramException, KeyboardInterrupt):
             break
         else:
             display.refresh()
+
+
+display.add_screen("help")
+command.register(command.HelpCommand)
+command.register(command.UndoCommand)
+command.register(command.RedoCommand)
+command.register(command.QuitCommand)

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-from . import display#, QuitProgramException
+from . import display
 from .validator import Validator, ValidatorError, VLit
 
 
@@ -21,6 +21,9 @@ class CommandConfigError(Exception):
 
 class CommandError(Exception):
     """Used for invalid command input."""
+    pass
+
+class QuitProgramException(Exception):
     pass
 
 

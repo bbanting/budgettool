@@ -336,8 +336,9 @@ def height_checker() -> None:
 def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
             truncate:bool=False, refresh_func=None) -> None:
     """Public func to add a screen to the controller."""
-    screen = Screen(name, min_body_height, numbered, truncate, refresh_func)
-    controller.add(screen)
+    if name not in controller._screens:
+        screen = Screen(name, min_body_height, numbered, truncate, refresh_func)
+        controller.add(screen)
 
 
 def push(*items:Any) -> None:

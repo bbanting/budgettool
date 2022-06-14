@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 import kelevsma
 
-import kelevsma.command as command
 import commands
 import config
 import target
@@ -21,7 +20,6 @@ logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", en
 
 
 # Screen names
-HELP = "help"
 ENTRIES = "entries"
 TARGETS = "targets"
 
@@ -72,12 +70,7 @@ def main():
     """Main function."""
     kelevsma.add_screen(ENTRIES, min_body_height=3, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
-    kelevsma.add_screen(HELP)
 
-    kelevsma.register(command.UndoCommand)
-    kelevsma.register(command.RedoCommand)
-    kelevsma.register(command.HelpCommand)
-    kelevsma.register(command.QuitCommand)
     kelevsma.register(commands.ListCommand)
     kelevsma.register(commands.RemoveCommand)
     kelevsma.register(commands.AddCommand)

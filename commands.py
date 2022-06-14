@@ -10,7 +10,7 @@ import kelevsma.display as display
 import entry
 import target
 
-from main import HELP, ENTRIES, TARGETS
+from main import ENTRIES, TARGETS
 from config import TODAY
 from entry import Entry
 from kelevsma.command import Example
