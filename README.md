@@ -11,13 +11,12 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [ ] Remove groups and create shortcuts "/"
+- [x] Remove groups and create shortcuts "/"
 - [ ] Make examples for all commands
 
 ## Notes
 
 - Currently, if page numbers get too many digits long, they will overflow
 - Make command params dependant on others
-- Set screen attr in Command class def?
 - Replace target foreign key on entry with target_instance?
 - Progress bars for targets?

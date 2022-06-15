@@ -11,6 +11,7 @@ import config
 ENTRIES = "entries"
 TARGETS = "targets"
 TARGET_INSTANCES = "target_instances"
+SHORTCUTS = "shortcuts"
 
 
 def format_iter(iter:typing.Iterable) -> str:
@@ -152,6 +153,16 @@ def select_target_instances_year(target_id:int, year:int) -> list:
     return run_select_query(query)
 
 
+def select_shortcuts() -> dict:
+    """Select and return shortcuts as dict."""
+    query = f"""
+    SELECT shortform, full
+    FROM {SHORTCUTS}
+    """
+    tuples = run_select_query(query)
+    return {k:v for k, v in tuples}
+
+
 target_table_query = f"""
 CREATE TABLE IF NOT EXISTS {TARGETS} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,6 +190,12 @@ CREATE TABLE IF NOT EXISTS {ENTRIES} (
     FOREIGN KEY (target) REFERENCES targets (id)
 );"""
 
+shortcuts_table_query = f"""
+CREATE TABLE IF NOT EXISTS {SHORTCUTS} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    shortform TEXT NOT NULL,
+    full TEXT NOT NULL
+);"""
 
 try:
     connection = sqlite3.connect("records.db")
@@ -189,6 +206,7 @@ except sqlite3.Error:
 run_query(target_table_query)
 run_query(target_instances_table_query)
 run_query(entries_table_query)
+run_query(shortcuts_table_query)
 
 # logging.info(run_select_query("SELECT * FROM target_instances"))
 # logging.info(run_select_query("SELECT * FROM targets"))

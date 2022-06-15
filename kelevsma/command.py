@@ -32,18 +32,22 @@ class CommandController:
         self.command_register = {}
         self.undo_stack = []
         self.redo_stack = []
+        self.shortcut_map = {}
 
     def register(self, command:Command) -> None:
         """Attach the controller to the command and append command to commands list"""
         command.controller = self
+
         # Update command register with names
         for n in command.names:
             if type(n) != str:
                 raise CommandConfigError("Invalid command name format.")
             self.command_register.update({n: command})
+
         # Replace the screen str with the actual Screen object
         if hasattr(command, "screen") and type(command.screen) is str:
             command.screen = display.controller.get_screen(command.screen)
+
         # Check for forks and recursively register if necessary
         if hasattr(command, "forks"):
             for cmd in command.forks.values():
@@ -75,6 +79,11 @@ class CommandController:
         if not args or not args[0]:
             raise CommandError("Try 'help' if you're having trouble.")
         
+        # Check for and process shortcut
+        if self.shortcut_map and args[0].startswith("/"):
+            self.route_command(self.shortcut(args))
+            return
+
         # Get the command class
         command_cls = self.get_command(args)
         if not command_cls:
@@ -91,6 +100,14 @@ class CommandController:
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
     
+    def shortcut(self, args:list[str]) -> list[str] | None:
+        """Translate the shortcut text into the full command."""
+        shortcut_text = " ".join(args)
+        try:
+            return self.shortcut_map[shortcut_text]
+        except KeyError:
+            raise CommandError("Invalid shortcut.")
+        
     def undo(self) -> None:
         if not self.undo_stack:
             display.message("Nothing to undo")
@@ -275,6 +292,13 @@ class Example:
 def register(command:Command) -> None:
     """Register a command to the controller."""
     controller.register(command)
+
+
+def set_shortcuts(shortcuts:dict) -> None:
+    all_values = list(shortcuts.keys()) + list(shortcuts.values())
+    if not type(shortcuts) is dict or [x for x in all_values if type(x) != str]:
+        raise CommandConfigError("Invalid shortcut configuration.")
+    controller.shortcut_map = shortcuts
 
 
 controller = CommandController()

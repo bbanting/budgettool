@@ -86,7 +86,7 @@ class Target:
         goal = entry.cents_to_dollars(self.goal())
         string =  f"{name:{NAMEW}}{current:.2f} / {goal:.2f}"
         default = entry.cents_to_dollars(self.default_amt)
-        if goal != default:
+        if goal != default and config.target_filter_state.tframe.month.value:
             string += f" (default: {default})"
         return string
 

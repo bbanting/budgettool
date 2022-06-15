@@ -12,6 +12,7 @@ import commands
 import config
 import target
 import entry
+import db
 
 from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 
@@ -79,6 +80,8 @@ def main():
     kelevsma.register(commands.RenameTargetCommand)
     kelevsma.register(commands.ChangePageCommand)
     kelevsma.register(commands.SetTargetCommand)
+
+    kelevsma.set_shortcuts(db.select_shortcuts())
 
     kelevsma.run("list")
 
