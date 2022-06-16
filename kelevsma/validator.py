@@ -153,14 +153,8 @@ class VBool(Validator):
 
 class VAny(Validator):
     """Accepts any value."""
-    def __init__(self, lower=False, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.lower = lower
-    
     def validate(self, value) -> Result:
-        if self.lower:
-            value = value.lower()
-        return Result.ok(value.lower())
+        return Result.ok(value)
 
 
 class VComment(Validator):
@@ -202,4 +196,13 @@ class VComment(Validator):
     
     def validate(self, value: str) -> Result:
         return Result.ok(value)
-        
+
+
+class VShortcut(Validator):
+    """Checks if a word is a valid shortcut."""
+    def validate(self, value:str) -> Result:
+        if " " in value:
+            return Result.err()
+        if not value.startswith("/"):
+            return Result.err()
+        return Result.ok(value)
