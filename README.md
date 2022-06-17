@@ -11,7 +11,6 @@ I made this because I like to code and want to improve. I can't see this being u
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [x] Remove groups and create shortcuts "/"
 - [ ] Make examples for all commands
 
 ## Notes

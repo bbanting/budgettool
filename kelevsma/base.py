@@ -9,6 +9,12 @@ import threading
 from . import command, display, shortcut
 
 
+def push_shortcuts() -> None:
+    """Push the shortcut list to the screen."""
+    display.push_h(f"{'SHORTCUT':11}  COMMAND")
+    display.push(*[f"/{k:10}  {v}" for k, v in command.controller.shortcut_map.items()])
+
+
 def run(init_cmd:str="") -> None:
     """Start the program loop. If init_cmd is given, a command will be
     run before the loop begins.
@@ -37,9 +43,12 @@ def run(init_cmd:str="") -> None:
             display.refresh()
 
 
+display.add_screen("shortcuts", refresh_func=push_shortcuts)
 display.add_screen("help")
+
 command.register(command.NewShortcutCommand)
 command.register(command.DeleteShortcutCommand)
+command.register(command.ViewShortcutsCommand)
 command.register(command.HelpCommand)
 command.register(command.UndoCommand)
 command.register(command.RedoCommand)

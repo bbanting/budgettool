@@ -8,10 +8,10 @@ def select_all() -> dict:
         return {f:v for id,f,v in tuples}
 
 
-def select(short:str) -> dict:
+def select(short:str) -> tuple:
     """Return a shortcut from the database."""
     tuples = db.select_rows(db.SHORTCUTS, shortform=short)
-    return {tuples[0][1]: tuples[0][2]}
+    return tuples[0]
 
 
 def insert(short:str, full:str) -> None:

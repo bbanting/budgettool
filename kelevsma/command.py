@@ -265,9 +265,8 @@ class DeleteShortcutCommand(Command):
     }
     
     def execute(self, shortform) -> None:
-        sc = shortcut.select(shortform)
         self.shortform = shortform
-        self.command = sc["command"]
+        self.command = shortcut.select(shortform)[1]
         shortcut.delete(self.shortform)
 
     def undo(self) -> None:
@@ -275,6 +274,15 @@ class DeleteShortcutCommand(Command):
 
     def redo(self) -> None:
         shortcut.delete(self.shortform)
+
+
+class ViewShortcutsCommand(Command):
+    """View a list of the shortcuts."""
+    names = ("shortcuts", "shortcut")
+    screen = "shortcuts"
+
+    def execute(self) -> None:
+        return super().execute()
 
 
 class HelpCommand(Command):

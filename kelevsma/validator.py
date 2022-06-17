@@ -1,7 +1,7 @@
 import abc
 from typing import Any
 
-from . import command
+from . import command, shortcut
 
 class ValidatorError(Exception):
     pass
@@ -199,8 +199,13 @@ class VComment(Validator):
 
 
 class VShortcut(Validator):
-    """Checks if a word is a valid shortcut."""
+    """Checks if a word is a valid and current shortcut. Invertable."""
     def validate(self, value:str) -> Result:
-        if " " in value:
+        if " " in value or len(value) > 10:
             return Result.err()
-        return Result.ok(value)
+
+        ret_val = [Result.ok(value), Result.err()]
+        if value not in shortcut.select_all():
+            ret_val.reverse()
+
+        return ret_val[self.invert]
