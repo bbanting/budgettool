@@ -203,6 +203,4 @@ class VShortcut(Validator):
     def validate(self, value:str) -> Result:
         if " " in value:
             return Result.err()
-        if not value.startswith("/"):
-            return Result.err()
         return Result.ok(value)

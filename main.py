@@ -12,7 +12,6 @@ import commands
 import config
 import target
 import entry
-import db
 
 from config import TimeFrame, DATEW, AMOUNTW, NAMEW
 

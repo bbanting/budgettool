@@ -38,6 +38,8 @@ def run(init_cmd:str="") -> None:
 
 
 display.add_screen("help")
+command.register(command.NewShortcutCommand)
+command.register(command.DeleteShortcutCommand)
 command.register(command.HelpCommand)
 command.register(command.UndoCommand)
 command.register(command.RedoCommand)

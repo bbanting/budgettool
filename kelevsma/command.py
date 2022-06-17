@@ -8,8 +8,9 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-from . import display, db, shortcut
+from . import display, shortcut
 from .validator import Validator, ValidatorError, VLit, VAny, VShortcut
+import kelevsma
 
 
 logging.basicConfig(level=logging.INFO)
@@ -73,14 +74,14 @@ class CommandController:
         else:
             command.execute()
 
-    def route_command(self, args:list[str]):
+    def route_command(self, args:list[str]) -> None:
         """Process user input, execute command."""
         # Ensure input isn't empty
         if not args or not args[0]:
             raise CommandError("Try 'help' if you're having trouble.")
         
         # Check for and process shortcut
-        if self.shortcut_map and args[0].startswith("/"):
+        if args[0].startswith("/"):
             self.route_command(self.shortcut(args))
             return
 
@@ -102,11 +103,11 @@ class CommandController:
     
     def shortcut(self, args:list[str]) -> list[str] | None:
         """Translate the shortcut text into the full command."""
-        shortcut_text = " ".join(args)
+        shortcut_text = args[0][1:]
         try:
-            return self.shortcut_map[shortcut_text]
+            return (self.shortcut_map[shortcut_text]).split(" ")
         except KeyError:
-            raise CommandError("Invalid shortcut.")
+            raise CommandError("That shortcut doesn't exist.")
         
     def undo(self) -> None:
         if not self.undo_stack:
@@ -234,14 +235,17 @@ class QuitCommand(Command):
 
 class NewShortcutCommand(Command):
     """Create a command shortcut."""
-    names = ("/+",)
+    names = ("+/",)
     params = {
-        "shortform": VShortcut(),
-        "command": VAny(plural=True),
+        "shortform": VShortcut(req=True),
+        "command": VAny(req=True, plural=True),
     }
     
     def execute(self, shortform, command) -> None:
         command = " ".join(command)
+        if command.startswith("/"):
+            kelevsma.error("Cannot nest shortcuts.")
+            return
         self.shortform = shortform
         self.command = command
         shortcut.insert(self.shortform, self.command)
@@ -255,7 +259,7 @@ class NewShortcutCommand(Command):
 
 class DeleteShortcutCommand(Command):
     """Delete a command shortcut."""
-    names = ("/-",)
+    names = ("-/",)
     params = {
         "shortform": VShortcut(),
     }
@@ -336,10 +340,8 @@ def register(command:Command) -> None:
 
 
 def set_shortcuts(shortcuts:dict) -> None:
-    all_values = list(shortcuts.keys()) + list(shortcuts.values())
-    if not type(shortcuts) is dict or [x for x in all_values if type(x) != str]:
-        raise CommandConfigError("Invalid shortcut configuration.")
-    controller.shortcut_map = shortcuts
+    if shortcuts:
+        controller.shortcut_map = shortcuts
 
 
 controller = CommandController()

@@ -31,9 +31,11 @@ class Target:
         if not tframe:
             tframe = config.target_filter_state.tframe
         if tframe.month:
-            return kdb.select_rows(db.TARGET_INSTANCES,
-                target=self.id, year=tframe.year, month=tframe.month.value)[0][2]
-        instances = kdb.select_rows(db.TARGET_INSTANCES, target=self.id, year=tframe.year)
+            instances = kdb.select_rows(db.TARGET_INSTANCES,
+                target=self.id, year=tframe.year, month=tframe.month.value)
+        else:
+            instances = kdb.select_rows(db.TARGET_INSTANCES, target=self.id, year=tframe.year)
+            
         instances_sum = sum([x[2] for x in instances])
         diff = 12 - len(instances)
 
@@ -112,13 +114,13 @@ def update(target:Target) -> None:
 
 def select() -> list[Target]:
     """Return one target or the whole list of targets as Target objects."""
-    target_tuples = kdb.select_rows(db.TARGET_INSTANCES)
+    target_tuples = kdb.select_rows(db.TARGETS)
     return [Target(*t) for t in target_tuples]
 
 
 def select_one(name:str) -> Target:
     """Return a single target from the database."""
-    target_tuples = kdb.select_rows(db.TARGET_INSTANCES, name=name)
+    target_tuples = kdb.select_rows(db.TARGETS, name=name)
     return Target(*target_tuples[0])
 
 

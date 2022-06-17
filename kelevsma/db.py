@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 import typing
+import logging
+
 import kelevsma
 
 
@@ -85,9 +87,8 @@ def select_rows(table_name:str, fields:str="*", **kwargs) -> list[tuple] | None:
     query = f"""
     SELECT {fields}
     FROM {table_name}
-    WHERE {'AND '.join(pairs)}
-    """
-
+    {"WHERE " if pairs else ""}{' AND '.join(pairs)}
+    """ 
     return run_select_query(query)
 
 

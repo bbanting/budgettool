@@ -1,13 +1,17 @@
-from . import db
+from . import db, command
+
 
 def select_all() -> dict:
     """Select and return all shortcuts."""
     tuples = db.select_rows(db.SHORTCUTS)
-    return {f:v for id,f,v in tuples}
+    if tuples:
+        return {f:v for id,f,v in tuples}
 
 
 def select(short:str) -> dict:
     """Return a shortcut from the database."""
+    tuples = db.select_rows(db.SHORTCUTS, shortform=short)
+    return {tuples[0][1]: tuples[0][2]}
 
 
 def insert(short:str, full:str) -> None:
@@ -15,6 +19,7 @@ def insert(short:str, full:str) -> None:
     fields = ("shortform", "full")
     values = (short, full)
     db.insert_row(db.SHORTCUTS, fields, values)
+    command.set_shortcuts(select_all())
 
 
 def delete(short:str) -> None:
@@ -22,3 +27,4 @@ def delete(short:str) -> None:
     fields = ("shortform",)
     values = (short,)
     db.delete_row_by_value(db.SHORTCUTS, fields, values)
+    command.set_shortcuts(select_all())
