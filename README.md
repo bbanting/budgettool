@@ -20,3 +20,4 @@ I made this because I like to code and want to improve. I can't see this being u
 - Make command params dependant on others
 - Replace target foreign key on entry with target_instance?
 - Progress bars for targets?
+- Project initializer?

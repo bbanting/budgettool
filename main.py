@@ -81,8 +81,6 @@ def main():
     kelevsma.register(commands.ChangePageCommand)
     kelevsma.register(commands.SetTargetCommand)
 
-    kelevsma.set_shortcuts(db.select_shortcuts())
-
     kelevsma.run("list")
 
 

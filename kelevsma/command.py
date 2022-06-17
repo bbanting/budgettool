@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-from . import display, db
+from . import display, db, shortcut
 from .validator import Validator, ValidatorError, VLit, VAny, VShortcut
 
 
@@ -234,6 +234,7 @@ class QuitCommand(Command):
 
 class NewShortcutCommand(Command):
     """Create a command shortcut."""
+    names = ("/+",)
     params = {
         "shortform": VShortcut(),
         "command": VAny(plural=True),
@@ -241,17 +242,35 @@ class NewShortcutCommand(Command):
     
     def execute(self, shortform, command) -> None:
         command = " ".join(command)
-        self.id = db.insert_row("shortcuts", ("shortform", "full"), (shortform, command)).lastrowid
+        self.shortform = shortform
+        self.command = command
+        shortcut.insert(self.shortform, self.command)
+
+    def undo(self) -> None:
+        shortcut.delete(self.shortform)
+
+    def redo(self) -> None:
+        shortcut.insert(self.shortform, self.command)
 
 
 class DeleteShortcutCommand(Command):
-    """Create a command shortcut."""
+    """Delete a command shortcut."""
+    names = ("/-",)
     params = {
         "shortform": VShortcut(),
     }
     
     def execute(self, shortform) -> None:
-        pass
+        sc = shortcut.select(shortform)
+        self.shortform = shortform
+        self.command = sc["command"]
+        shortcut.delete(self.shortform)
+
+    def undo(self) -> None:
+        shortcut.insert(self.shortform, self.command)
+
+    def redo(self) -> None:
+        shortcut.delete(self.shortform)
 
 
 class HelpCommand(Command):

@@ -91,7 +91,7 @@ def select_shortcuts() -> dict:
 shortcuts_table_query = f"""
 CREATE TABLE IF NOT EXISTS {SHORTCUTS} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    shortform TEXT NOT NULL,
+    shortform TEXT NOT NULL UNIQUE,
     full TEXT NOT NULL
 );"""
 

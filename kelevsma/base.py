@@ -6,7 +6,7 @@ import logging
 import shlex
 import threading
 
-from . import command, display
+from . import command, display, shortcut
 
 
 def run(init_cmd:str="") -> None:
@@ -15,6 +15,8 @@ def run(init_cmd:str="") -> None:
     """
     height_check_thread = threading.Thread(target=display.height_checker, daemon=True)
     height_check_thread.start()
+
+    command.set_shortcuts(shortcut.select_all())
 
     if init_cmd:
         command.controller.route_command(shlex.split(init_cmd))
