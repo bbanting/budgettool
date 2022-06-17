@@ -243,21 +243,6 @@ class AddTargetCommand(kelevsma.Command):
         target.insert(self.target)
 
 
-class AddShortcutCommand(kelevsma.Command):
-    """Create a command shortcut."""
-    params = {
-        "shortform": VShortcut(),
-        "command": VAny(plural=True),
-    }
-    
-    def execute(self, shortform, command) -> None:
-        command = " ".join(command)
-        self.id = db.insert_row("shortcuts", ("shortform", "full"), (shortform, command)).lastrowid
-
-    def undo(self) -> None:
-        db.delete_row_by_id("shortcuts", self.id)
-
-
 class AddCommand(kelevsma.ForkCommand):
     """Add an entry or target."""    
     names = ("add",)
@@ -265,7 +250,6 @@ class AddCommand(kelevsma.ForkCommand):
         "entry": AddEntryCommand,
         "today": AddEntryTodayCommand,
         "target": AddTargetCommand,
-        "shortcut": AddShortcutCommand,
     }
     default = "entry"
 

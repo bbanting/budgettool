@@ -8,8 +8,8 @@ from dataclasses import dataclass
 
 from colorama import Style
 
-from . import display
-from .validator import Validator, ValidatorError, VLit
+from . import display, db
+from .validator import Validator, ValidatorError, VLit, VAny, VShortcut
 
 
 logging.basicConfig(level=logging.INFO)
@@ -230,6 +230,28 @@ class QuitCommand(Command):
 
     def execute(self) -> None:
         raise QuitProgramException("User quit program.")
+
+
+class NewShortcutCommand(Command):
+    """Create a command shortcut."""
+    params = {
+        "shortform": VShortcut(),
+        "command": VAny(plural=True),
+    }
+    
+    def execute(self, shortform, command) -> None:
+        command = " ".join(command)
+        self.id = db.insert_row("shortcuts", ("shortform", "full"), (shortform, command)).lastrowid
+
+
+class DeleteShortcutCommand(Command):
+    """Create a command shortcut."""
+    params = {
+        "shortform": VShortcut(),
+    }
+    
+    def execute(self, shortform) -> None:
+        pass
 
 
 class HelpCommand(Command):
