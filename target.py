@@ -2,6 +2,7 @@ import logging
 
 import config
 import entry
+import kelevsma.db as kdb
 import db
 
 from config import NAMEW
@@ -30,8 +31,9 @@ class Target:
         if not tframe:
             tframe = config.target_filter_state.tframe
         if tframe.month:
-            return db.select_target_instance(self.id, tframe)[0][2]
-        instances = db.select_target_instances_year(self.id, tframe.year)
+            return kdb.select_rows(db.TARGET_INSTANCES,
+                target=self.id, year=tframe.year, month=tframe.month.value)[0][2]
+        instances = kdb.select_rows(db.TARGET_INSTANCES, target=self.id, year=tframe.year)
         instances_sum = sum([x[2] for x in instances])
         diff = 12 - len(instances)
 
@@ -43,7 +45,8 @@ class Target:
         """Return true if an instance exists in the db with this 
         target and time frame.
         """
-        return bool(db.select_target_instance(self.id, tframe))
+        return bool(kdb.select_rows(db.TARGET_INSTANCES, 
+                target=self.id, year=tframe.year, month=tframe.month.value))
 
     def set_instance(self, tframe:config.TimeFrame, amount:int) -> None:
         """Set the target amount for the specified month. Start by deleting the 
@@ -107,15 +110,16 @@ def update(target:Target) -> None:
     db.update_row(db.TARGETS, target.id, fields[1:], values[1:])
 
 
-def select(name:str="") -> list[Target]:
+def select() -> list[Target]:
     """Return one target or the whole list of targets as Target objects."""
-    target_tuples = db.select_targets(name)
+    target_tuples = kdb.select_rows(db.TARGET_INSTANCES)
     return [Target(*t) for t in target_tuples]
 
 
 def select_one(name:str) -> Target:
     """Return a single target from the database."""
-    return select(name)[0]
+    target_tuples = kdb.select_rows(db.TARGET_INSTANCES, name=name)
+    return Target(*target_tuples[0])
 
 
 def get_target_names() -> list[str]:

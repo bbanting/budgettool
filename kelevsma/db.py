@@ -78,14 +78,17 @@ def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> sqlite3.Cu
     return run_query(query)
 
 
-def select_shortcuts() -> dict:
-    """Select and return shortcuts as dict."""
+def select_rows(table_name:str, fields:str="*", **kwargs) -> list[tuple] | None:
+    """Select rows from the db."""
+    values = [f"'{x}'" if type(x) is str else x for x in kwargs.values()]
+    pairs = [f"{f}={v}" for f, v in zip(kwargs.keys(), values)]
     query = f"""
-    SELECT shortform, full
-    FROM {SHORTCUTS}
+    SELECT {fields}
+    FROM {table_name}
+    WHERE {'AND '.join(pairs)}
     """
-    tuples = run_select_query(query)
-    return {k:v for k, v in tuples}
+
+    return run_select_query(query)
 
 
 shortcuts_table_query = f"""

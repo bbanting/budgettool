@@ -2,7 +2,8 @@ from . import db
 
 def select_all() -> dict:
     """Select and return all shortcuts."""
-    return db.select_shortcuts()
+    tuples = db.select_rows(db.SHORTCUTS)
+    return {f:v for id,f,v in tuples}
 
 
 def select(short:str) -> dict:
@@ -13,7 +14,6 @@ def insert(short:str, full:str) -> None:
     """Insert a new shortcut into the db."""
     fields = ("shortform", "full")
     values = (short, full)
-    
     db.insert_row(db.SHORTCUTS, fields, values)
 
 

@@ -33,15 +33,6 @@ def select_entries(tframe:config.TimeFrame, category:str, targets:list) -> list:
     return kdb.run_select_query(query)
 
 
-def select_targets(name:str) -> list:
-    """Construct a query to select targets."""
-    query = f"SELECT * FROM {TARGETS}"
-    if name:
-        query += f" WHERE name = '{name}'"
-        
-    return kdb.run_select_query(query)
-
-
 def sum_target(target_id:int, tframe:config.TimeFrame) -> int:
     """Sum entries with a specified target in a time period."""
     tframe_str = tframe.iso_format()
@@ -52,30 +43,6 @@ def sum_target(target_id:int, tframe:config.TimeFrame) -> int:
     """
     sum_amount = kdb.run_select_query(query)[0][0]
     return sum_amount if sum_amount else 0
-
-
-def select_target_instance(target_id:int, tframe:config.TimeFrame) -> tuple | None:
-    """Returns a single target instance or an entire year of instances."""
-    query = f"""
-    SELECT * 
-    FROM {TARGET_INSTANCES}
-    WHERE target = {target_id} 
-        AND year = {tframe.year} 
-        AND month = {tframe.month.value}
-    """
-    if result := kdb.run_select_query(query):
-        return result
-
-
-def select_target_instances_year(target_id:int, year:int) -> list:
-    """Select the target instances for a whole year."""
-    query = f"""
-    SELECT * 
-    FROM {TARGET_INSTANCES}
-    WHERE target = {target_id} AND year = {year}
-    """
-
-    return kdb.run_select_query(query)
 
 
 target_table_query = f"""
