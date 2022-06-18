@@ -3,5 +3,5 @@
 from .command import Command, CommandError, ForkCommand, SporkCommand, ContextualCommand, CommandController, register, set_shortcuts
 from .validator import Validator, ValidatorError, VLit, VBool, VAny
 from .display import add_screen, change_page, refresh, message, error, push, push_f, push_h
-from .base import run
+from .base import run, prof_run
     

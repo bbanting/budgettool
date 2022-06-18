@@ -6,6 +6,7 @@ def select_all() -> dict:
     tuples = db.select_rows(db.SHORTCUTS)
     if tuples:
         return {f:v for id,f,v in tuples}
+    return {}
 
 
 def select(short:str) -> tuple:

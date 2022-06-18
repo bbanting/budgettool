@@ -12,6 +12,8 @@ I made this because I like to code and want to improve. I can't see this being u
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Make examples for all commands
+- [ ] Export to csv
+- [ ] Check terminal width as well
 
 ## Notes
 

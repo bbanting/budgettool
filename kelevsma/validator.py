@@ -205,7 +205,8 @@ class VShortcut(Validator):
             return Result.err()
 
         ret_val = [Result.ok(value), Result.err()]
-        if value not in shortcut.select_all():
+        shortcuts = sc if (sc := shortcut.select_all()) else []
+        if value not in shortcuts:
             ret_val.reverse()
 
         return ret_val[self.invert]

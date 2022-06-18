@@ -14,12 +14,13 @@ def push_shortcuts() -> None:
     display.push_h(f"{'SHORTCUT':11}  COMMAND")
     display.push(*[f"/{k:10}  {v}" for k, v in command.controller.shortcut_map.items()])
 
-def prof_run(*commands:str) -> None:
+def prof_run(*commands:str, times:int=1) -> None:
     """Run the program for profiling purposes. Does not block for input."""
     command.set_shortcuts(shortcut.select_all())
-    for c in commands:
-        command.controller.route_command(shlex.split(c))
-        display.refresh()
+    for _ in range(times):
+        for c in commands:
+            command.controller.route_command(shlex.split(c))
+            display.refresh()
 
 def run(init_cmd:str="") -> None:
     """Start the program loop. If init_cmd is given, a command will be

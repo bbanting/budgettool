@@ -68,14 +68,10 @@ class LineGroup(collections.UserList):
         for l in lines[::-1]:
             self.data.append(l)
 
-    def print(self) -> None:
-        """Print all lines if any exist."""
-        if self:
-            print(self)
-
-    def __str__(self) -> str:
-        bold = Style.BRIGHT if self.bold else ""
-        return "\n".join([f"{bold}{l.text}" for l in self])
+    def print(self) -> list:
+        """Return all lines for printing if any exist."""
+        style = Style.BRIGHT if self.bold else f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
+        return [f"{style}{l}" for l in self]
 
 
 class BodyLines(LineGroup):
@@ -134,7 +130,8 @@ class BodyLines(LineGroup):
         self.selected = items[index-1].ref_obj
         return self.selected
 
-    def print(self) -> None:
+    def print(self) -> list:
+        """Return all lines for printing if any exist."""
         lines = []
         start, end = self.get_current_range()
         raw_lines = list(reversed(self.data[start:end]))
@@ -157,9 +154,7 @@ class BodyLines(LineGroup):
             lines.append(f"{Style.DIM}{count:02}" if self.number else "")
             count += 1
         
-        # Print the lines
-        for l in lines:
-            print(l)
+        return [str(l) for l in lines]
 
 
 class Screen:
@@ -227,41 +222,46 @@ class Screen:
 
             return rng, prefix, suffix
         
-    def _print_page_numbers(self) -> None:
-        """Print the divider bar with page numbers."""
+    def _print_page_numbers(self) -> list:
+        """Return the divider bar with page numbers for printing."""
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
+        norm = f"{Back.BLACK}{Fore.WHITE}{Style.NORMAL}"
         div_char = " "
         if self.body.n_pages < 2:
-            print(f"{style}{div_char*t_width()}", end="\n")
-            return
+            return [f"{style}{div_char*t_width()}"]
 
         page_range, prefix, suffix = self._get_page_range()
 
         leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
         nums = "".join([f" {n} " if n != self.body.page else f"|{n}|" for n in page_range])
         trailing = t_width()-(leading+len(nums))
-        print(f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}")
+        
+        return [f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}"]
 
-    def _print_message_bar(self) -> None:
-        """Print the line below the page numbers."""
-        print(self.message)
+    def _print_message_bar(self) -> list:
+        """Return the line below the page numbers for printing."""
+        style = f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
+        msg = f"{style}{self.message}{' ' * (t_width() - len(self.message))}"
         self.message = ""
+        return [msg]
 
     def print(self) -> None:
-        """Print the contents of the buffer to the terminal."""
+        """Print the contents of the screen to the terminal."""
         # Check the height before printing
         if not self.check_height():
             print("Please increase the height of the terminal window.", end="")
             return
         # Print
         else:
-            self.header.print()
-            self.body.print()
-            self.footer.print()
-            self._print_page_numbers()
-            self._print_message_bar()
-            print("> ", end="")
+            lines = ["\n"]
+            lines.extend(self.header.print())
+            lines.extend(self.body.print())
+            lines.extend(self.footer.print())
+            lines.extend(self._print_page_numbers())
+            lines.extend(self._print_message_bar())
+            lines.extend(["> "])
 
+            print("\n".join(lines), end="")
             self.printed = True
 
 

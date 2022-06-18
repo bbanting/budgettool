@@ -237,7 +237,7 @@ class NewShortcutCommand(Command):
     """Create a command shortcut."""
     names = ("+/",)
     params = {
-        "shortform": VShortcut(req=True),
+        "shortform": VShortcut(req=True, invert=True),
         "command": VAny(req=True, plural=True),
     }
     
@@ -266,7 +266,7 @@ class DeleteShortcutCommand(Command):
     
     def execute(self, shortform) -> None:
         self.shortform = shortform
-        self.command = shortcut.select(shortform)[1]
+        self.command = shortcut.select(shortform)[2]
         shortcut.delete(self.shortform)
 
     def undo(self) -> None:
@@ -348,8 +348,7 @@ def register(command:Command) -> None:
 
 
 def set_shortcuts(shortcuts:dict) -> None:
-    if shortcuts:
-        controller.shortcut_map = shortcuts
+    controller.shortcut_map = shortcuts
 
 
 controller = CommandController()
