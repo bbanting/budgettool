@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import config
 import kelevsma.db as kdb
+from kelevsma.db import insert_row
 
 
 ENTRIES = "entries"

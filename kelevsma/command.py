@@ -209,6 +209,13 @@ class SporkCommand:
         return cls.default
 
 
+@dataclass(slots=True)
+class Example:
+    """A command usage example."""
+    text: str
+    subtext: str
+
+
 class UndoCommand(Command):
     """Undo the last command."""
     names = ("undo",)
@@ -240,6 +247,9 @@ class NewShortcutCommand(Command):
         "shortform": VShortcut(req=True, invert=True),
         "command": VAny(req=True, plural=True),
     }
+    examples = (
+        Example("+/ bills list electric insurance water", "Create a shortcut named 'bills' that runs the command 'list electric insurance water.'"),
+    )
     
     def execute(self, shortform, command) -> None:
         command = " ".join(command)
@@ -263,6 +273,9 @@ class DeleteShortcutCommand(Command):
     params = {
         "shortform": VShortcut(),
     }
+    examples = (
+        Example("-/ bills", "Delete the shortcut named 'bills.'"),
+    )
     
     def execute(self, shortform) -> None:
         self.shortform = shortform
@@ -328,18 +341,12 @@ class HelpCommand(Command):
             desc = getattr(command, "description", command.__doc__)
             lines.append(f"{name:.<15}{desc}")
             prev = self.controller.command_register[name]
+        lines.sort()
         display.push(*lines)
 
     def get_names(self, command: Command) -> str:
         name_suffix = "" if len(command.names)<=1 else "S"
         return f"{Style.BRIGHT}COMMAND NAME{name_suffix}: {Style.NORMAL}{', '.join(command.names)}"
-
-
-@dataclass(slots=True)
-class Example:
-    """A command usage example."""
-    text: str
-    subtext: str
 
 
 def register(command:Command) -> None:

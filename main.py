@@ -80,11 +80,8 @@ def main():
     kelevsma.register(commands.ChangePageCommand)
     kelevsma.register(commands.SetTargetCommand)
 
-    # kelevsma.prof_run("list", times=10)
     kelevsma.run("list")
 
 
 if __name__=="__main__":
     main()
-    # import cProfile
-    # cProfile.run("main()", filename="bt.prof")

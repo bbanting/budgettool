@@ -252,6 +252,11 @@ class AddCommand(kelevsma.ForkCommand):
         "target": AddTargetCommand,
     }
     default = "entry"
+    examples = (
+        Example("add [entry]", "Add an entry though multiple prompts"),
+        Example("add today -100 insurance 'Car insurance bill'", "Add an entry for today in one line."),
+        Example("add target groceries -400", "Add a new target named 'groceries' with amount -400.")
+    )
 
 
 class RemoveEntryCommand(kelevsma.Command):
@@ -309,6 +314,10 @@ class RemoveCommand(kelevsma.ForkCommand):
         "target": RemoveTargetCommand,
     }
     default = "entry"
+    examples = (
+        Example("delete 3", "Remove the entry on line 3."),
+        Example("del insurance", "Remove the target named 'insurance.'"),
+    )
     
 
 class EditEntryCommand(kelevsma.Command):
@@ -319,6 +328,9 @@ class EditEntryCommand(kelevsma.Command):
         "field": VLit(input_functions, req=True),
     }
     screen = ENTRIES
+    examples = (
+        Example("edit 3 amount", "Edit the amount of the entry on line 3; a prompt will be given."),
+    )
 
     def execute(self, id:int, field:str) -> None:
         self.old_entry = display.select(id)
@@ -386,6 +398,12 @@ class SetTargetCommand(kelevsma.SporkCommand):
         VLit("default"): SetTargetDefaultCommand,
         }
     default = SetTargetForMonthCommand
+    description = "Set the amount for a target; either the default or for a specified month."
+    examples = (
+        Example("set insurance default -200", "Set the default amount for the 'insurance' target to -200."),
+        Example("set insurance july 2022 -400", "Set the 'insurance' target amount to -400 for July 2022."),
+        Example("set insurance -400", "Set the 'insurance' target amount to -400 for the current month."),
+    )
 
 
 class RenameTargetCommand(kelevsma.Command):
@@ -396,6 +414,9 @@ class RenameTargetCommand(kelevsma.Command):
         "new_name": VTarget(req=True, invert=True),
     }
     screen = TARGETS
+    examples = (
+        Example("rename groceries food", "Rename the 'groceries' target to 'food.'")
+    )
 
     def execute(self, current_name, new_name) -> None:
         self.old_target = target.select_one(current_name)
@@ -416,6 +437,9 @@ class ChangePageCommand(kelevsma.Command):
     params = {
         "number": VBool(str.isdigit, req=True)
     }
+    examples = (
+        Example("page 4", "Change to page 4.")
+    )
 
     def execute(self, number:str) -> None:
         number = int(number)

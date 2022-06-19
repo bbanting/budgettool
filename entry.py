@@ -13,16 +13,18 @@ import target
 from config import DATEW, AMOUNTW
 
 
-@dataclass
+@dataclass(slots=True)
 class Entry:
     """Represent one entry in the budget."""
-    __slots__ = ("id", "date", "amount", "target", "note")
-    def __init__(self, id:int, date:date, amount:int, targ:str, note:str):
-        self.id = id
-        self.date = date
-        self.amount = amount
-        self.target = target.select_one(targ)
-        self.note = note
+    id: int
+    date: date
+    amount: int
+    targ: str
+    note: str
+    target: target.Target = None
+    
+    def __post_init__(self) -> None:
+        self.target = target.select_one(self.targ)
 
     @property
     def category(self) -> str:

@@ -12,7 +12,7 @@ SHORTCUTS = "shortcuts"
 
 def format_iter(iter:typing.Iterable) -> str:
     """Format an iterable to be used in an SQL query."""
-    iter = [f"'{x}'" if  type(x) is str else x for x in iter]
+    iter = [f"'{x}'" if  type(x) is str else str(x) for x in iter]
     return f"({', '.join(iter)})"
 
 
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS {SHORTCUTS} (
 
 
 try:
-    connection = sqlite3.connect("records.db")
+    connection = sqlite3.connect("db.db")
 except sqlite3.Error:
     kelevsma.error("Database connection error.")
     quit()

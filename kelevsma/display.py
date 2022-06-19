@@ -148,6 +148,9 @@ class BodyLines(LineGroup):
             
             lines.append(to_print)
             count += 1
+        
+        if self.parent_screen.reverse_body_order:
+            lines = lines[::-1]
 
         # Append empty space
         while count <= self.space:
@@ -160,12 +163,14 @@ class BodyLines(LineGroup):
 class Screen:
     """A buffer of lines to print."""
     def __init__(self, name:str, min_body_height:int, numbered:bool, 
-    truncate:bool, refresh_func:Callable) -> None:
+    truncate:bool, refresh_func:Callable, reversed:bool, clear:bool) -> None:
         # Attributes
         self.name = name
         self.min_body_height = min_body_height
         self.offset = 3 # Page nums, message line, input line
         self.refresh_func = refresh_func
+        self.reverse_body_order = reversed
+        self.clear_on_refresh = clear
 
         # Sub-buffers & state
         self.body = BodyLines(self, trunc=truncate, number=numbered)
@@ -304,11 +309,12 @@ class ScreenController:
 
 
 def clear_terminal() -> None:
-    # if os.name == "nt":
-    #     os.system("cls")
-    # else:
-    #     os.system("clear")
-    pass
+    if not controller.get_screen().clear_on_refresh:
+        return
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
 
 
 def t_width() -> int:
@@ -321,24 +327,24 @@ def t_height() -> int:
     return os.get_terminal_size()[1]
 
 
-def height_checker() -> None:
-    """Check if the screen size has changed, refresh if so."""
-    height = t_height()
+def window_checker() -> None:
+    """Check if the terminal window size has changed, refresh if so."""
+    width, height = os.get_terminal_size()
     while True:
-        new_height = t_height()
-        if height == new_height:
+        new_width, new_height = os.get_terminal_size()
+        if (width, height) == (new_width, new_height):
             continue
-        height = new_height
+        width, height = new_width, new_height
         clear_terminal()
         controller.get_screen().print()
         time.sleep(0.5)
 
 
-def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, 
-            truncate:bool=False, refresh_func=None) -> None:
+def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, truncate:bool=False, 
+    refresh_func:Callable=None, reversed:bool=False, clear:bool=False) -> None:
     """Public func to add a screen to the controller."""
     if name not in controller._screens:
-        screen = Screen(name, min_body_height, numbered, truncate, refresh_func)
+        screen = Screen(name, min_body_height, numbered, truncate, refresh_func, reversed, clear)
         controller.add(screen)
 
 

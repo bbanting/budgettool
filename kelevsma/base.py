@@ -26,7 +26,7 @@ def run(init_cmd:str="") -> None:
     """Start the program loop. If init_cmd is given, a command will be
     run before the loop begins.
     """
-    height_check_thread = threading.Thread(target=display.height_checker, daemon=True)
+    height_check_thread = threading.Thread(target=display.window_checker, daemon=True)
     height_check_thread.start()
 
     command.set_shortcuts(shortcut.select_all())
@@ -51,7 +51,7 @@ def run(init_cmd:str="") -> None:
 
 
 display.add_screen("shortcuts", refresh_func=push_shortcuts)
-display.add_screen("help")
+display.add_screen("help", reversed=True)
 
 command.register(command.NewShortcutCommand)
 command.register(command.DeleteShortcutCommand)
