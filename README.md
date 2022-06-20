@@ -11,9 +11,8 @@ I can't see this being useful to anyone else but am now writing it as though it 
     - monthly income and expenses over year
 - [ ] Write tests
 - [ ] Search descriptions
-- [x] Make examples for all commands
 - [ ] Export to csv
-- [x] Check terminal width as well
+- [ ] Remove main import from commands
 
 ## Notes
 

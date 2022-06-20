@@ -5,6 +5,15 @@ A simple tool to keep track of expenses and earnings.
 """
 
 from __future__ import annotations
+
+import os
+import sys
+
+# Because kelevsma is pretending to be an external package
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# I believe this would not be necessary if kelevsma were an external package
+os.chdir(os.path.dirname(__file__))
+
 import logging
 import kelevsma
 

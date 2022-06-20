@@ -106,7 +106,7 @@ def insert(entry:Entry) -> None:
     # Make a target instance for this month if it doesn't exist
     targ = entry.target
     if not targ.instance_exists(entry.tframe):
-        db.set_target_instance(targ, targ.default_amt, entry.tframe)
+        targ.set_instance(entry.tframe, targ.default_amt)
 
     db.insert_row(db.ENTRIES, *entry.fields_and_values())
 

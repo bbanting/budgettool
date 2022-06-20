@@ -60,7 +60,7 @@ class Target:
         ins_fields = ("target", "amount", "year", "month")
         ins_values = (self.id, amount, tframe.year, tframe.month.value)
         
-        if db.delete_row_by_value(db.TARGET_INSTANCES, del_fields, del_values):
+        if kdb.delete_row_by_value(db.TARGET_INSTANCES, del_fields, del_values):
             # If first query works, run the next one
             db.insert_row(db.TARGET_INSTANCES, ins_fields, ins_values)
 
