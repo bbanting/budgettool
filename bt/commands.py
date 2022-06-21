@@ -5,17 +5,15 @@ import logging
 import datetime
 
 import config
-import kelevsma
-import kelevsma.display as display
 import entry
 import target
-import db
+import kelevsma
+import kelevsma.display as display
 
-from main import ENTRIES, TARGETS
-from config import TODAY
+from config import TODAY, ENTRIES, TARGETS
 from entry import Entry
 from kelevsma.command import Example
-from kelevsma.validator import VLit, VBool, VAny, VShortcut
+from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
 
 

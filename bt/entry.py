@@ -126,3 +126,4 @@ def select(tframe:config.TimeFrame, category:str, targets:list) -> list[Entry]:
     """Select entries from the database."""
     entry_tuples = db.select_entries(tframe, category, targets)
     return [Entry.from_tuple(e) for e in entry_tuples]
+    

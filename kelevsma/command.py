@@ -325,10 +325,10 @@ class HelpCommand(Command):
 
         # Print examples
         if examples := getattr(command, "examples", ""):
-            display.push(f"{Style.BRIGHT}EXAMPLES:")
+            display.push(f"{Style.BRIGHT}EXAMPLES:{Style.NORMAL}")
             for e in examples:
                 display.push(f"    {e.text}")
-                display.push(f"\t{Style.DIM}{e.subtext}")
+                display.push(f"\t{Style.DIM}{e.subtext}{Style.NORMAL}")
 
     def show_general_help(self) -> str:
         """Return general help for when a command isn't specified."""

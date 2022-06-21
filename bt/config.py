@@ -11,6 +11,10 @@ FILENAME = "config.json"
 TODAY = datetime.date.today()
 KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries", "default")
 
+# Screen names
+ENTRIES = "entries"
+TARGETS = "targets"
+
 # Widths for display columns
 DATEW = 8
 AMOUNTW = 12

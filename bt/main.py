@@ -11,8 +11,6 @@ import sys
 
 # Because kelevsma is pretending to be an external package
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# I believe this would not be necessary if kelevsma were an external package
-os.chdir(os.path.dirname(__file__))
 
 import logging
 import kelevsma
@@ -22,15 +20,10 @@ import config
 import target
 import entry
 
-from config import TimeFrame, DATEW, AMOUNTW, NAMEW
+from config import TimeFrame, DATEW, AMOUNTW, NAMEW, ENTRIES, TARGETS
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
-
-
-# Screen names
-ENTRIES = "entries"
-TARGETS = "targets"
 
 
 def push_targets() -> None:

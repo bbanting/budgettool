@@ -109,6 +109,8 @@ class BodyLines(LineGroup):
     def get_current_range(self) -> tuple[int]:
         """Return the start and end indices of the current page."""
         start = -(self.page * self.space)
+        if self.parent_screen.reverse_body_order:
+            start = 0 + ((self.page-1) * self.space)
         end = start + self.space if start + self.space else None
         return (start, end)
 
