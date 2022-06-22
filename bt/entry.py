@@ -10,7 +10,7 @@ import config
 import db
 import target
 
-from config import DATEW, AMOUNTW
+from config import DATEW, AMOUNTW, TARGETW
 
 
 @dataclass(slots=True)
@@ -65,9 +65,10 @@ class Entry:
 
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")
-        return f"{date:{DATEW}}" \
-        f"{dollar_str(self.amount):{AMOUNTW}}" \
-        f"{Style.DIM}({self.target.name}){Style.NORMAL} {self.note}"
+        return f"{date:{DATEW}}"\
+        f"{dollar_str(self.amount):{AMOUNTW}}"\
+        f"{self.target.name:{TARGETW}}"\
+        f"{self.note}"
 
     def __add__(self, other) -> int:
         if type(other) == type(self):

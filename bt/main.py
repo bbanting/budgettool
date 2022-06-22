@@ -20,7 +20,7 @@ import config
 import target
 import entry
 
-from config import TimeFrame, DATEW, AMOUNTW, NAMEW, ENTRIES, TARGETS
+from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
@@ -42,7 +42,7 @@ def push_entries() -> None:
     entry_summary = get_entry_summary(len(entries), s.tframe, s.category, s.targets)
     target_progress = get_target_progress(s.targets)
 
-    kelevsma.push_h(f"   {'DATE':{DATEW}} {'AMOUNT':{AMOUNTW}} {'NOTE'}")
+    kelevsma.push_h(f"   {'DATE':{DATEW}}{' AMOUNT':{AMOUNTW}}{'TARGET':{TARGETW}}{'NOTE'}")
     kelevsma.push(*entries)
     kelevsma.push_f("", target_progress, entry_summary)
 

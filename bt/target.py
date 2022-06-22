@@ -31,13 +31,15 @@ class Target:
         if not tframe:
             tframe = config.target_filter_state.tframe
         if tframe.month:
+            expected_n_instances = 1
             instances = kdb.select_rows(db.TARGET_INSTANCES,
                 target=self.id, year=tframe.year, month=tframe.month.value)
         else:
+            expected_n_instances = 12
             instances = kdb.select_rows(db.TARGET_INSTANCES, target=self.id, year=tframe.year)
             
         instances_sum = sum([x[2] for x in instances])
-        diff = 12 - len(instances)
+        diff = expected_n_instances - len(instances)
 
         if not diff:
             return instances_sum
@@ -80,10 +82,6 @@ class Target:
         """Return the number of times target is used in the database."""
         query = f"SELECT * FROM entries WHERE target = {self.id}"
         return len(db.run_select_query(query))
-        
-    def update_instance(self, amount:int, tframe:config.TimeFrame) -> None:
-        """Update the amount for a target instance."""
-        db.set_target_instance(self.id, amount, tframe)
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]

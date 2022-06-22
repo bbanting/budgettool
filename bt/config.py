@@ -18,6 +18,7 @@ TARGETS = "targets"
 # Widths for display columns
 DATEW = 8
 AMOUNTW = 12
+TARGETW = 12
 NAMEW = 12  # For target names
 
 
