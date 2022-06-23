@@ -70,7 +70,7 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def main():
     """Main function."""
-    kelevsma.add_screen(ENTRIES, min_body_height=3, numbered=True, refresh_func=push_entries)
+    kelevsma.add_screen(ENTRIES, min_body_height=4, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
 
     kelevsma.register(commands.ListCommand)

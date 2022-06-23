@@ -80,6 +80,6 @@ kdb.run_query(target_table_query)
 kdb.run_query(target_instances_table_query)
 kdb.run_query(entries_table_query)
 
-logging.info(kdb.run_select_query("SELECT * FROM target_instances"))
+# logging.info(kdb.run_select_query("SELECT * FROM target_instances"))
 # logging.info(run_select_query("SELECT * FROM targets"))
 # logging.info(run_select_query("SELECT * FROM entries"))

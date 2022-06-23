@@ -164,11 +164,12 @@ class BodyLines(LineGroup):
 
 class Screen:
     """A buffer of lines to print."""
-    def __init__(self, name:str, min_body_height:int, numbered:bool, 
+    def __init__(self, name:str, min_width:int, min_body_height:int, numbered:bool, 
     truncate:bool, refresh_func:Callable, reversed:bool, clear:bool) -> None:
         # Attributes
         self.name = name
         self.min_body_height = min_body_height
+        self.min_width = min_width
         self.offset = 3 # Page nums, message line, input line
         self.refresh_func = refresh_func
         self.reverse_body_order = reversed
@@ -186,12 +187,23 @@ class Screen:
         """Return the height in lines of the available space for the body."""
         return t_height() - sum((self.offset, len(self.header), len(self.footer)))
 
-    def check_height(self) -> bool:
-        """Check to see that the terminal window is tall enough."""
-        if t_height() > sum((2, len(self.header), len(self.footer), self.min_body_height)):
-            return True
-        return False
-    
+    def check_window_size(self) -> bool:
+        """Check if the terminal is big enough. Print message if not and 
+        return False. Otherwise return True.
+        """
+        high_enough = t_height() >= sum((3, len(self.header), len(self.footer), self.min_body_height))
+        wide_enough = t_width() >= self.min_width
+        dimensions = [("height", high_enough), ("width", wide_enough)]
+
+        for dim, enough in dimensions:
+            if enough:
+                continue
+            clear_terminal()
+            print("\n" * (t_height()-1), end="")
+            print(f"Please increase the window {dim}.", end="")
+            return False
+        return True
+        
     def push(self, item:Any, target:str="body") -> None:
         """Append an item to one of the sub-buffers."""
         if self.printed:
@@ -232,7 +244,6 @@ class Screen:
     def _print_page_numbers(self) -> list:
         """Return the divider bar with page numbers for printing."""
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
-        norm = f"{Back.BLACK}{Fore.WHITE}{Style.NORMAL}"
         div_char = " "
         if self.body.n_pages < 2:
             return [f"{style}{div_char*t_width()}"]
@@ -255,10 +266,10 @@ class Screen:
     def print(self) -> None:
         """Print the contents of the screen to the terminal."""
         # Check the height before printing
-        if not self.check_height():
-            print("Please increase the height of the terminal window.", end="")
+        if not self.check_window_size():
             return
-        # Print
+
+        # Combine into one string and print
         else:
             lines = ["\n"]
             lines.extend(self.header.print())
@@ -342,11 +353,11 @@ def window_checker() -> None:
         time.sleep(0.5)
 
 
-def add_screen(name:str, *, min_body_height:int=1, numbered:bool=False, truncate:bool=False, 
+def add_screen(name:str, *, min_width:int=50, min_body_height:int=1, numbered:bool=False, truncate:bool=False, 
     refresh_func:Callable=None, reversed:bool=False, clear:bool=False) -> None:
     """Public func to add a screen to the controller."""
     if name not in controller._screens:
-        screen = Screen(name, min_body_height, numbered, truncate, refresh_func, reversed, clear)
+        screen = Screen(name, min_width, min_body_height, numbered, truncate, refresh_func, reversed, clear)
         controller.add(screen)
 
 
