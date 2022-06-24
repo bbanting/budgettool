@@ -44,6 +44,8 @@ class VTarget(Validator):
         value = value.lower()
         if value in KEYWORDS:
             return Result.err()
+        if len(value) > 12:
+            return Result.err()
             
         ret_val = [Result.ok(value), Result.err()]
         if value not in target.get_target_names():

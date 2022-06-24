@@ -44,10 +44,11 @@ class Validator(abc.ABC):
     req: The command will fail if set to True.
     default: Specify a different value to return on failure.
     """
-    def __init__(self, plural=False, req=False, invert=False, default=None):
+    def __init__(self, plural=False, req=False, invert=False, max_len=float("inf"), default=None):
         self.plural = plural
         self.required = req
         self.invert = invert
+        self.max_len = max_len
         self.default = default
 
     def __call__(self, args:list, rmargs:bool=True) -> Any | list[Any]:
@@ -154,6 +155,8 @@ class VBool(Validator):
 class VAny(Validator):
     """Accepts any value."""
     def validate(self, value) -> Result:
+        if type(value) is str and len(value) > self.max_len:
+            return Result.err()
         return Result.ok(value)
 
 

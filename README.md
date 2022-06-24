@@ -12,7 +12,7 @@ I can't see this being useful to anyone else but am now writing it as though it 
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Export to csv
-- [ ] Maximum lengths for inputs
+- [x] Maximum lengths for inputs
 
 ## Notes
 

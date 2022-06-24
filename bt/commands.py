@@ -85,6 +85,9 @@ def get_note() -> str:
     if note.lower() in ("q", "quit"):
         raise kelevsma.CommandError("Input aborted by user.")
 
+    if len(note) > 50:
+        raise kelevsma.CommandError("Note must be 50 characters or less.")
+
     if not note:
         return "..."
 
