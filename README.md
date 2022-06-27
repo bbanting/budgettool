@@ -12,7 +12,6 @@ I can't see this being useful to anyone else but am now writing it as though it 
 - [ ] Write tests
 - [ ] Search descriptions
 - [ ] Export to csv
-- [x] Maximum lengths for inputs
 
 ## Notes
 
@@ -23,3 +22,4 @@ I can't see this being useful to anyone else but am now writing it as though it 
 - Project initializer?
 - kelevsma config function?
 - Screen types?
+- Use ID to remove target?

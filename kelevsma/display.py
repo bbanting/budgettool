@@ -68,10 +68,11 @@ class LineGroup(collections.UserList):
         for l in lines[::-1]:
             self.data.append(l)
 
-    def print(self) -> list:
+    def print(self) -> list[str]:
         """Return all lines for printing if any exist."""
-        style = Style.BRIGHT if self.bold else f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
-        return [f"{style}{l}" for l in self]
+        normal_style = f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
+        style = Style.BRIGHT if self.bold else normal_style
+        return [f"{style}{l}{normal_style}" for l in self]
 
 
 class BodyLines(LineGroup):
@@ -132,7 +133,7 @@ class BodyLines(LineGroup):
         self.selected = items[index-1].ref_obj
         return self.selected
 
-    def print(self) -> list:
+    def print(self) -> list[str]:
         """Return all lines for printing if any exist."""
         lines = []
         start, end = self.get_current_range()

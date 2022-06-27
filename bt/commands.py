@@ -10,7 +10,7 @@ import target
 import kelevsma
 import kelevsma.display as display
 
-from config import TODAY, ENTRIES, TARGETS
+from config import TODAY, ENTRIES, TARGETS, GRAPH
 from entry import Entry
 from kelevsma.command import Example
 from kelevsma.validator import VLit, VBool, VAny
@@ -133,7 +133,7 @@ class ListEntriesCommand(kelevsma.Command):
     def execute(self, year, month, category, targets):
         tframe = config.TimeFrame(year, month)
         config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
-        config.target_filter_state.__init__(tframe=tframe)
+        config.target_filter_state.tframe = tframe
         kelevsma.change_page(1)
 
 
@@ -166,6 +166,23 @@ class ListCommand(kelevsma.ForkCommand):
         Example("list all income", "List all positive entries from current year."),
         Example("list targets", "List all targets.")
     )
+
+
+class GraphTargetsCommand(kelevsma.Command):
+    """Graph expenses and earnings grouped by targets."""
+    names = ("graph",)
+    params = {
+        "year": VYear(default=TODAY.year),
+        "month": VMonth(default=TODAY.month),
+        "targets": VTarget(plural=True, default=[]),
+    }
+    screen = GRAPH
+    examples = ()
+
+    def execute(self, year, month, targets) -> None:
+        tframe = config.TimeFrame(year, month)
+        config.entry_filter_state.__init__(tframe=tframe, targets=targets)
+        config.target_filter_state.tframe = tframe
 
 
 class AddEntryTodayCommand(kelevsma.Command):

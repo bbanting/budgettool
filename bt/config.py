@@ -14,6 +14,7 @@ KEYWORDS = ("income", "expense", "all", "target", "targets", "entry", "entries",
 # Screen names
 ENTRIES = "entries"
 TARGETS = "targets"
+GRAPH = "graph"
 
 # Widths for display columns
 DATEW = 8

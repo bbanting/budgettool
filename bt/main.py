@@ -20,13 +20,14 @@ import config
 import target
 import entry
 
-from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS
+from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS, GRAPH
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 
 
 def push_targets() -> None:
+    """Push the current targets to the current screen"""
     year = config.target_filter_state.tframe.year
     month = config.target_filter_state.tframe.month.name
     kelevsma.push_h(f"   {'NAME':{NAMEW}}{'PROGRESS'}")
@@ -35,7 +36,7 @@ def push_targets() -> None:
 
 
 def push_entries() -> None:
-    """Push the current entries to the display."""
+    """Push the current entries to the current screen."""
     global entry # I don't understand why this is necessary
     s = config.entry_filter_state
     entries = entry.select(s.tframe, s.category, s.targets)
@@ -68,12 +69,18 @@ def get_target_progress(target_names:list[str]) -> str:
     return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(target_names)})"
 
 
+def push_target_graph() -> None:
+    """Push the graph for the current targets to the current screen."""
+
+
 def main():
     """Main function."""
     kelevsma.add_screen(ENTRIES, min_body_height=4, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
+    kelevsma.add_screen(GRAPH, min_width=100, refresh_func=None)
 
     kelevsma.register(commands.ListCommand)
+    kelevsma.register(commands.GraphTargetsCommand)
     kelevsma.register(commands.RemoveCommand)
     kelevsma.register(commands.AddCommand)
     kelevsma.register(commands.AddEntryTodayCommand)
