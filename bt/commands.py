@@ -181,7 +181,7 @@ class GraphTargetsCommand(kelevsma.Command):
 
     def execute(self, year, month, targets) -> None:
         tframe = config.TimeFrame(year, month)
-        config.entry_filter_state.__init__(tframe=tframe, targets=targets)
+        config.entry_filter_state.__init__(tframe=tframe, category="", targets=targets)
         config.target_filter_state.tframe = tframe
 
 

@@ -71,6 +71,12 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
+    width = int(kelevsma.display.t_width() * .75)
+    targs = target.select()
+    standard = max(targs, key=lambda x: x.current_total)
+    for t in targs:
+        count = int(t.current_total / standard) * width
+        kelevsma.push(f"{'0' * count} {t.name}")
 
 
 def main():
