@@ -85,7 +85,8 @@ def main():
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
     kelevsma.add_screen(GRAPH, min_width=100, refresh_func=None)
 
-    kelevsma.register(commands.ListCommand)
+    kelevsma.register(commands.ListEntriesCommand)
+    kelevsma.register(commands.ListTargetsCommand)
     kelevsma.register(commands.GraphTargetsCommand)
     kelevsma.register(commands.RemoveCommand)
     kelevsma.register(commands.AddCommand)

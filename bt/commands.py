@@ -120,30 +120,18 @@ def targets_exist() -> bool:
     return bool(len(target.select()))
 
 
-class ListEntriesCommand(kelevsma.Command):
-    """Set the entry filter state (tframe, category, and target)."""
-    params = {
-        "year": VYear(default=TODAY.year),
-        "month": VMonth(default=TODAY.month),
-        "category": VType(default=""),
-        "targets": VTarget(plural=True, default=[]),
-    }
-    screen = ENTRIES
-
-    def execute(self, year, month, category, targets):
-        tframe = config.TimeFrame(year, month)
-        config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
-        config.target_filter_state.tframe = tframe
-        kelevsma.change_page(1)
-
-
 class ListTargetsCommand(kelevsma.Command):
     """Set the target filter state."""
+    names = ("targets", "target")
     params = {
         "year": VYear(default=TODAY.year),
         "month": VMonth(default=TODAY.month),
     }
     screen = TARGETS
+    examples = (
+        Example("targets all", "List all targets for the current year."),
+        Example("targets March 2021", "List targets for March of 2021."),
+    )
 
     def execute(self, year, month) -> None:
         tframe = config.TimeFrame(year, month)
@@ -151,21 +139,26 @@ class ListTargetsCommand(kelevsma.Command):
         kelevsma.change_page(1)
 
 
-class ListCommand(kelevsma.ForkCommand):
-    """List either the entries or targets."""
-    names = ("list", "ls")
-    forks = {
-        "entries": ListEntriesCommand,
-        "entry": ListEntriesCommand,
-        "targets": ListTargetsCommand,
-        "target": ListTargetsCommand,
+class ListEntriesCommand(kelevsma.Command):
+    """List entries. Filter by taret and time."""
+    names = ("list", "ls", "entries", "entry")
+    params = {
+        "year": VYear(default=TODAY.year),
+        "month": VMonth(default=TODAY.month),
+        "category": VType(default=""),
+        "targets": VTarget(plural=True, default=[]),
     }
-    default = ENTRIES
+    screen = ENTRIES
     examples = (
         Example("list march 2022 other", "List the entries for March of 2022 at target 'other.'"),
         Example("list all income", "List all positive entries from current year."),
-        Example("list targets", "List all targets.")
     )
+
+    def execute(self, year, month, category, targets):
+        tframe = config.TimeFrame(year, month)
+        config.entry_filter_state.__init__(tframe=tframe, category=category, targets=targets)
+        config.target_filter_state.tframe = tframe
+        kelevsma.change_page(1)
 
 
 class GraphTargetsCommand(kelevsma.Command):
