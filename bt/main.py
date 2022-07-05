@@ -81,7 +81,7 @@ def push_target_graph() -> None:
 
 def main():
     """Main function."""
-    kelevsma.add_screen(ENTRIES, min_body_height=4, numbered=True, refresh_func=push_entries)
+    kelevsma.add_screen(ENTRIES, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
     kelevsma.add_screen(GRAPH, min_width=100, refresh_func=None)
 

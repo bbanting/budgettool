@@ -12,7 +12,7 @@ import kelevsma.display as display
 
 from config import TODAY, ENTRIES, TARGETS, GRAPH
 from entry import Entry
-from kelevsma.command import Example
+from kelevsma.command import ContextualCommand, Example
 from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
 
@@ -297,15 +297,15 @@ class RemoveEntryCommand(kelevsma.Command):
 class RemoveTargetCommand(kelevsma.Command):
     """Remove a target by its name."""
     params = {
-        "name": VTarget(req=True),
+        "id": VID(req=True),
     }
     screen = TARGETS
 
-    def execute(self, name:str) -> None:
-        self.target = target.select_one(name)
-        uses = target.times_used(self.target)
+    def execute(self, id:str) -> None:
+        self.target = display.select(id)
+        uses = self.target.times_used()
         if uses:
-            display.message(f"Cannot delete {name}; in use by {uses} entr{'y' if uses<2 else 'ies'}.")
+            display.message(f"Cannot delete {self.target.name}; in use by {uses} entr{'y' if uses<2 else 'ies'}.")
             return
 
         target.delete(self.target)
@@ -317,17 +317,15 @@ class RemoveTargetCommand(kelevsma.Command):
         target.delete(self.target)
 
 
-class RemoveCommand(kelevsma.ForkCommand):
+class RemoveCommand(kelevsma.ContextualCommand):
     """Delete an entry or target."""
     names = ("del", "delete", "remove")
     forks = {
-        "entry": RemoveEntryCommand,
-        "target": RemoveTargetCommand,
+        ENTRIES: RemoveEntryCommand,
+        TARGETS: RemoveTargetCommand,
     }
-    default = "entry"
     examples = (
-        Example("delete 3", "Remove the entry on line 3."),
-        Example("del insurance", "Remove the target named 'insurance.'"),
+        Example("delete 3", "Remove the entry or target on line 3 of the current screen."),
     )
     
 

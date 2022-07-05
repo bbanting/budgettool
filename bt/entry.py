@@ -1,15 +1,15 @@
 from __future__ import annotations
+
 import datetime
 import logging
-
 from datetime import date
 from dataclasses import dataclass
-from colorama import Style
+
+from kelevsma import db as kdb
 
 import config
 import db
 import target
-
 from config import DATEW, AMOUNTW, TARGETW
 
 
@@ -109,18 +109,18 @@ def insert(entry:Entry) -> None:
     if not targ.instance_exists(entry.tframe):
         targ.set_instance(entry.tframe, targ.default_amt)
 
-    db.insert_row(db.ENTRIES, *entry.fields_and_values())
+    kdb.insert_row(db.ENTRIES, *entry.fields_and_values())
 
 
 def delete(entry:Entry) -> None:
     """Delete an entry from the database."""
-    db.delete_row_by_id(db.ENTRIES, entry.id)
+    kdb.delete_row_by_id(db.ENTRIES, entry.id)
 
 
 def update(entry:Entry) -> None:
     """Update an entry in the database."""
     fields, values = entry.fields_and_values()
-    db.update_row(db.ENTRIES, entry.id, fields[1:], values[1:])
+    kdb.update_row(db.ENTRIES, entry.id, fields[1:], values[1:])
 
 
 def select(tframe:config.TimeFrame, category:str, targets:list) -> list[Entry]:

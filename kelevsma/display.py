@@ -300,7 +300,6 @@ class ScreenController:
 
     def switch_to(self, screen:Screen) -> None:
         """Switch the active screen."""
-        screen.clear()
         self._active = screen
 
     def get_screen(self, name:str="") -> Screen:
@@ -354,7 +353,7 @@ def window_checker() -> None:
         time.sleep(0.5)
 
 
-def add_screen(name:str, *, min_width:int=50, min_body_height:int=1, numbered:bool=False, truncate:bool=False, 
+def add_screen(name:str, *, min_width:int=50, min_body_height:int=5, numbered:bool=False, truncate:bool=False, 
     refresh_func:Callable=None, reversed:bool=False, clear:bool=False) -> None:
     """Public func to add a screen to the controller."""
     if name not in controller._screens:

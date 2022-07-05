@@ -64,7 +64,7 @@ class Target:
         
         if kdb.delete_row_by_value(db.TARGET_INSTANCES, del_fields, del_values):
             # If first query works, run the next one
-            db.insert_row(db.TARGET_INSTANCES, ins_fields, ins_values)
+            kdb.insert_row(db.TARGET_INSTANCES, ins_fields, ins_values)
 
     def fields_and_values(self) -> tuple[tuple]:
         """Return the fields and values for an SQL insert."""
@@ -81,7 +81,7 @@ class Target:
     def times_used(self) -> int:
         """Return the number of times target is used in the database."""
         query = f"SELECT * FROM entries WHERE target = {self.id}"
-        return len(db.run_select_query(query))
+        return len(kdb.run_select_query(query))
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
@@ -96,18 +96,18 @@ class Target:
 
 def insert(target:Target) -> None:
     """Adds a new target to the database."""
-    db.insert_row(db.TARGETS, *target.fields_and_values())
+    kdb.insert_row(db.TARGETS, *target.fields_and_values())
 
 
 def delete(target:Target) -> None:
     """Removes a target from the database."""
-    db.delete_row_by_id(db.TARGETS, target.id)
+    kdb.delete_row_by_id(db.TARGETS, target.id)
 
 
 def update(target:Target) -> None:
     """Update a target."""
     fields, values = target.fields_and_values()
-    db.update_row(db.TARGETS, target.id, fields[1:], values[1:])
+    kdb.update_row(db.TARGETS, target.id, fields[1:], values[1:])
 
 
 def select() -> list[Target]:
