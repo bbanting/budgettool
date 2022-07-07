@@ -217,47 +217,20 @@ class Screen:
         self.body.clear()
         self.header.clear()
         self.footer.clear()
-    
-    def _get_page_range(self) -> tuple[range, str]:
-        """Return the range of pages to be displayed and the markings
-        on both ends that denote pages preceding or following."""
-        max_pages_displayed = t_width() // 8
-        prefix, suffix = "   ", "   "
-
-        if self.body.n_pages <= max_pages_displayed:
-            return range(1, self.body.n_pages+1), prefix, suffix
-
-        page_sets = self.body.n_pages / max_pages_displayed
-        if page_sets.is_integer():
-            page_sets = int(page_sets)
-        else:
-            page_sets = int(page_sets + 1)
         
-        for x in range(1, page_sets+1):
-            rng = range(max_pages_displayed*(x-1)+1, max_pages_displayed*x+1)
-            if self.body.page not in rng:
-                continue
-            if x < page_sets: suffix = ">>|"
-            if x > 1: prefix = "|<<"
-
-            return rng, prefix, suffix
-        
-    def _print_page_numbers(self) -> list:
+    def _print_page_numbers(self) -> list[str]:
         """Return the divider bar with page numbers for printing."""
         style = f"{Back.WHITE}{Fore.BLACK}{Style.BRIGHT}"
         div_char = " "
-        if self.body.n_pages < 2:
-            return [f"{style}{div_char*t_width()}"]
 
-        page_range, prefix, suffix = self._get_page_range()
-
-        leading = (t_width() // 2) - (len(page_range)) - (len(prefix+suffix))
-        nums = "".join([f" {n} " if n != self.body.page else f"|{n}|" for n in page_range])
-        trailing = t_width()-(leading+len(nums))
+        nums = f"{self.body.page} / {self.body.n_pages}"
+        free_space = t_width() - len(nums)
+        leading = free_space // 2
+        trailing = free_space // 2 + (free_space % 2)
         
-        return [f"{style}{div_char*(leading-2)}{prefix} {nums} {suffix}{div_char*(trailing-6)}"]
+        return [f"{style}{div_char*leading}{nums}{div_char*trailing}"]
 
-    def _print_message_bar(self) -> list:
+    def _print_message_bar(self) -> list[str]:
         """Return the line below the page numbers for printing."""
         style = f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
         msg = f"{style}{self.message}{' ' * (t_width() - len(self.message))}"
