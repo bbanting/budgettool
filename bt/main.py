@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import logging
 import kelevsma
+from colorama import Style
 
 import commands
 import config
@@ -72,18 +73,35 @@ def get_target_progress(target_names:list[str]) -> str:
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
     width = int(kelevsma.display.t_width() * .75)
+    if odd_width := (width % 2):
+        width -= 1
+    # center = kelevsma.display.t_width() // 2
+    max_bar_len = width // 2
+
     targs = target.select()
-    standard = max(targs, key=lambda x: x.current_total)
+    extreme = max([abs(t.current_total()) for t in targs])
     for t in targs:
-        count = int(t.current_total / standard) * width
-        kelevsma.push(f"{'0' * count} {t.name}")
+        total = t.current_total()
+        ratio = abs(total) / extreme if total else 0
+        bar_len = int(max_bar_len * ratio)
+        if total < 0:
+            lhalf = (" " * (max_bar_len-bar_len)) + "#" * bar_len
+            rhalf = " " * max_bar_len
+        elif total > 0:
+            lhalf = " " * max_bar_len
+            rhalf = (" " * (max_bar_len-bar_len)) + "$" * bar_len
+        else:
+            lhalf = " " * max_bar_len
+            rhalf = " " * max_bar_len
+
+        kelevsma.push(f"{t.name}: {lhalf}{rhalf}{' ' * odd_width}")
 
 
 def main():
     """Main function."""
     kelevsma.add_screen(ENTRIES, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
-    kelevsma.add_screen(GRAPH, min_width=100, refresh_func=None)
+    kelevsma.add_screen(GRAPH, min_width=100, refresh_func=push_target_graph)
 
     kelevsma.register(commands.ListEntriesCommand)
     kelevsma.register(commands.ListTargetsCommand)
