@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import logging
 import kelevsma
-from colorama import Style
+from kelevsma.display import t_width
+from colorama import Style, Back, Fore
 
 import commands
 import config
@@ -72,36 +73,50 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
+    norm_style = f"{Back.RESET}{Fore.RESET}"
+    green_style = f"{Back.GREEN}{Fore.WHITE}"
+    red_style = f"{Back.RED}{Fore.WHITE}"
+
     width = int(kelevsma.display.t_width() * .75)
     if odd_width := (width % 2):
         width -= 1
-    # center = kelevsma.display.t_width() // 2
+    padding = (kelevsma.display.t_width() - width) // 2
     max_bar_len = width // 2
 
     targs = target.select()
     extreme = max([abs(t.current_total()) for t in targs])
     for t in targs:
         total = t.current_total()
+        total_str = entry.dollar_str(total)
         ratio = abs(total) / extreme if total else 0
         bar_len = int(max_bar_len * ratio)
+        if t.failing():
+            style = red_style
+        else:
+            style = green_style
+
         if total < 0:
-            lhalf = (" " * (max_bar_len-bar_len)) + "#" * bar_len
-            rhalf = " " * max_bar_len
+            lhalf = f"{' ' * (max_bar_len-bar_len-len(total_str))}{total_str}{style}{' ' * bar_len}{norm_style}"
+            rhalf = t.name + (" " * (max_bar_len - len(t.name)))
         elif total > 0:
-            lhalf = " " * max_bar_len
-            rhalf = (" " * (max_bar_len-bar_len)) + "$" * bar_len
+            lhalf = (" " * (max_bar_len - len(t.name))) + t.name
+            rhalf = f"{' ' * (max_bar_len-bar_len-len(total_str))}{style}{' ' * bar_len}{norm_style}{total_str}"
         else:
             lhalf = " " * max_bar_len
-            rhalf = " " * max_bar_len
+            rhalf = t.name + (" " * (max_bar_len - len(t.name)))
 
-        kelevsma.push(f"{t.name}: {lhalf}{rhalf}{' ' * odd_width}")
+        kelevsma.push(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}")
+        logging.info(len(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}"))
+        logging.info(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}")
+    logging.info(t_width())
+    logging.info(width)
 
 
 def main():
     """Main function."""
     kelevsma.add_screen(ENTRIES, numbered=True, refresh_func=push_entries)
     kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
-    kelevsma.add_screen(GRAPH, min_width=100, refresh_func=push_target_graph)
+    kelevsma.add_screen(GRAPH, min_width=100, truncate=True, refresh_func=push_target_graph)
 
     kelevsma.register(commands.ListEntriesCommand)
     kelevsma.register(commands.ListTargetsCommand)

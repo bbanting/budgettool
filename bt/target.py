@@ -45,6 +45,10 @@ class Target:
             return instances_sum
         return instances_sum + (diff * self.default_amt)
 
+    def failing(self) -> bool:
+        """Return true if target is not meeting goal."""
+        return self.current_total() < self.goal()
+
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
         target and time frame.
