@@ -73,14 +73,14 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
-    norm_style = f"{Back.RESET}{Fore.RESET}"
-    green_style = f"{Back.GREEN}{Fore.WHITE}"
-    red_style = f"{Back.RED}{Fore.WHITE}"
+    norm_style = f"{Back.RESET}"
+    green_style = f"{Back.GREEN}"
+    red_style = f"{Back.RED}"
 
     width = int(kelevsma.display.t_width() * .75)
     if odd_width := (width % 2):
         width -= 1
-    padding = (kelevsma.display.t_width() - width) // 2
+    margin = (kelevsma.display.t_width() - width) // 2
     max_bar_len = width // 2
 
     targs = target.select()
@@ -89,27 +89,36 @@ def push_target_graph() -> None:
         total = t.current_total()
         total_str = entry.dollar_str(total)
         ratio = abs(total) / extreme if total else 0
-        bar_len = int(max_bar_len * ratio)
-        if t.failing():
-            style = red_style
-        else:
-            style = green_style
+        bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
+        style = red_style if t.failing() else green_style
 
         if total < 0:
-            lhalf = f"{' ' * (max_bar_len-bar_len-len(total_str))}{total_str}{style}{' ' * bar_len}{norm_style}"
-            rhalf = t.name + (" " * (max_bar_len - len(t.name)))
+            lpadding = " " * (max_bar_len-bar_len)
+            if len(total_str) <= bar_len:
+                bar = f"{style}{total_str}{' ' * (bar_len-len(total_str))}{norm_style}"
+            elif len(total_str) <= len(lpadding):
+                bar = f"{total_str}{style}{' ' * (bar_len)}{norm_style}"
+                lpadding = " " * (max_bar_len-bar_len-len(total_str))
+            else:
+                bar = f"{style}{' ' * bar_len}{norm_style}"
+            rpadding = " " * (max_bar_len - len(t.name))
+            lhalf = f"{lpadding}{bar}"
+            rhalf = f"{t.name}{rpadding}"
         elif total > 0:
-            lhalf = (" " * (max_bar_len - len(t.name))) + t.name
-            rhalf = f"{' ' * (max_bar_len-bar_len-len(total_str))}{style}{' ' * bar_len}{norm_style}{total_str}"
+            lpadding = " " * (max_bar_len - len(t.name))
+            rpadding = " " * (max_bar_len-bar_len)
+            if len(total_str) <= bar_len:
+                bar = f"{style}{' ' * (bar_len-len(total_str))}{total_str}{norm_style}"
+            elif len(total_str) <= len(rpadding):
+                bar = f"{style}{' ' * (bar_len)}{norm_style}{total_str}"
+                rpadding = " " * (max_bar_len-bar_len-len(total_str))
+            lhalf = f"{lpadding}{t.name}"
+            rhalf = f"{bar}{rpadding}"
         else:
             lhalf = " " * max_bar_len
             rhalf = t.name + (" " * (max_bar_len - len(t.name)))
 
-        kelevsma.push(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}")
-        logging.info(len(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}"))
-        logging.info(f"{' ' * padding}{lhalf}{rhalf}{' ' * odd_width}")
-    logging.info(t_width())
-    logging.info(width)
+        kelevsma.push(f"{' ' * margin}{lhalf}{rhalf}{' ' * odd_width}")
 
 
 def main():
