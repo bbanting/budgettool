@@ -41,7 +41,7 @@ def run(init_cmd:str="") -> None:
             command.controller.route_command(user_input)
         except (display.DisplayError) as e:
             display.error(e)
-        except command.CommandError as e:
+        except (command.CommandError, ValueError) as e:
             display.message(str(e))
         except (command.QuitProgramException, KeyboardInterrupt):
             break

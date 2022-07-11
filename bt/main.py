@@ -39,7 +39,6 @@ def push_targets() -> None:
 
 def push_entries() -> None:
     """Push the current entries to the current screen."""
-    global entry # I don't understand why this is necessary
     s = config.entry_filter_state
     entries = entry.select(s.tframe, s.category, s.targets)
     entry_summary = get_entry_summary(len(entries), s.tframe, s.category, s.targets)
@@ -68,7 +67,11 @@ def get_target_progress(target_names:list[str]) -> str:
         target_names = [target.select_one(t) for t in target_names]
     current = sum([t.current_total() for t in target_names])
     goal = sum([t.goal() for t in target_names])
-    return f"Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)} ({len(target_names)})"
+    if current < goal:
+        style = f"{Style.BRIGHT}{Fore.RED}"
+    else:
+        style = f"{Style.BRIGHT}{Fore.GREEN}"
+    return f"{style}Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)}"
 
 
 def push_target_graph() -> None:
@@ -92,7 +95,9 @@ def push_target_graph() -> None:
         bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
         style = red_style if t.failing() else green_style
 
+
         if total < 0:
+            name = f"{t.name} {Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL}"
             lpadding = " " * (max_bar_len-bar_len)
             if len(total_str) <= bar_len:
                 bar = f"{style}{total_str}{' ' * (bar_len-len(total_str))}{norm_style}"
@@ -101,24 +106,30 @@ def push_target_graph() -> None:
                 lpadding = " " * (max_bar_len-bar_len-len(total_str))
             else:
                 bar = f"{style}{' ' * bar_len}{norm_style}"
-            rpadding = " " * (max_bar_len - len(t.name))
+            rpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
             lhalf = f"{lpadding}{bar}"
-            rhalf = f"{t.name}{rpadding}"
+            rhalf = f"{name}{rpadding}"
         elif total > 0:
-            lpadding = " " * (max_bar_len - len(t.name))
+            name = f"{Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL} {t.name}"
+            lpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
             rpadding = " " * (max_bar_len-bar_len)
             if len(total_str) <= bar_len:
                 bar = f"{style}{' ' * (bar_len-len(total_str))}{total_str}{norm_style}"
             elif len(total_str) <= len(rpadding):
                 bar = f"{style}{' ' * (bar_len)}{norm_style}{total_str}"
                 rpadding = " " * (max_bar_len-bar_len-len(total_str))
-            lhalf = f"{lpadding}{t.name}"
+            lhalf = f"{lpadding}{name}"
             rhalf = f"{bar}{rpadding}"
         else:
             lhalf = " " * max_bar_len
-            rhalf = t.name + (" " * (max_bar_len - len(t.name)))
+            rhalf = name + (" " * (max_bar_len - len(name)))
 
         kelevsma.push(f"{' ' * margin}{lhalf}{rhalf}{' ' * odd_width}")
+
+    year = config.target_filter_state.tframe.year
+    month = config.target_filter_state.tframe.month.name
+    kelevsma.push_f("NOTE: Green bars are meeting their goal, red ones are not.")
+    kelevsma.push_f(f"Showing targets for {month} of {year}.")
 
 
 def main():

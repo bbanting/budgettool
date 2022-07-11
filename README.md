@@ -6,16 +6,14 @@ I can't see this being useful to anyone else but am now writing it as though it 
 
 ## To Do
 
-- [ ] Incorporate graphing
-    - bar graph categories for year and month
-    - monthly income and expenses over year
+- [x] Incorporate graphing
 - [ ] Write tests
 - [ ] Export to csv
+- [ ] Fix highlighting
+- [ ] Fix undo
+- [ ] Fix graph not refreshing right (width problem?)
+- [ ] Make new converter script
 
 ## Notes
 
 - Make command params dependant on others
-- Progress bars for targets?
-- Project initializer?
-- kelevsma config function?
-- Screen types?
