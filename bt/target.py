@@ -1,11 +1,14 @@
 import logging
 
+from colorama import Fore
+
 import config
 import entry
 import kelevsma.db as kdb
 import db
 
 from config import NAMEW
+
 
 class Target:
     """Class for manipulating and printing rows from the targets table."""
@@ -89,12 +92,14 @@ class Target:
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
-        current = entry.cents_to_dollars(self.current_total())
-        goal = entry.cents_to_dollars(self.goal())
-        string =  f"{name:{NAMEW}}{current:.2f} / {goal:.2f}"
-        default = entry.cents_to_dollars(self.default_amt)
+        current = entry.dollar_str(self.current_total())
+        goal = entry.dollar_str(self.goal())
+        string =  f"{name:{NAMEW}}{current} / {goal}"
+        default = entry.dollar_str(self.default_amt)
         if goal != default and config.target_filter_state.tframe.month.value:
             string += f" (default: {default})"
+        if self.failing():
+            return f"{Fore.RED}{string}{Fore.RESET}"
         return string
 
 

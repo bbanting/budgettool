@@ -6,14 +6,15 @@ I can't see this being useful to anyone else but am now writing it as though it 
 
 ## To Do
 
-- [x] Incorporate graphing
 - [ ] Write tests
 - [ ] Export to csv
-- [ ] Fix highlighting
+- [x] Fix highlighting
 - [ ] Fix undo
 - [ ] Fix graph not refreshing right (width problem?)
 - [ ] Make new converter script
+- [ ] Refactor push_target_graph
 
 ## Notes
 
 - Make command params dependant on others
+- Move some constants and functions to config.py?

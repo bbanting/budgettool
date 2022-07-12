@@ -137,7 +137,7 @@ class BodyLines(LineGroup):
         """Return all lines for printing if any exist."""
         lines = []
         start, end = self.get_current_range()
-        raw_lines = list(reversed(self.data[start:end]))
+        raw_lines: list[Line] = list(reversed(self.data[start:end]))
 
         # Append lines
         # Prepend numbers and highlight if selected
@@ -147,8 +147,7 @@ class BodyLines(LineGroup):
             if self.number:
                 to_print = f"{Style.DIM}{count:02} {Style.NORMAL}{to_print}"
             if line.ref_obj is self.selected:
-                to_print = f"{Fore.CYAN}{to_print}"
-            
+                to_print = f"{Fore.CYAN}{to_print}{Fore.RESET}"
             lines.append(to_print)
             count += 1
         
@@ -187,6 +186,10 @@ class Screen:
     def body_space(self) -> int:
         """Return the height in lines of the available space for the body."""
         return t_height() - sum((self.offset, len(self.header), len(self.footer)))
+
+    @property
+    def selected(self) -> Any:
+        return self.body.selected
 
     def check_window_size(self) -> bool:
         """Check if the terminal is big enough. Print message if not and 
@@ -288,7 +291,7 @@ class ScreenController:
 
     def refresh(self) -> None:
         """Clear the terminal and print the current state of the screen."""
-        if self._active.refresh_func:
+        if self._active.refresh_func and self._active.selected is None:
             self._active.refresh_func()
         clear_terminal()
         self._active.print()    
@@ -356,7 +359,7 @@ def select(index) -> Any:
 
 def deselect() -> None:
     """Remove the selection."""
-    controller.get_screen().selected = None
+    controller.get_screen().body.selected = None
     
 
 def message(text:str) -> None:

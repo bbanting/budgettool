@@ -304,11 +304,19 @@ class RemoveTargetCommand(kelevsma.Command):
     def execute(self, id:str) -> None:
         self.target = display.select(id)
         uses = self.target.times_used()
+        # Check if it is in use.
         if uses:
             display.message(f"Cannot delete {self.target.name}; in use by {uses} entr{'y' if uses<2 else 'ies'}.")
+            display.deselect()
             return
-
-        target.delete(self.target)
+        # 'Are you sure' message
+        ans = None
+        while ans not in ("yes", "no", "y", "n"):
+            display.refresh()
+            ans = input("(Y/n) Are you sure you want to delete this target? ").lower()
+        if ans in ("yes", "y"):
+            target.delete(self.target)
+        display.deselect()
 
     def undo(self):
         target.insert(self.target)
