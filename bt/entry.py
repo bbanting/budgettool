@@ -102,14 +102,15 @@ def dollars_to_cents(dollar_amount:str) -> int:
     return int(float(dollar_amount) * 100)
 
 
-def insert(entry:Entry) -> None:
+def insert(entry:Entry) -> Entry:
     """Insert an entry into the database."""
     # Make a target instance for this month if it doesn't exist
     targ = entry.target
     if not targ.instance_exists(entry.tframe):
         targ.set_instance(entry.tframe, targ.default_amt)
 
-    kdb.insert_row(db.ENTRIES, *entry.fields_and_values())
+    entry.id = kdb.insert_row(db.ENTRIES, *entry.fields_and_values()).lastrowid
+    return entry
 
 
 def delete(entry:Entry) -> None:

@@ -8,8 +8,8 @@ I can't see this being useful to anyone else but am now writing it as though it 
 
 - [ ] Write tests
 - [ ] Export to csv
-- [ ] Fix undo
-- [ ] Show message about what's being undone/redone
+- [x] Fix undo
+- [x] Show message about what's being undone/redone
 - [ ] Fix graph not refreshing right (width problem?)
 - [ ] Make new converter script
 - [ ] Refactor push_target_graph

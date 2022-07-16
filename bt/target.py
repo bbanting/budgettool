@@ -103,9 +103,10 @@ class Target:
         return string
 
 
-def insert(target:Target) -> None:
+def insert(target:Target) -> Target:
     """Adds a new target to the database."""
-    kdb.insert_row(db.TARGETS, *target.fields_and_values())
+    target.id = kdb.insert_row(db.TARGETS, *target.fields_and_values()).lastrowid
+    return target
 
 
 def delete(target:Target) -> None:

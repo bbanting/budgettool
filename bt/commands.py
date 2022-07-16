@@ -194,8 +194,7 @@ class AddEntryTodayCommand(kelevsma.Command):
 
         date = datetime.date.today()
         note = " ".join(note)
-        self.entry = Entry(0, date, amount, target, note)
-        entry.insert(self.entry)
+        self.entry = entry.insert(Entry(0, date, amount, target, note))
 
         date = date.strftime("%b %d")
         amount = entry.dollar_str(self.entry.amount)
@@ -221,8 +220,7 @@ class AddEntryCommand(kelevsma.Command):
             date, amount, target, note = get_input(*list(input_functions.values()))
         except kelevsma.CommandError:
             return # Exit the command
-        self.entry = Entry(0, date, amount, target, note)
-        entry.insert(self.entry)
+        self.entry = entry.insert(Entry(0, date, amount, target, note))
 
         date = date.strftime("%b %d")
         amount = entry.dollar_str(self.entry.amount)
@@ -244,11 +242,10 @@ class AddTargetCommand(kelevsma.Command):
     screen = TARGETS
 
     def execute(self, name, amount) -> None:
-        self.target = target.Target(0, name, amount)
-        target.insert(self.target)
+        self.target = target.insert(target.Target(0, name, amount))
 
     def undo(self) -> None:
-        target.delete(self.target.name)
+        target.delete(self.target)
 
     def redo(self) -> None:
         target.insert(self.target)

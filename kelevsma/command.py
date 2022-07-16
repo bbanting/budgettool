@@ -76,6 +76,7 @@ class CommandController:
 
     def route_command(self, args:list[str]) -> None:
         """Process user input, execute command."""
+        user_input = " ".join(args)
         # Ensure input isn't empty
         if not args or not args[0]:
             raise CommandError("Try 'help' if you're having trouble.")
@@ -98,6 +99,7 @@ class CommandController:
         else:
             self.execute(command)
             if "undo" in command.__class__.__dict__:
+                command.user_input = user_input
                 self.undo_stack.append(command)
                 self.redo_stack.clear()
     
@@ -116,6 +118,7 @@ class CommandController:
         command = self.undo_stack.pop()
         self.redo_stack.append(command)
         command.undo()
+        display.message(f"Undid \"{command.user_input}\".")
 
     def redo(self) -> None:
         if not self.redo_stack:
@@ -124,6 +127,7 @@ class CommandController:
         command = self.redo_stack.pop()
         self.undo_stack.append(command)
         command.redo()
+        display.message(f"Redid \"{command.user_input}\".")
 
 
 class Command(metaclass=abc.ABCMeta):
@@ -132,6 +136,7 @@ class Command(metaclass=abc.ABCMeta):
     params: dict[str, Validator] = {}
     data: dict[str, Any]
     controller: CommandController
+    user_input: str
     description: str
     examples: tuple[Example]
     screen: str
