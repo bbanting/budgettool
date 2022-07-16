@@ -181,9 +181,9 @@ class GraphTargetsCommand(kelevsma.Command):
 class AddEntryTodayCommand(kelevsma.Command):
     """Add an entry for today with one line."""
     params = {
-        "amount": VAmount(),
-        "target": VTarget(),
-        "note": VAny(plural=True),
+        "amount": VAmount(req=True),
+        "target": VTarget(req=True),
+        "note": VAny(plural=True, req=True),
     }
     screen = ENTRIES
 

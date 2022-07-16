@@ -51,7 +51,7 @@ class TimeFrame:
 
     def iso_format(self, *, month:bool=True) -> str:
         """Return date in iso format for querying db."""
-        if month:
+        if self.month.value:
             return f"{self.year}-{self.month.value:02}-%"
         return f"{self.year}-%"
 

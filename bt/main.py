@@ -121,6 +121,7 @@ def push_target_graph() -> None:
             lhalf = f"{lpadding}{name}"
             rhalf = f"{bar}{rpadding}"
         else:
+            name = f"{t.name} {Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL}"
             lhalf = " " * max_bar_len
             rhalf = name + (" " * (max_bar_len - len(name)))
 
