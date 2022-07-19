@@ -91,10 +91,9 @@ def push_target_graph() -> None:
     for t in targs:
         total = t.current_total()
         total_str = entry.dollar_str(total)
-        ratio = abs(total) / extreme if total else 0
+        ratio = (abs(total) / extreme) if total else 0
         bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
         style = red_style if t.failing() else green_style
-
 
         if total < 0:
             name = f"{t.name} {Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL}"

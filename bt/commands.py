@@ -17,13 +17,17 @@ from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
 
 
+class AbortInput(Exception):
+    """An exception for the user to abort input."""
+
+
 def get_date() -> datetime.date | None:
     """Retrieve the date input from the user."""
     display.refresh()
     date = input("Date: ")
 
     if date.lower() in ("q", "quit"):
-        raise kelevsma.CommandError("Input aborted by user.")
+        raise AbortInput("Input aborted by user.")
 
     date = date.split()
 
@@ -44,7 +48,7 @@ def get_amount() -> int | None:
     amount = input("Amount: ").strip()
 
     if amount.lower() in ("q", "quit"):
-        raise kelevsma.CommandError("Input aborted by user.")
+        raise AbortInput("Input aborted by user.")
 
     if not amount.startswith(("-", "+")):
         display.message("The amount must start with + or -")
@@ -65,7 +69,7 @@ def get_target() -> dict | None:
     t_input = input("Target: ").lower().strip()
 
     if t_input in ("q", "quit"):
-        raise kelevsma.CommandError("Input aborted by user.")
+        raise AbortInput("Input aborted by user.")
     if t_input == "help":
         display.message(f"({', '.join(target_names)})")
         return
@@ -83,7 +87,7 @@ def get_note() -> str:
     note = input("Note: ")
 
     if note.lower() in ("q", "quit"):
-        raise kelevsma.CommandError("Input aborted by user.")
+        raise AbortInput("Input aborted by user.")
 
     if len(note) > 50:
         raise kelevsma.CommandError("Note must be 50 characters or less.")
@@ -347,15 +351,17 @@ class EditEntryCommand(kelevsma.Command):
     )
 
     def execute(self, id:int, field:str) -> None:
-        self.old_entry = display.select(id)
+        try:
+            self.old_entry = display.select(id)
 
-        self.new_entry = copy.copy(self.old_entry)
-        field = field.lower()
-        new_value = input_functions[field]()
-        setattr(self.new_entry, field, new_value)
+            self.new_entry = copy.copy(self.old_entry)
+            new_value = input_functions[field.lower()]()
+            setattr(self.new_entry, field, new_value)
 
-        entry.update(self.new_entry)
-        display.deselect()
+            entry.update(self.new_entry)
+        except AbortInput as e:
+            display.deselect()
+            kelevsma.message(str(e))
     
     def undo(self) -> None:
         entry.update(self.old_entry)
