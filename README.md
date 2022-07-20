@@ -15,4 +15,3 @@ I can't see this being useful to anyone else but am now writing it as though it 
 ## Notes
 
 - Make command params dependant on others
-- Move some constants and functions to config.py?

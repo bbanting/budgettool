@@ -11,6 +11,7 @@ import config
 import db
 import target
 from config import DATEW, AMOUNTW, TARGETW
+from util import dollar_str
 
 
 @dataclass(slots=True)
@@ -79,27 +80,6 @@ class Entry:
 
     def __radd__(self, other) -> int:
         return self.__add__(other)
-
-
-def dollar_str(amount:int) -> str:
-    """Formats a cent amount for display in dollars."""
-    amount = cents_to_dollars(amount)
-    if amount >= 0:
-        return f"+${amount:.2f}"
-    else:
-        return f"-${abs(amount):.2f}"      
-
-
-def cents_to_dollars(cent_amount:int) -> float:
-    """Convert a cent amount to dollars."""
-    if not cent_amount:
-        return float(0)
-    return cent_amount / 100
-
-
-def dollars_to_cents(dollar_amount:str) -> int:
-    """Convert a string dollar ammount to cents for storage."""
-    return int(float(dollar_amount) * 100)
 
 
 def insert(entry:Entry) -> Entry:

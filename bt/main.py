@@ -21,6 +21,7 @@ import commands
 import config
 import target
 import entry
+import util
 
 from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS, GRAPH
 
@@ -71,32 +72,33 @@ def get_target_progress(target_names:list[str]) -> str:
         style = f"{Style.BRIGHT}{Fore.RED}"
     else:
         style = f"{Style.BRIGHT}{Fore.GREEN}"
-    return f"{style}Progress: {entry.dollar_str(current)} / {entry.dollar_str(goal)}"
+    return f"{style}Progress: {util.dollar_str(current)} / {util.dollar_str(goal)}"
 
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
+    # Width of 145 causes glitch
     norm_style = f"{Back.RESET}"
     green_style = f"{Back.GREEN}"
     red_style = f"{Back.RED}"
 
-    width = int(kelevsma.display.t_width() * .75)
+    width = int(t_width() * .75)
     if odd_width := (width % 2):
         width -= 1
-    margin = (kelevsma.display.t_width() - width) // 2
+    margin = (t_width() - width) // 2
     max_bar_len = width // 2
 
     targs = target.select()
     extreme = max([abs(t.current_total()) for t in targs])
     for t in targs:
         total = t.current_total()
-        total_str = entry.dollar_str(total)
+        total_str = util.dollar_str(total)
         ratio = (abs(total) / extreme) if total else 0
         bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
         style = red_style if t.failing() else green_style
 
         if total < 0:
-            name = f"{t.name} {Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL}"
+            name = f"{t.name} {Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL}"
             lpadding = " " * (max_bar_len-bar_len)
             if len(total_str) <= bar_len:
                 bar = f"{style}{total_str}{' ' * (bar_len-len(total_str))}{norm_style}"
@@ -109,7 +111,7 @@ def push_target_graph() -> None:
             lhalf = f"{lpadding}{bar}"
             rhalf = f"{name}{rpadding}"
         elif total > 0:
-            name = f"{Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL} {t.name}"
+            name = f"{Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL} {t.name}"
             lpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
             rpadding = " " * (max_bar_len-bar_len)
             if len(total_str) <= bar_len:
@@ -120,7 +122,7 @@ def push_target_graph() -> None:
             lhalf = f"{lpadding}{name}"
             rhalf = f"{bar}{rpadding}"
         else:
-            name = f"{t.name} {Style.DIM}({entry.dollar_str(t.goal())}){Style.NORMAL}"
+            name = f"{t.name} {Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL}"
             lhalf = " " * max_bar_len
             rhalf = name + (" " * (max_bar_len - len(name)))
 
