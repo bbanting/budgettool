@@ -77,10 +77,10 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
-    # Width of 145 causes glitch
     norm_style = f"{Back.RESET}"
     green_style = f"{Back.GREEN}"
     red_style = f"{Back.RED}"
+    targs = target.select()
 
     width = int(t_width() * .75)
     if odd_width := (width % 2):
