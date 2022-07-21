@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import logging
 import kelevsma
-from kelevsma.display import t_width
-from colorama import Style, Back, Fore
+from kelevsma.display import Screen
+from colorama import Style, Fore
 
 import commands
 import config
@@ -24,6 +24,7 @@ import entry
 import util
 
 from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS, GRAPH
+from screens import GraphScreen
 
 
 logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
@@ -66,8 +67,8 @@ def get_target_progress(target_names:list[str]) -> str:
         target_names = target.select()
     else:
         target_names = [target.select_one(t) for t in target_names]
-    current = sum([t.current_total() for t in target_names])
-    goal = sum([t.goal() for t in target_names])
+    current = sum([t.current_total for t in target_names])
+    goal = sum([t.goal for t in target_names])
     if current < goal:
         style = f"{Style.BRIGHT}{Fore.RED}"
     else:
@@ -77,68 +78,20 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
-    norm_style = f"{Back.RESET}"
-    green_style = f"{Back.GREEN}"
-    red_style = f"{Back.RED}"
-    targs = target.select()
-
-    width = int(t_width() * .75)
-    if odd_width := (width % 2):
-        width -= 1
-    margin = (t_width() - width) // 2
-    max_bar_len = width // 2
-
-    targs = target.select()
-    extreme = max([abs(t.current_total()) for t in targs])
-    for t in targs:
-        total = t.current_total()
-        total_str = util.dollar_str(total)
-        ratio = (abs(total) / extreme) if total else 0
-        bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
-        style = red_style if t.failing() else green_style
-
-        if total < 0:
-            name = f"{t.name} {Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL}"
-            lpadding = " " * (max_bar_len-bar_len)
-            if len(total_str) <= bar_len:
-                bar = f"{style}{total_str}{' ' * (bar_len-len(total_str))}{norm_style}"
-            elif len(total_str) <= len(lpadding):
-                bar = f"{total_str}{style}{' ' * (bar_len)}{norm_style}"
-                lpadding = " " * (max_bar_len-bar_len-len(total_str))
-            else:
-                bar = f"{style}{' ' * bar_len}{norm_style}"
-            rpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
-            lhalf = f"{lpadding}{bar}"
-            rhalf = f"{name}{rpadding}"
-        elif total > 0:
-            name = f"{Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL} {t.name}"
-            lpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
-            rpadding = " " * (max_bar_len-bar_len)
-            if len(total_str) <= bar_len:
-                bar = f"{style}{' ' * (bar_len-len(total_str))}{total_str}{norm_style}"
-            elif len(total_str) <= len(rpadding):
-                bar = f"{style}{' ' * (bar_len)}{norm_style}{total_str}"
-                rpadding = " " * (max_bar_len-bar_len-len(total_str))
-            lhalf = f"{lpadding}{name}"
-            rhalf = f"{bar}{rpadding}"
-        else:
-            name = f"{t.name} {Style.DIM}({util.dollar_str(t.goal())}){Style.NORMAL}"
-            lhalf = " " * max_bar_len
-            rhalf = name + (" " * (max_bar_len - len(name)))
-
-        kelevsma.push(f"{' ' * margin}{lhalf}{rhalf}{' ' * odd_width}")
-
+    targets = target.select()
     year = config.target_filter_state.tframe.year
     month = config.target_filter_state.tframe.month.name
+
+    kelevsma.push(*targets)
     kelevsma.push_f("NOTE: Green bars are meeting their goal, red ones are not.")
     kelevsma.push_f(f"Showing targets for {month} of {year}.")
 
 
 def main():
     """Main function."""
-    kelevsma.add_screen(ENTRIES, numbered=True, refresh_func=push_entries)
-    kelevsma.add_screen(TARGETS, numbered=True, refresh_func=push_targets)
-    kelevsma.add_screen(GRAPH, min_width=100, truncate=True, refresh_func=push_target_graph)
+    kelevsma.add_screen(Screen(ENTRIES, numbered=True, refresh_func=push_entries))
+    kelevsma.add_screen(Screen(TARGETS, numbered=True, refresh_func=push_targets))
+    kelevsma.add_screen(GraphScreen(GRAPH, min_width=100, truncate=True, refresh_func=push_target_graph))
 
     kelevsma.register(commands.ListEntriesCommand)
     kelevsma.register(commands.ListTargetsCommand)

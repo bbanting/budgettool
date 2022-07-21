@@ -8,9 +8,10 @@ I can't see this being useful to anyone else but am now writing it as though it 
 
 - [ ] Write tests
 - [ ] Export to csv
-- [ ] Fix graph not refreshing right (width problem?)
+- [x] Fix graph not refreshing right (width problem?)
 - [ ] Make new converter script
-- [ ] Refactor push_target_graph
+- [x] Refactor push_target_graph
+- [ ] Fix extra white space on entry list
 
 ## Notes
 

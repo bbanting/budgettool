@@ -49,8 +49,8 @@ def run(init_cmd:str="") -> None:
             display.refresh()
 
 
-display.add_screen("shortcuts", refresh_func=push_shortcuts)
-display.add_screen("help", reversed=True)
+display.add_screen(display.Screen("shortcuts", refresh_func=push_shortcuts))
+display.add_screen(display.Screen("help", reversed=True))
 
 command.register(command.NewShortcutCommand)
 command.register(command.DeleteShortcutCommand)

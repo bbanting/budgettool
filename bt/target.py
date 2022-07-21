@@ -12,24 +12,28 @@ from config import NAMEW
 
 class Target:
     """Class for manipulating and printing rows from the targets table."""
-    __slots__ = ("id", "name", "default_amt")
+    __slots__ = ("id", "name", "default_amt", "current_total", "goal")
     id: int
     name: str
     default_amt: int
+    current_total: int
+    goal: int
 
     def __init__(self, id:int, name:str, default_amt:int) -> None:
         self.id = id
         self.name = name
         self.default_amt = default_amt
+        self.current_total = self.get_current_total()
+        self.goal = self.get_goal()
 
-    def current_total(self) -> int:
+    def get_current_total(self) -> int:
         """Return the amount sum for entries with this 
         target in the current timeframe.
         """
         tframe = config.target_filter_state.tframe
         return db.sum_target(self.id, tframe)
 
-    def goal(self, tframe=None) -> int:
+    def get_goal(self, tframe=None) -> int:
         """Return the goal with respect to current timeframe."""
         if not tframe:
             tframe = config.target_filter_state.tframe
@@ -50,7 +54,7 @@ class Target:
 
     def failing(self) -> bool:
         """Return true if target is not meeting goal."""
-        return self.current_total() < self.goal()
+        return self.current_total < self.goal
 
     def instance_exists(self, tframe:config.TimeFrame) -> bool:
         """Return true if an instance exists in the db with this 
@@ -92,8 +96,8 @@ class Target:
 
     def __str__(self) -> str:
         name = self.name[:NAMEW]
-        current = entry.dollar_str(self.current_total())
-        goal = entry.dollar_str(self.goal())
+        current = entry.dollar_str(self.current_total)
+        goal = entry.dollar_str(self.goal)
         string =  f"{name:{NAMEW}}{current} / {goal}"
         default = entry.dollar_str(self.default_amt)
         if goal != default and config.target_filter_state.tframe.month.value:

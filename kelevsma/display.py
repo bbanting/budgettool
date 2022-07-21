@@ -50,7 +50,7 @@ class LineGroup(collections.UserList):
         # For truncated line output
         if self.trunc:
             lines.extend([Line(obj, str(obj)[:width]) for obj in self])
-            return
+            return lines
 
         # For full output
         for obj in self:
@@ -73,17 +73,16 @@ class LineGroup(collections.UserList):
     def print(self) -> list[str]:
         """Return all lines for printing if any exist."""
         lines = self.prepare_lines()
-        normal_style = f"{Back.RESET}{Fore.WHITE}{Style.NORMAL}"
+        normal_style = f"{Back.RESET}{Fore.RESET}{Style.NORMAL}"
         style = Style.BRIGHT if self.bold else normal_style
         return [f"{style}{l}{normal_style}" for l in lines]
 
 
 class BodyLines(LineGroup):
     """A special LineGroup for the screen body."""
-    def __init__(self, parent:Screen, number:bool=True, *args, **kwargs) -> None:
+    def __init__(self, parent:Screen, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.parent_screen = parent
-        self.number = number
         self._page = 1
         self.selected = None
 
@@ -140,7 +139,7 @@ class BodyLines(LineGroup):
         """Return all lines for printing if any exist."""
         lines = []
         start, end = self.get_current_range()
-        raw_lines: list[Line] = list(reversed(self.data[start:end]))
+        raw_lines: list[Line] = list(reversed(self.prepare_lines()[start:end]))
 
         # Append lines
         # Prepend numbers and highlight if selected
@@ -165,65 +164,11 @@ class BodyLines(LineGroup):
         return [str(l) for l in lines]
 
 
-class BodyGraph(BodyLines):
-    """A group of lines for printing in graph format. 
-    Lines must contan tuples with a string, integer, repr, and colour code.
-    """
-    def prepare_lines(self) -> list[Line]:
-        """Prepare the lines for the graph."""
-        # FIX: Width of 145 causes glitch
-        lines = []
-        width = int(t_width() * .75)
-        if odd_width := (width % 2):
-            width -= 1
-        margin = (t_width() - width) // 2
-        max_bar_len = width // 2
-        extreme = max([abs(t[1]) for t in self])
-
-        for tup in self:
-            name, total, repr, colour = tup
-            ratio = (abs(total) / extreme) if total else 0
-            bar_len = int(max_bar_len * ratio) if int(max_bar_len * ratio) else 1
-
-            if total < 0:
-                lpadding = " " * (max_bar_len-bar_len)
-                if len(repr) <= bar_len:
-                    bar = f"{colour}{repr}{' ' * (bar_len-len(repr))}{Back.RESET}"
-                elif len(repr) <= len(lpadding):
-                    bar = f"{repr}{colour}{' ' * (bar_len)}{Back.RESET}"
-                    lpadding = " " * (max_bar_len-bar_len-len(repr))
-                else:
-                    bar = f"{colour}{' ' * bar_len}{Back.RESET}"
-                rpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
-                lhalf = f"{lpadding}{bar}"
-                rhalf = f"{name}{rpadding}"
-            elif total > 0:
-                lpadding = " " * (max_bar_len - len(name) + len(Style.DIM + Style.NORMAL))
-                rpadding = " " * (max_bar_len-bar_len)
-                if len(repr) <= bar_len:
-                    bar = f"{colour}{' ' * (bar_len-len(repr))}{repr}{Back.RESET}"
-                elif len(repr) <= len(rpadding):
-                    bar = f"{colour}{' ' * (bar_len)}{Back.RESET}{repr}"
-                    rpadding = " " * (max_bar_len-bar_len-len(repr))
-                lhalf = f"{lpadding}{name}"
-                rhalf = f"{bar}{rpadding}"
-            else:
-                lhalf = " " * max_bar_len
-                rhalf = name + (" " * (max_bar_len - len(name)))
-            lines.append(Line("", f"{' ' * margin}{lhalf}{rhalf}{' ' * odd_width}"))
-
-        return lines
-
-
-    def print(self) -> list[str]:
-        """Return all lines for printing if any exist."""
-        return [l.text for l in self.prepare_lines()]
-
-
 class Screen:
     """A buffer of lines to print."""
-    def __init__(self, name:str, min_width:int, min_body_height:int, numbered:bool, 
-    truncate:bool, refresh_func:Callable, reversed:bool, clear:bool) -> None:
+    def __init__(self, name:str, *, min_width:int=50, min_body_height:int=5, 
+    numbered:bool=False, truncate:bool=False, refresh_func:Callable=None, 
+    reversed:bool=False, clear:bool=False) -> None:
         # Attributes
         self.name = name
         self.min_body_height = min_body_height
@@ -318,10 +263,6 @@ class Screen:
             self.printed = True
 
 
-class GraphScreen(Screen):
-    """A screen with a graph for the body."""
-
-
 class ScreenController:
     """A class to switch to and from multiple buffers."""
     _active: Screen
@@ -391,11 +332,9 @@ def window_checker() -> None:
         time.sleep(0.5)
 
 
-def add_screen(name:str, *, min_width:int=50, min_body_height:int=5, numbered:bool=False, truncate:bool=False, 
-    refresh_func:Callable=None, reversed:bool=False, clear:bool=False) -> None:
+def add_screen(screen:Screen) -> None:
     """Public func to add a screen to the controller."""
-    if name not in controller._screens:
-        screen = Screen(name, min_width, min_body_height, numbered, truncate, refresh_func, reversed, clear)
+    if screen.name not in controller._screens:
         controller.add(screen)
 
 
