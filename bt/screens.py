@@ -9,7 +9,6 @@ class TargetGraphBody(BodyLines):
     """Replaces Screen body to print targets in graph format."""
     def prepare_lines(self) -> list[Line]:
         """Prepare the lines for the graph."""
-        # FIX: Width of 145 causes glitch
         width = int(t_width() * .75)
         if odd_width := (width % 2):
             width -= 1

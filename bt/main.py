@@ -48,7 +48,7 @@ def push_entries() -> None:
 
     kelevsma.push_h(f"   {'DATE':{DATEW}}{' AMOUNT':{AMOUNTW}}{'TARGET':{TARGETW}}{'NOTE'}")
     kelevsma.push(*entries)
-    kelevsma.push_f("", target_progress, entry_summary)
+    kelevsma.push_f(" ", target_progress, entry_summary)
 
 
 def get_entry_summary(n:int, date:TimeFrame, category:str, targets:list) -> str:
