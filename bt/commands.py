@@ -3,18 +3,22 @@ from __future__ import annotations
 import copy
 import logging
 import datetime
+import csv
+import os
+
+import kelevsma
+import kelevsma.display as display
+from kelevsma.command import Example
+from kelevsma.validator import VLit, VBool, VAny
 
 import config
 import entry
 import target
-import kelevsma
-import kelevsma.display as display
-
+import util
 from config import TODAY, ENTRIES, TARGETS, GRAPH
 from entry import Entry
-from kelevsma.command import ContextualCommand, Example
-from kelevsma.validator import VLit, VBool, VAny
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
+
 
 
 class AbortInput(Exception):
@@ -465,3 +469,29 @@ class ChangePageCommand(kelevsma.Command):
     def execute(self, number:str) -> None:
         number = int(number)
         display.change_page(number)
+
+
+class ExportCommand(kelevsma.Command):
+    """Export entry data to a csv file."""
+    names = ("export",)
+    params = {
+        "year": VYear(req=True, )
+    }
+    examples = (
+        Example("export 2022", "Export all entries from 2022 into a csv file."),
+    )
+
+    def execute(self, year:int) -> None:
+        tframe = util.TimeFrame(year, 0)
+        entries = entry.select(tframe, "", [])
+        if not entries:
+            kelevsma.message(f"There are no entries for {year}.")
+            return
+
+        with open(f"{year}_records.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(("date", "amount", "target", "note"))
+            for e in entries:
+                writer.writerow(e.to_csv())
+            path = os.path.join(os.getcwd(), f.name)
+            kelevsma.message(f"{len(entries)} entries written to {path}.")

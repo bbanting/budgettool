@@ -11,7 +11,7 @@ import config
 import db
 import target
 from config import DATEW, AMOUNTW, TARGETW
-from util import dollar_str
+from util import dollar_str, cents_to_dollars
 
 
 @dataclass(slots=True)
@@ -63,6 +63,15 @@ class Entry:
             d.pop("id")
 
         return (tuple(d.keys()), tuple(d.values()))
+
+    def to_csv(self) -> tuple:
+        """Serialize entry for writing to csv."""
+        date = self.date.isoformat()
+        amount = cents_to_dollars(self.amount)
+        targ = self.target.name
+        note = self.note
+
+        return (date, amount, targ, note)
 
     def __str__(self) -> str:
         date = self.date.strftime("%b %d")

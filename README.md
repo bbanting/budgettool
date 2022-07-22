@@ -7,9 +7,8 @@ I can't see this being useful to anyone else but am now writing it as though it 
 ## To Do
 
 - [ ] Write tests
-- [ ] Export to csv
+- [x] Export to csv
 - [ ] Make new converter script
-- [x] Fix extra white space on entry list
 
 ## Notes
 
