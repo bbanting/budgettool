@@ -130,9 +130,11 @@ def select() -> list[Target]:
     return [Target(*t) for t in target_tuples]
 
 
-def select_one(name:str) -> Target:
+def select_one(name:str) -> Target | None:
     """Return a single target from the database."""
     target_tuples = kdb.select_rows(db.TARGETS, name=name)
+    if not target_tuples:
+        return None
     return Target(*target_tuples[0])
 
 

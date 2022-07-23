@@ -98,6 +98,7 @@ def insert(entry:Entry) -> Entry:
     if not targ.instance_exists(entry.tframe):
         targ.set_instance(entry.tframe, targ.default_amt)
 
+    # Save the id as some entries won't have an id until inserted
     entry.id = kdb.insert_row(db.ENTRIES, *entry.fields_and_values()).lastrowid
     return entry
 

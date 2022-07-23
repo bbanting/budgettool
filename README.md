@@ -7,8 +7,8 @@ I can't see this being useful to anyone else but am now writing it as though it 
 ## To Do
 
 - [ ] Write tests
-- [x] Export to csv
-- [ ] Make new converter script
+- [x] Make new converter script
+- [ ] Fix on Windows
 
 ## Notes
 

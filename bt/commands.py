@@ -18,7 +18,7 @@ import util
 from config import TODAY, ENTRIES, TARGETS, GRAPH
 from entry import Entry
 from validators import VDay, VMonth, VYear, VType, VTarget, VID, VAmount
-
+import converter
 
 
 class AbortInput(Exception):
@@ -495,3 +495,14 @@ class ExportCommand(kelevsma.Command):
                 writer.writerow(e.to_csv())
             path = os.path.join(os.getcwd(), f.name)
             kelevsma.message(f"{len(entries)} entries written to {path}.")
+
+
+class CovertCommand(kelevsma.Command):
+    """Convert from csv format to sqlite."""
+    names = ("convert",)
+    params = {
+        "filename": VAny(req=True),
+    }
+
+    def execute(self, filename) -> None:
+        converter.main(filename)
