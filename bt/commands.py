@@ -62,7 +62,7 @@ def get_amount() -> int | None:
         display.message("Invalid amount.")
         return
 
-    return entry.dollars_to_cents(amount)
+    return util.dollars_to_cents(amount)
 
 
 def get_target() -> dict | None:
@@ -226,8 +226,9 @@ class AddEntryCommand(kelevsma.Command):
 
         try:
             date, amount, target, note = get_input(*list(input_functions.values()))
-        except kelevsma.CommandError:
-            return # Exit the command
+        except AbortInput as e:
+            kelevsma.message(str(e))
+            return
         self.entry = entry.insert(Entry(0, date, amount, target, note))
 
         date = date.strftime("%b %d")

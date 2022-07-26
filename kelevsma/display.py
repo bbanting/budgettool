@@ -12,7 +12,6 @@ import colorama
 from colorama import Fore, Back, Style
 
 
-logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
 colorama.init(autoreset=True)
 
 
@@ -132,7 +131,7 @@ class BodyLines(LineGroup):
         if index > len(items) or index < 1:
             raise DisplayError("Invalid line selection.")
 
-        self.selected = items[index-1].ref_obj
+        self.selected = items[index-1]
         return self.selected
 
     def print(self) -> list[str]:

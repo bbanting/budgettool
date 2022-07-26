@@ -28,9 +28,6 @@ from config import TimeFrame, DATEW, AMOUNTW, TARGETW, NAMEW, ENTRIES, TARGETS, 
 from screens import GraphScreen
 
 
-logging.basicConfig(level=logging.INFO, filename="general.log", filemode="w", encoding="utf-8")
-
-
 def push_targets() -> None:
     """Push the current targets to the current screen"""
     year = config.target_filter_state.tframe.year

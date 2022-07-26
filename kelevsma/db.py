@@ -16,11 +16,11 @@ def format_iter(iter:typing.Iterable) -> str:
     return f"({', '.join(iter)})"
 
 
-def run_query(query:str) -> sqlite3.Cursor | None:
+def run_query(query:str, params=()) -> sqlite3.Cursor | None:
     """Execute an SQL query"""
     cursor = connection.cursor()
     try:
-        cursor.execute(query)
+        cursor.execute(query, params)
     except sqlite3.Error as e:
         kelevsma.error("Database error")
     else:
@@ -61,10 +61,10 @@ def insert_row(table_name:str, fields:tuple, values:tuple) -> sqlite3.Cursor | N
     """Inserts a row into the database, given the table, fields, and values."""
     query = f"""
     INSERT INTO {table_name} {format_iter(fields)}
-    VALUES {format_iter(values)}
+    VALUES ({", ".join(['?' for _ in range(len(values))])})
     """
 
-    return run_query(query)
+    return run_query(query, values)
 
 
 def update_row(table_name:str, id:int, fields:tuple, values:tuple) -> sqlite3.Cursor | None:

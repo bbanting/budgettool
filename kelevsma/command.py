@@ -13,9 +13,6 @@ from .validator import Validator, ValidatorError, VLit, VAny, VShortcut
 import kelevsma
 
 
-logging.basicConfig(level=logging.INFO)
-
-
 class CommandConfigError(Exception):
     """Used for invalid command configuration."""
     pass
