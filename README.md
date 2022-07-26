@@ -7,7 +7,6 @@ I can't see this being useful to anyone else but am now writing it as though it 
 ## To Do
 
 - [ ] Write tests
-- [x] Make new converter script
 - [ ] Fix on Windows
 
 ## Notes

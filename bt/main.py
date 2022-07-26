@@ -105,6 +105,7 @@ def main():
     kelevsma.register(commands.ChangePageCommand)
     kelevsma.register(commands.SetTargetCommand)
     kelevsma.register(commands.ExportCommand)
+    kelevsma.register(commands.ConvertCommand)
 
     kelevsma.run("list")
 

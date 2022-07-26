@@ -59,3 +59,4 @@ def cents_to_dollars(cent_amount:int) -> float:
 def dollars_to_cents(dollar_amount:str) -> int:
     """Convert a string dollar ammount to cents for storage."""
     return int(float(dollar_amount) * 100)
+    

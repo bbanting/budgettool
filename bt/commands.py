@@ -497,7 +497,7 @@ class ExportCommand(kelevsma.Command):
             kelevsma.message(f"{len(entries)} entries written to {path}.")
 
 
-class CovertCommand(kelevsma.Command):
+class ConvertCommand(kelevsma.Command):
     """Convert from csv format to sqlite."""
     names = ("convert",)
     params = {

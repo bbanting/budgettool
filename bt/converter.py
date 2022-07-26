@@ -3,7 +3,7 @@
 import csv
 import datetime
 
-import entry, target
+import entry, target, util
 
 
 def main(filename:str):
@@ -12,7 +12,7 @@ def main(filename:str):
         reader = csv.DictReader(lines)
         for l in reader:
             date = datetime.date.fromisoformat(l["date"].replace("/", "-"))
-            amount = entry.dollars_to_cents(l["amount"])
+            amount = util.dollars_to_cents(l["amount"])
             targ = get_target(l["category"])
             note = l["note"]
             e = entry.Entry(0, date, amount, targ, note)
