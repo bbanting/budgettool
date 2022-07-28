@@ -44,7 +44,7 @@ def run(init_cmd:str="") -> None:
         except (command.CommandError, ValueError) as e:
             display.message(str(e))
         except (command.QuitProgramException, KeyboardInterrupt):
-            break
+            return
         finally:
             display.refresh()
 

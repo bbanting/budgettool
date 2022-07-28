@@ -1,5 +1,6 @@
 """Module to handle displaying output in terminal."""
 from __future__ import annotations
+from fileinput import filename
 
 import os
 import logging
@@ -322,13 +323,13 @@ def window_checker() -> None:
     """Check if the terminal window size has changed, refresh if so."""
     width, height = os.get_terminal_size()
     while True:
+        time.sleep(0.5)
         new_width, new_height = os.get_terminal_size()
         if (width, height) == (new_width, new_height):
             continue
         width, height = new_width, new_height
         clear_terminal()
         controller.get_screen().print()
-        time.sleep(0.5)
 
 
 def add_screen(screen:Screen) -> None:
