@@ -58,7 +58,7 @@ def get_amount() -> int | None:
         display.message("The amount must start with + or -")
         return
 
-    if not amount[1:].isnumeric() or int(amount) == 0:
+    if (float(amount) == 0) or [c for c in amount[1:] if (not c.isnumeric() and c != ".")]:
         display.message("Invalid amount.")
         return
 
