@@ -32,8 +32,12 @@ def push_targets() -> None:
     """Push the current targets to the current screen"""
     year = config.target_filter_state.tframe.year
     month = config.target_filter_state.tframe.month.name
+    targets = target.select()
+    # If a specific month is selected, don't show targets with a default of 0
+    if config.target_filter_state.tframe.month.value:
+        targets = [t for t in targets if t.default_amt or t.goal]
     kelevsma.push_h(f"   {'NAME':{NAMEW}}{'PROGRESS'}")
-    kelevsma.push(*target.select())
+    kelevsma.push(*targets)
     kelevsma.push_f(f"Showing targets for {month} of {year}.")
 
 
@@ -76,9 +80,11 @@ def get_target_progress(target_names:list[str]) -> str:
 
 def push_target_graph() -> None:
     """Push the graph for the current targets to the current screen."""
-    targets = target.select()
     year = config.target_filter_state.tframe.year
     month = config.target_filter_state.tframe.month.name
+    targets = target.select()
+    if config.target_filter_state.tframe.month.value:
+        targets = [t for t in targets if t.default_amt or t.goal]
 
     kelevsma.push(*targets)
     kelevsma.push_f("NOTE: Green bars are meeting their goal, red ones are not.")

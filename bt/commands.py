@@ -272,7 +272,7 @@ class AddCommand(kelevsma.ForkCommand):
     examples = (
         Example("add [entry]", "Add an entry though multiple prompts"),
         Example("add today -100 insurance 'Car insurance bill'", "Add an entry for today in one line."),
-        Example("add target groceries -400", "Add a new target named 'groceries' with amount -400.")
+        Example("add target groceries -400", "Add a new target named 'groceries' with amount -400."),
     )
 
 
@@ -441,7 +441,7 @@ class RenameTargetCommand(kelevsma.Command):
     }
     screen = TARGETS
     examples = (
-        Example("rename groceries food", "Rename the 'groceries' target to 'food.'")
+        Example("rename groceries food", "Rename the 'groceries' target to 'food.'"),
     )
 
     def execute(self, current_name, new_name) -> None:
@@ -464,7 +464,7 @@ class ChangePageCommand(kelevsma.Command):
         "number": VBool(str.isdigit, req=True)
     }
     examples = (
-        Example("page 4", "Change to page 4.")
+        Example("page 4", "Change to page 4."),
     )
 
     def execute(self, number:str) -> None:

@@ -23,7 +23,7 @@ def get_target(category:str) -> str:
     """Takes the name of a category and creates a target with the same
     name if it does not exist."""
     if not target.select_one(category):
-        targ = target.Target(0, category, 1000)
+        targ = target.Target(0, category.lower(), 1000)
         target.insert(targ)
     return category
 

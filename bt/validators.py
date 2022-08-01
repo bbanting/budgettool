@@ -1,7 +1,9 @@
+from kelevsma.validator import Validator, Result
+
 import entry
 import target
+import util
 from config import KEYWORDS, Month
-from kelevsma.validator import Validator, Result
 
 
 class VMonth(Validator):
@@ -48,6 +50,7 @@ class VTarget(Validator):
             return Result.err()
             
         ret_val = [Result.ok(value), Result.err()]
+        a = target.get_target_names()
         if value not in target.get_target_names():
             ret_val.reverse()
 
@@ -61,14 +64,17 @@ class VAmount(Validator):
         super().__init__(*args, **kwargs)
         
     def validate(self, value:str) -> Result:
-        if not value.startswith(("-", "+")):
+        # This is to help simplify the logic
+        if float(value) == 0:
+            value = "+0"
+        if (not value.startswith(("-", "+"))):
             return Result.err()
         if not value[1:].isnumeric():
             return Result.err()
-        if not self.allow_zero and int(value) == 0:
+        if not self.allow_zero and float(value) == 0:
             return Result.err()
         
-        amount = entry.dollars_to_cents(value)
+        amount = util.dollars_to_cents(value)
         if not -100000000 < amount < 100000000:
             return Result.err()
         return Result.ok(amount)
