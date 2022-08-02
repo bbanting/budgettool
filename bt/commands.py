@@ -365,8 +365,9 @@ class EditEntryCommand(kelevsma.Command):
 
             entry.update(self.new_entry)
         except AbortInput as e:
-            display.deselect()
             kelevsma.message(str(e))
+        finally:
+            display.deselect()
     
     def undo(self) -> None:
         entry.update(self.old_entry)
